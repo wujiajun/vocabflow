@@ -3,15 +3,35 @@ package com.vocabflow.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.vocabflow.identity.application.UserRepository;
+import com.vocabflow.identity.domain.*;
 import com.vocabflow.identity.infrastructure.UserEntity;
 import com.vocabflow.vocabulary.infrastructure.UserVocabularyEntity;
 import com.vocabflow.vocabulary.infrastructure.VocabularyItemEntity;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 
 class MysqlPersistenceIT extends MysqlIntegrationTest {
+  @Autowired private UserRepository userRepository;
+
+  @Test
+  void persistsUserThroughApplicationRepositoryPort() {
+    User saved =
+        userRepository.save(
+            new User(
+                0,
+                new Email("port@example.com"),
+                "bcrypt-hash-value",
+                ClbLevel.CLB_5,
+                new DailyVocabularyGoal(10),
+                Instant.parse("2026-01-01T00:00:00Z")));
+
+    assertThat(userRepository.findById(saved.id())).contains(saved);
+  }
+
   @Test
   void persistsUserWithGeneratedIdTimestampAndPasswordHash() {
     UserEntity saved = users.saveAndFlush(user("learner@example.com"));

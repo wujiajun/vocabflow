@@ -3,3 +3,6 @@ spring:
   datasource: { url: "jdbc:h2:mem:vocabflow;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE", username: sa, password: '' }
   jpa: { hibernate: { ddl-auto: validate } }
   flyway: { enabled: true }
+vocabflow:
+  auth:
+    secret: "test-secret-not-for-production"

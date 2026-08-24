@@ -1,1 +1,7 @@
-spring: { config: { activate: { on-profile: dev } } }
+spring:
+  config: { activate: { on-profile: dev } }
+  datasource:
+    password: vocabflow
+vocabflow:
+  auth:
+    secret: "local-development-secret-not-for-production"

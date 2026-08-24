@@ -1,8 +1,10 @@
 package com.vocabflow.identity.adapter;
 
 import com.vocabflow.identity.application.*;
-import com.vocabflow.identity.infrastructure.UserEntity;
+import com.vocabflow.identity.domain.User;
+import com.vocabflow.security.BearerTokenExtractor;
 import com.vocabflow.security.TokenService;
+import com.vocabflow.shared.web.UnauthorizedException;
 import jakarta.validation.constraints.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,16 +28,17 @@ public class IdentityController {
 
   record Login(@Email String email, @NotBlank String password) {}
 
-  record User(long id, String email, String clbLevel, int dailyNewVocabularyGoal) {}
+  record UserResponse(long id, String email, String clbLevel, int dailyNewVocabularyGoal) {}
 
-  record LoginResponse(String accessToken, User user) {}
+  record LoginResponse(String accessToken, UserResponse user) {}
 
-  private User map(UserEntity u) {
-    return new User(u.id, u.email, u.clbLevel, u.dailyGoal);
+  private UserResponse map(User u) {
+    return new UserResponse(
+        u.id(), u.email().value(), u.clbLevel().name(), u.dailyVocabularyGoal().value());
   }
 
   @PostMapping("/register")
-  public User register(@RequestBody @jakarta.validation.Valid Register r) {
+  public UserResponse register(@RequestBody @jakarta.validation.Valid Register r) {
     return map(
         service.register(
             r.email,
@@ -46,17 +49,20 @@ public class IdentityController {
 
   @PostMapping("/login")
   public LoginResponse login(@RequestBody @jakarta.validation.Valid Login r) {
-    UserEntity u = service.authenticate(r.email, r.password);
-    return new LoginResponse(tokens.issue(u.id, u.email), map(u));
+    User u = service.authenticate(r.email, r.password);
+    return new LoginResponse(tokens.issue(u.id(), u.email().value()), map(u));
   }
 
   @PostMapping("/logout")
-  public void logout(@RequestHeader("Authorization") String h) {
-    tokens.revoke(h.substring(7));
+  public void logout(
+      @RequestHeader(value = "Authorization", required = false) String authorization) {
+    tokens.revoke(
+        BearerTokenExtractor.extract(authorization)
+            .orElseThrow(() -> new UnauthorizedException("Authentication is required")));
   }
 
   @GetMapping("/me")
-  public User me(@AuthenticationPrincipal Long id) {
+  public UserResponse me(@AuthenticationPrincipal Long id) {
     return map(service.current(id));
   }
 }

@@ -3,11 +3,11 @@ spring:
   datasource:
     url: ${VOCABFLOW_DB_URL:jdbc:mysql://localhost:3306/vocabflow?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC}
     username: ${VOCABFLOW_DB_USERNAME:vocabflow}
-    password: ${VOCABFLOW_DB_PASSWORD:change-me}
+    password: ${VOCABFLOW_DB_PASSWORD}
   jpa: { hibernate: { ddl-auto: validate }, open-in-view: false }
   flyway: { enabled: true }
 server: { error: { include-message: never } }
 vocabflow:
   auth:
-    secret: "${VOCABFLOW_AUTH_SECRET:change-this-development-secret-to-at-least-32-characters}"
+    secret: "${VOCABFLOW_AUTH_SECRET}"
     token-hours: 24

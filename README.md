@@ -16,7 +16,7 @@ Registration hashes passwords with BCrypt. Login issues a short-lived, HMAC-SHA2
 
 ## Database and configuration
 
-MySQL is required to run the application. Create a database/user (or permit `createDatabaseIfNotExist`) and set:
+MySQL is required to run the application. Create a database/user (or permit `createDatabaseIfNotExist`) and set these required environment variables for the default (production-like) profile:
 
 ```sh
 export VOCABFLOW_DB_URL='jdbc:mysql://localhost:3306/vocabflow?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC'
@@ -24,6 +24,8 @@ export VOCABFLOW_DB_USERNAME=vocabflow
 export VOCABFLOW_DB_PASSWORD='your-password'
 export VOCABFLOW_AUTH_SECRET='a-long-random-development-secret-at-least-32-chars'
 ```
+
+The application intentionally fails at startup when `VOCABFLOW_DB_PASSWORD` or `VOCABFLOW_AUTH_SECRET` is absent from the default profile. The `dev` and `test` profiles use local/test-only values; never use them in production.
 
 Flyway owns schema creation (`V1__initial_schema.sql`); Hibernate validates rather than creates it. Tests use isolated in-memory H2 in MySQL compatibility mode, so no personal MySQL instance is needed.
 
