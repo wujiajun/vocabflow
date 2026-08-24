@@ -1,0 +1,7 @@
+target/
+.mvn/wrapper/apache-maven-*/
+*.log
+.env
+.idea/
+*.iml
+*.tar.gz
