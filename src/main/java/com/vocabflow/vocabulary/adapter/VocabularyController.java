@@ -1,22 +1,20 @@
 package com.vocabflow.vocabulary.adapter;
 
-import com.vocabflow.shared.infrastructure.JsonSupport;
 import com.vocabflow.vocabulary.application.VocabularyService;
-import com.vocabflow.vocabulary.infrastructure.*;
+import com.vocabflow.vocabulary.domain.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
-import java.util.*;
-import org.springframework.data.domain.Page;
+import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/vocabulary")
 public class VocabularyController {
-  final VocabularyService service;
+  private final VocabularyService service;
 
-  public VocabularyController(VocabularyService s) {
-    service = s;
+  public VocabularyController(VocabularyService service) {
+    this.service = service;
   }
 
   record Create(@NotBlank @Size(max = 255) String term) {}
@@ -36,40 +34,40 @@ public class VocabularyController {
 
   record PageResponse(List<Item> content, int page, int size, long totalElements, int totalPages) {}
 
-  private Item map(UserVocabularyEntity u) {
-    var i = u.item;
+  private Item map(UserVocabulary userVocabulary) {
+    VocabularyItem item = userVocabulary.item();
     return new Item(
-        u.id,
-        i.term,
-        i.type,
-        i.phonetic,
-        i.partOfSpeech,
-        i.definition,
-        JsonSupport.read(i.examples),
-        JsonSupport.read(i.collocations),
-        i.enrichmentStatus,
-        u.learningStatus,
-        u.createdAt);
+        userVocabulary.id(),
+        item.term().value(),
+        item.type() == null ? null : item.type().name(),
+        item.phonetic(),
+        item.partOfSpeech(),
+        item.definition(),
+        item.examples(),
+        item.collocations(),
+        item.enrichmentStatus().name(),
+        userVocabulary.learningStatus().name(),
+        userVocabulary.createdAt());
   }
 
   @PostMapping
   public Item create(
-      @AuthenticationPrincipal Long id, @RequestBody @jakarta.validation.Valid Create r) {
-    return map(service.add(id, r.term));
+      @AuthenticationPrincipal Long userId, @RequestBody @jakarta.validation.Valid Create request) {
+    return map(service.add(userId, request.term()));
   }
 
   @GetMapping
   public PageResponse list(
-      @AuthenticationPrincipal Long id,
+      @AuthenticationPrincipal Long userId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
-    Page<UserVocabularyEntity> p = service.list(id, page, size);
+    VocabularyPage result = service.list(userId, page, size);
     return new PageResponse(
-        p.map(this::map).getContent(),
-        p.getNumber(),
-        p.getSize(),
-        p.getTotalElements(),
-        p.getTotalPages());
+        result.content().stream().map(this::map).toList(),
+        result.page(),
+        result.size(),
+        result.totalElements(),
+        result.totalPages());
   }
 
   @GetMapping("/{id}")

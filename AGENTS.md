@@ -43,7 +43,9 @@ Before completing any coding task, run:
 
 - `./mvnw spotless:check`
 - `./mvnw test`
-- `./mvnw clean package`
+- `./mvnw verify`
+
+`./mvnw verify` is the authoritative full validation command because it includes MySQL/Testcontainers integration tests. `./mvnw clean package` may also be used to validate packaging, but it does not replace `./mvnw verify`.
 
 If the task affects runtime behavior, also start the application and verify the affected APIs when practical.
 

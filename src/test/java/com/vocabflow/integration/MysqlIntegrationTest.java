@@ -1,12 +1,15 @@
 package com.vocabflow.integration;
 
 import com.vocabflow.identity.infrastructure.UserJpaRepository;
+import com.vocabflow.vocabulary.application.UserVocabularyRepository;
+import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.infrastructure.UserVocabularyJpaRepository;
 import com.vocabflow.vocabulary.infrastructure.VocabularyItemJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -25,6 +28,9 @@ public abstract class MysqlIntegrationTest {
   @Autowired protected UserJpaRepository users;
   @Autowired protected VocabularyItemJpaRepository vocabularyItems;
   @Autowired protected UserVocabularyJpaRepository userVocabularies;
+  @Autowired protected VocabularyItemRepository vocabularyItemRepository;
+  @Autowired protected UserVocabularyRepository userVocabularyRepository;
+  @Autowired protected JdbcTemplate jdbcTemplate;
 
   @DynamicPropertySource
   static void configureDataSource(DynamicPropertyRegistry registry) {

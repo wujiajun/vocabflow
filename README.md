@@ -27,7 +27,7 @@ export VOCABFLOW_AUTH_SECRET='a-long-random-development-secret-at-least-32-chars
 
 The application intentionally fails at startup when `VOCABFLOW_DB_PASSWORD` or `VOCABFLOW_AUTH_SECRET` is absent from the default profile. The `dev` and `test` profiles use local/test-only values; never use them in production.
 
-Flyway owns schema creation (`V1__initial_schema.sql`); Hibernate validates rather than creates it. Tests use isolated in-memory H2 in MySQL compatibility mode, so no personal MySQL instance is needed.
+Flyway owns schema creation; Hibernate validates rather than creates it. All absolute timestamps are represented as `java.time.Instant` in application/domain code and persisted as MySQL `DATETIME(6)` values in UTC. Tests use isolated in-memory H2 in MySQL compatibility mode for fast checks and MySQL Testcontainers during `verify`, so no personal MySQL instance is needed.
 
 ## Run, test, IntelliJ
 
@@ -35,9 +35,12 @@ Requires JDK 21. Maven Wrapper downloads Maven 3.9.11 on first use; no global Ma
 
 ```sh
 ./mvnw test
+./mvnw verify
 ./mvnw clean package
 ./mvnw spring-boot:run
 ```
+
+`test` runs the fast test suite. `verify` is the authoritative full quality gate and also runs MySQL/Testcontainers integration tests. `clean package` validates packaging but does not replace `verify`.
 
 In IntelliJ IDEA: open the root `pom.xml` as a Maven project, select JDK 21 as Project SDK, reload Maven, then run `VocabFlowApplication` or Maven goals. Breakpoints work directly from the application class.
 
