@@ -1,5 +1,7 @@
-target/
-.mvn/wrapper/apache-maven-*/
+backend/target/
+backend/.mvn/wrapper/apache-maven-*/
+frontend/node_modules/
+frontend/dist/
 *.log
 .env
 .idea/

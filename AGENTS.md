@@ -1,90 +1,18 @@
-# Project
+# VocabFlow repository
 
-- Project name: VocabFlow
-- Java 21
-- Spring Boot
-- Maven Wrapper
-- Modular monolith
-- MySQL in production
-- React frontend will be added later
+VocabFlow is a modular-monolith product repository. Keep changes focused and leave them ready for human review.
 
-# Architecture
+## Layout
 
-- Organize by business capability.
-- Keep domain code independent from Spring MVC, JPA, MySQL, HTTP clients, and AI providers.
-- Do not expose JPA entities through APIs.
-- Keep API DTOs, domain objects, and persistence models separated.
-- Prefer simple designs over unnecessary abstractions.
+- `backend/` — Java 21, Spring Boot, Maven backend. Follow `backend/AGENTS.md` for backend work.
+- `frontend/` — future React, TypeScript, and Vite application. Do not initialize frontend tooling unless explicitly requested.
+- `docs/` — long-lived product and architecture documentation.
+
+## Repository rules
+
+- Organize work by business capability and prefer simple designs over unnecessary abstractions.
 - Do not introduce microservices, message queues, or distributed infrastructure unless explicitly requested.
-
-# Java formatting
-
-- Use Spotless as the formatting source of truth.
-- Spotless is the source of truth for Java formatting.
-- All Java changes must be formatted before task completion.
-- Before completing any Java coding task, run:
-
-  ```sh
-  ./mvnw spotless:apply
-  ./mvnw spotless:check
-  ```
-
-- A Java coding task is not complete unless `spotless:check` passes.
-- Run:
-
-  ```sh
-  ./mvnw spotless:apply
-  ./mvnw spotless:check
-  ```
-
-# Verification
-
-Before completing any coding task, run:
-
-- `./mvnw spotless:check`
-- `./mvnw test`
-- `./mvnw verify`
-
-`./mvnw verify` is the authoritative full validation command because it includes MySQL/Testcontainers integration tests. `./mvnw clean package` may also be used to validate packaging, but it does not replace `./mvnw verify`.
-
-If the task affects runtime behavior, also start the application and verify the affected APIs when practical.
-
-# Testing
-
-- Keep unit tests fast.
-- Use meaningful integration tests.
-- Prefer real MySQL compatibility tests using Testcontainers for persistence/Flyway behavior.
-- Do not weaken or delete tests merely to make a change pass.
-
-# Security
-
-- Never store plaintext passwords.
-- Never hard-code secrets or API keys.
-- Never trust userId supplied by the client for authenticated resources.
-- Preserve strict user data isolation.
-
-# Environment safety
-
-Do not:
-
-- install or upgrade JDK
-- modify `JAVA_HOME` or `PATH`
-- modify global Maven configuration
-- use `sudo`
-- install system software
-- delete files outside the project
-
-unless explicitly approved.
-
-# Git
-
+- Never hard-code secrets or API keys, and preserve strict user data isolation.
 - Do not commit, push, reset, rebase, tag, or rewrite Git history unless explicitly requested.
-- Leave changes ready for human review.
-
-# Working style
-
-- Inspect existing code before changing it.
-- Do not rewrite unrelated code.
-- Keep diffs focused.
-- Fix compilation/test failures caused by your changes.
-- Summarize architectural decisions and validation performed.
+- Do not install system software, use `sudo`, modify global tool configuration, or delete files outside this repository unless explicitly approved.
+- Inspect existing code before changing it. Do not rewrite unrelated code. Fix failures caused by your changes and summarize validation performed.

@@ -1,6 +1,14 @@
-# VocabFlow Backend MVP
+# VocabFlow
 
-VocabFlow captures an English word or phrase and returns deterministic structured learning content. This first vertical slice covers identity, protected personal vocabulary, MySQL persistence, and a replaceable enrichment boundary.
+VocabFlow captures an English word or phrase and returns deterministic structured learning content. The repository contains the Java backend today; frontend development has not started.
+
+## Repository layout
+
+```text
+backend/   Java 21 + Spring Boot + Maven backend
+frontend/  Future React + TypeScript + Vite application
+docs/      Long-lived product and architecture documentation
+```
 
 ## Architecture
 
@@ -42,6 +50,7 @@ Flyway owns schema creation; Hibernate validates rather than creates it. All abs
 Requires JDK 21. Maven Wrapper downloads Maven 3.9.11 on first use; no global Maven installation is required.
 
 ```sh
+cd backend
 ./mvnw test
 ./mvnw verify
 ./mvnw clean package
@@ -50,7 +59,7 @@ Requires JDK 21. Maven Wrapper downloads Maven 3.9.11 on first use; no global Ma
 
 `test` runs the fast test suite. `verify` is the authoritative full quality gate and also runs MySQL/Testcontainers integration tests. `clean package` validates packaging but does not replace `verify`.
 
-In IntelliJ IDEA: open the root `pom.xml` as a Maven project, select JDK 21 as Project SDK, reload Maven, then run `VocabFlowApplication` or Maven goals. Breakpoints work directly from the application class.
+In IntelliJ IDEA: open `backend/pom.xml` as a Maven project, select JDK 21 as Project SDK, reload Maven, then run `VocabFlowApplication` or Maven goals. Breakpoints work directly from the application class.
 
 ## API flow
 
