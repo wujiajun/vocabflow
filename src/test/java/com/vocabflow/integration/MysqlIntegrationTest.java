@@ -1,6 +1,8 @@
 package com.vocabflow.integration;
 
 import com.vocabflow.identity.infrastructure.UserJpaRepository;
+import com.vocabflow.learning.application.DailyLearningPlanRepository;
+import com.vocabflow.vocabulary.application.LearningVocabularyQuery;
 import com.vocabflow.vocabulary.application.UserVocabularyRepository;
 import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.infrastructure.UserVocabularyJpaRepository;
@@ -30,6 +32,8 @@ public abstract class MysqlIntegrationTest {
   @Autowired protected UserVocabularyJpaRepository userVocabularies;
   @Autowired protected VocabularyItemRepository vocabularyItemRepository;
   @Autowired protected UserVocabularyRepository userVocabularyRepository;
+  @Autowired protected DailyLearningPlanRepository dailyLearningPlans;
+  @Autowired protected LearningVocabularyQuery learningVocabulary;
   @Autowired protected JdbcTemplate jdbcTemplate;
 
   @DynamicPropertySource
@@ -41,6 +45,8 @@ public abstract class MysqlIntegrationTest {
 
   @BeforeEach
   void clearDatabase() {
+    jdbcTemplate.update("DELETE FROM daily_learning_plan_items");
+    jdbcTemplate.update("DELETE FROM daily_learning_plans");
     userVocabularies.deleteAll();
     vocabularyItems.deleteAll();
     users.deleteAll();

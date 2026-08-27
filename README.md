@@ -10,6 +10,14 @@ This is a modular monolith arranged by business capability: `identity` and `voca
 
 `VocabularyEnrichmentProvider` is an application port. `FakeVocabularyEnrichmentAdapter` provides deterministic fixtures for `overwhelmed` and `figure out`, plus predictable fallback content. Enrichment state is recorded as PENDING/PROCESSING/COMPLETED/FAILED; a failed item remains usable and can support later retry work.
 
+## Daily Learning Plan
+
+`GET /api/v1/learning/daily-plan` creates or returns one stable plan for the authenticated user and learning date. Pass an optional ISO date, for example `?date=2026-08-25`; without it, “today” is the current UTC date until user timezone preferences are introduced. New items are selected from the user’s `NEW` vocabulary oldest-first, with ID as a stable tie-breaker, up to `dailyNewVocabularyGoal`. `reviewItems` is intentionally empty until the review scheduler milestone.
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" 'localhost:8080/api/v1/learning/daily-plan?date=2026-08-25'
+```
+
 ## Authentication
 
 Registration hashes passwords with BCrypt. Login issues a short-lived, HMAC-SHA256 signed Bearer token; all vocabulary endpoints derive user ID exclusively from it. Logout adds the token hash to `revoked_tokens`. This is simple, SPA-friendly, and intentionally omits OAuth/refresh tokens for this MVP. Set a strong `VOCABFLOW_AUTH_SECRET` outside development.

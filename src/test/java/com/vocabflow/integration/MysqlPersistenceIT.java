@@ -6,10 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.vocabflow.identity.application.UserRepository;
 import com.vocabflow.identity.domain.*;
 import com.vocabflow.identity.infrastructure.UserEntity;
+import com.vocabflow.learning.domain.*;
 import com.vocabflow.vocabulary.domain.*;
 import com.vocabflow.vocabulary.infrastructure.UserVocabularyEntity;
 import com.vocabflow.vocabulary.infrastructure.VocabularyItemEntity;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -150,6 +152,86 @@ class MysqlPersistenceIT extends MysqlIntegrationTest {
     assertThat(userVocabularyRepository.findByUserId(firstUser.id, 0, 20).content())
         .singleElement()
         .isEqualTo(saved);
+  }
+
+  @Test
+  void learningPersistenceUsesOldestNewVocabularyAndStablePlans() {
+    UserEntity user = users.saveAndFlush(user("learning@example.com"));
+    UserEntity otherUser = users.saveAndFlush(user("other-learning@example.com"));
+    VocabularyItemEntity newestItem = vocabularyItems.saveAndFlush(vocabularyItem("newest"));
+    VocabularyItemEntity oldestItem = vocabularyItems.saveAndFlush(vocabularyItem("oldest"));
+    VocabularyItemEntity otherItem = vocabularyItems.saveAndFlush(vocabularyItem("other"));
+    UserVocabularyEntity newest = userVocabulary(user.id, newestItem);
+    newest.createdAt = Instant.parse("2026-01-03T00:00:00Z");
+    UserVocabularyEntity oldest = userVocabulary(user.id, oldestItem);
+    oldest.createdAt = Instant.parse("2026-01-01T00:00:00Z");
+    UserVocabularyEntity other = userVocabulary(otherUser.id, otherItem);
+    other.createdAt = Instant.parse("2026-01-01T00:00:00Z");
+    userVocabularies.saveAndFlush(newest);
+    userVocabularies.saveAndFlush(oldest);
+    userVocabularies.saveAndFlush(other);
+
+    List<LearningVocabulary> candidates = learningVocabulary.findNewVocabularyForUser(user.id, 2);
+    assertThat(candidates)
+        .extracting(LearningVocabulary::userVocabularyId)
+        .containsExactly(oldest.id, newest.id);
+
+    DailyLearningPlan plan =
+        new DailyLearningPlan(
+            0,
+            user.id,
+            java.time.LocalDate.of(2026, 8, 25),
+            2,
+            Instant.parse("2026-08-25T00:00:00.123456Z"),
+            candidates.stream()
+                .map(
+                    candidate ->
+                        new DailyLearningPlanItem(
+                            candidate.userVocabularyId(),
+                            candidate.vocabularyItemId(),
+                            candidate.term(),
+                            candidate.type(),
+                            PlanItemType.NEW))
+                .toList(),
+            List.of());
+    DailyLearningPlan saved = dailyLearningPlans.saveIfAbsent(plan).orElseThrow();
+
+    assertThat(dailyLearningPlans.saveIfAbsent(plan)).isEmpty();
+    assertThat(dailyLearningPlans.findByUserIdAndLearningDate(user.id, plan.learningDate()))
+        .contains(saved);
+    assertThat(saved.newItems())
+        .extracting(DailyLearningPlanItem::userVocabularyId)
+        .containsExactly(oldest.id, newest.id);
+  }
+
+  @Test
+  void rollsBackPlanAndItemsWhenPlanItemCannotBePersisted() {
+    UserEntity user = users.saveAndFlush(user("plan-rollback@example.com"));
+    DailyLearningPlan invalidPlan =
+        new DailyLearningPlan(
+            0,
+            user.id,
+            java.time.LocalDate.of(2026, 8, 26),
+            2,
+            Instant.parse("2026-08-26T00:00:00Z"),
+            List.of(
+                new DailyLearningPlanItem(
+                    999_999L, 999_999L, "missing", VocabularyType.WORD, PlanItemType.NEW)),
+            List.of());
+
+    assertThatThrownBy(() -> dailyLearningPlans.saveIfAbsent(invalidPlan))
+        .isInstanceOf(DataIntegrityViolationException.class);
+
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM daily_learning_plans WHERE user_id = ?",
+                Integer.class,
+                user.id))
+        .isZero();
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM daily_learning_plan_items", Integer.class))
+        .isZero();
   }
 
   private UserEntity user(String email) {
