@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -65,6 +65,29 @@ test('asks for the plan of the local calendar date, not the UTC date', async () 
 
   await screen.findByRole('heading', { name: 'Today’s plan' })
   expect(fetchMock).toHaveBeenCalledWith('/api/v1/learning/daily-plan?date=2026-10-29', expect.anything())
+})
+
+test('loads the next day’s plan when the page is left open past midnight', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 29, 23, 59, 30))
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/daily-plan': ({ url }) =>
+      jsonResponse(plan({ date: url.searchParams.get('date') ?? '', newVocabularyGoal: 1 })),
+  })
+
+  renderApp('/app/today')
+  await screen.findByRole('heading', { name: 'Today’s plan' })
+  expect(fetchMock).toHaveBeenCalledWith('/api/v1/learning/daily-plan?date=2026-10-29', expect.anything())
+
+  vi.setSystemTime(new Date(2026, 9, 30, 0, 0, 30))
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+
+  await waitFor(() =>
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/learning/daily-plan?date=2026-10-30', expect.anything()),
+  )
 })
 
 test('explains an empty plan and points to the vocabulary page', async () => {
