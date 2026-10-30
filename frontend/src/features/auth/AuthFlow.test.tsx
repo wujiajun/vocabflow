@@ -1,18 +1,19 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { MemoryRouter } from 'react-router'
-import { App } from '../../app/App'
 import { clearToken, getToken, setToken } from '../../shared/api/tokenStorage'
-import { AuthTokenProvider } from './hooks/AuthTokenProvider'
+import {
+  errorResponse,
+  expectNoUnexpectedRequests,
+  jsonResponse,
+  renderApp,
+  stubApi,
+  user,
+} from '../../test/utils'
 
-const user = {
-  id: 1,
-  email: 'learner@example.com',
-  clbLevel: 'CLB_4',
-  dailyNewVocabularyGoal: 10,
-} as const
+const emptyVocabularyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
+const cachedUserDataKey = ['test', 'cached-user-data'] as const
+const unauthorized = () => errorResponse(401, 'UNAUTHORIZED', 'Authentication is required')
 
 beforeEach(() => {
   clearToken()
@@ -21,11 +22,11 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  expectNoUnexpectedRequests()
 })
 
 test('does not request the current user when no token exists and protects /app', async () => {
-  const fetchMock = vi.fn()
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({})
 
   renderApp('/app')
 
@@ -35,12 +36,15 @@ test('does not request the current user when no token exists and protects /app',
 
 test('loads the current user when a valid token exists and renders /app', async () => {
   setToken('valid-token')
-  const fetchMock = vi.fn().mockResolvedValue(jsonResponse(user))
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+  })
 
   renderApp('/app')
 
-  expect(await screen.findByRole('heading', { name: 'Your learning space is ready' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(screen.getByText(user.email)).toBeInTheDocument()
   expect(fetchMock).toHaveBeenCalledWith(
     '/api/v1/auth/me',
     expect.objectContaining({ headers: expect.any(Headers) }),
@@ -49,15 +53,7 @@ test('loads the current user when a valid token exists and renders /app', async 
 
 test('clears a stale token and redirects to login', async () => {
   setToken('stale-token')
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(
-      jsonResponse(
-        { code: 'UNAUTHORIZED', message: 'Authentication is required', timestamp: '2026-10-20T00:00:00Z' },
-        401,
-      ),
-    ),
-  )
+  stubApi({ 'GET /api/v1/auth/me': unauthorized })
 
   renderApp('/app')
 
@@ -66,11 +62,11 @@ test('clears a stale token and redirects to login', async () => {
 })
 
 test('validates and completes login with a persisted token', async () => {
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValueOnce(jsonResponse({ accessToken: 'new-token', user }))
-    .mockResolvedValueOnce(jsonResponse(user))
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({
+    'POST /api/v1/auth/login': () => jsonResponse({ accessToken: 'new-token', user }),
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/login')
@@ -82,20 +78,14 @@ test('validates and completes login with a persisted token', async () => {
   await browserUser.type(screen.getByLabelText('Password'), 'password123')
   await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
 
-  expect(await screen.findByRole('heading', { name: 'Your learning space is ready' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
   expect(getToken()).toBe('new-token')
 })
 
 test('displays a failed login error', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(
-      jsonResponse(
-        { code: 'UNAUTHORIZED', message: 'Invalid email or password', timestamp: '2026-10-20T00:00:00Z' },
-        401,
-      ),
-    ),
-  )
+  stubApi({
+    'POST /api/v1/auth/login': () => errorResponse(401, 'UNAUTHORIZED', 'Invalid email or password'),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/login')
@@ -107,8 +97,7 @@ test('displays a failed login error', async () => {
 })
 
 test('registers with all backend fields and redirects to login', async () => {
-  const fetchMock = vi.fn().mockResolvedValue(jsonResponse(user))
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({ 'POST /api/v1/auth/register': () => jsonResponse(user) })
   const browserUser = userEvent.setup()
 
   renderApp('/register')
@@ -126,15 +115,9 @@ test('registers with all backend fields and redirects to login', async () => {
 })
 
 test('displays backend registration validation errors', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(
-      jsonResponse(
-        { code: 'CONFLICT', message: 'Email is already registered', timestamp: '2026-10-20T00:00:00Z' },
-        409,
-      ),
-    ),
-  )
+  stubApi({
+    'POST /api/v1/auth/register': () => errorResponse(409, 'CONFLICT', 'Email is already registered'),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/register')
@@ -147,20 +130,15 @@ test('displays backend registration validation errors', async () => {
 
 test('clears local auth and redirects after logout even when backend logout fails', async () => {
   setToken('valid-token')
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValueOnce(jsonResponse(user))
-    .mockResolvedValueOnce(
-      jsonResponse(
-        { code: 'UNAUTHORIZED', message: 'Authentication is required', timestamp: '2026-10-20T00:00:00Z' },
-        401,
-      ),
-    )
-  vi.stubGlobal('fetch', fetchMock)
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'POST /api/v1/auth/logout': unauthorized,
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your learning space is ready' })
+  await screen.findByRole('heading', { name: 'Your vocabulary' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
@@ -169,11 +147,17 @@ test('clears local auth and redirects after logout even when backend logout fail
 
 test('shows a retry screen when the first session check cannot reach the server, then recovers', async () => {
   setToken('valid-token')
-  const fetchMock = vi
-    .fn()
-    .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-    .mockResolvedValueOnce(jsonResponse(user))
-  vi.stubGlobal('fetch', fetchMock)
+  let meCalls = 0
+  stubApi({
+    'GET /api/v1/auth/me': () => {
+      meCalls += 1
+      if (meCalls === 1) {
+        throw new TypeError('Failed to fetch')
+      }
+      return jsonResponse(user)
+    },
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
@@ -184,19 +168,15 @@ test('shows a retry screen when the first session check cannot reach the server,
 
   await browserUser.click(screen.getByRole('button', { name: 'Try again' }))
 
-  expect(await screen.findByRole('heading', { name: 'Your learning space is ready' })).toBeInTheDocument()
-  expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(meCalls).toBeGreaterThanOrEqual(2)
 })
 
 test('lets the user sign out locally when the session check keeps failing with a server error', async () => {
   setToken('valid-token')
-  const fetchMock = vi.fn().mockResolvedValue(
-    jsonResponse(
-      { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred', timestamp: '2026-10-20T00:00:00Z' },
-      500,
-    ),
-  )
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => errorResponse(500, 'INTERNAL_ERROR', 'An unexpected error occurred'),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
@@ -211,7 +191,11 @@ test('lets the user sign out locally when the session check keeps failing with a
 
 test('shows the same retry screen on a public route when a stored token cannot be checked', async () => {
   setToken('valid-token')
-  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+  stubApi({
+    'GET /api/v1/auth/me': () => {
+      throw new TypeError('Failed to fetch')
+    },
+  })
 
   renderApp('/login')
 
@@ -222,7 +206,11 @@ test('shows the same retry screen on a public route when a stored token cannot b
 
 test('shows the retry screen from the root route when the session check fails', async () => {
   setToken('valid-token')
-  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+  stubApi({
+    'GET /api/v1/auth/me': () => {
+      throw new TypeError('Failed to fetch')
+    },
+  })
 
   renderApp('/')
 
@@ -232,27 +220,21 @@ test('shows the retry screen from the root route when the session check fails', 
 
 test('redirects a signed-in user away from the public login route', async () => {
   setToken('valid-token')
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(user)))
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+  })
 
   renderApp('/login')
 
-  expect(await screen.findByRole('heading', { name: 'Your learning space is ready' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
 })
 
 test('displays backend 400 validation errors on registration', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(
-      jsonResponse(
-        {
-          code: 'VALIDATION_ERROR',
-          message: 'Daily new vocabulary goal must be between 1 and 100',
-          timestamp: '2026-10-20T00:00:00Z',
-        },
-        400,
-      ),
-    ),
-  )
+  stubApi({
+    'POST /api/v1/auth/register': () =>
+      errorResponse(400, 'VALIDATION_ERROR', 'Daily new vocabulary goal must be between 1 and 100'),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/register')
@@ -267,15 +249,15 @@ test('displays backend 400 validation errors on registration', async () => {
 
 test('signs out cleanly when the backend logout returns an empty success response', async () => {
   setToken('valid-token')
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValueOnce(jsonResponse(user))
-    .mockResolvedValueOnce(new Response(null, { status: 204 }))
-  vi.stubGlobal('fetch', fetchMock)
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'POST /api/v1/auth/logout': () => new Response(null, { status: 204 }),
+  })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your learning space is ready' })
+  await screen.findByRole('heading', { name: 'Your vocabulary' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
@@ -286,96 +268,66 @@ test('signs out cleanly when the backend logout returns an empty success respons
   )
 })
 
-const otherUsersCacheKey = ['vocabulary', 'list', 0, 20] as const
-
 test('drops cached user data when the user signs out', async () => {
   setToken('valid-token')
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValueOnce(jsonResponse(user)).mockResolvedValueOnce(new Response(null, { status: 204 })),
-  )
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'POST /api/v1/auth/logout': () => new Response(null, { status: 204 }),
+  })
   const browserUser = userEvent.setup()
 
   const { queryClient } = renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your learning space is ready' })
-  queryClient.setQueryData(otherUsersCacheKey, { content: [] })
+  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  queryClient.setQueryData(cachedUserDataKey, { content: [] })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+  expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
   expect(queryClient.getQueryData(['auth', 'current-user'])).toBeUndefined()
+  expect(queryClient.getQueryData(['vocabulary', 'list', 0, 20])).toBeUndefined()
 })
 
 test('drops cached user data when a stale token is rejected', async () => {
   setToken('stale-token')
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(
-      jsonResponse(
-        { code: 'UNAUTHORIZED', message: 'Authentication is required', timestamp: '2026-10-20T00:00:00Z' },
-        401,
-      ),
-    ),
-  )
+  stubApi({ 'GET /api/v1/auth/me': unauthorized })
 
-  const { queryClient } = renderApp('/app', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+  const { queryClient } = renderApp('/app', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+  expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
 })
 
 test('drops cached user data when the session is discarded from the retry screen', async () => {
   setToken('valid-token')
-  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+  stubApi({
+    'GET /api/v1/auth/me': () => {
+      throw new TypeError('Failed to fetch')
+    },
+  })
   const browserUser = userEvent.setup()
 
-  const { queryClient } = renderApp('/app', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+  const { queryClient } = renderApp('/app', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
   await screen.findByRole('alert')
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
-  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+  expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
 })
 
 test('does not show a previous user’s cached data after a new login', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValueOnce(jsonResponse({ accessToken: 'second-token', user })).mockResolvedValueOnce(jsonResponse(user)),
-  )
+  stubApi({
+    'POST /api/v1/auth/login': () => jsonResponse({ accessToken: 'second-token', user }),
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+  })
   const browserUser = userEvent.setup()
 
-  const { queryClient } = renderApp('/login', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+  const { queryClient } = renderApp('/login', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
   await browserUser.type(screen.getByLabelText('Email'), user.email)
   await browserUser.type(screen.getByLabelText('Password'), 'password123')
   await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
 
-  await screen.findByRole('heading', { name: 'Your learning space is ready' })
-  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
 })
-
-function renderApp(initialPath: string, prepare?: (queryClient: QueryClient) => void) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  })
-  prepare?.(queryClient)
-
-  return {
-    queryClient,
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <AuthTokenProvider>
-          <MemoryRouter initialEntries={[initialPath]}>
-            <App />
-          </MemoryRouter>
-        </AuthTokenProvider>
-      </QueryClientProvider>,
-    ),
-  }
-}
-
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}

@@ -1,9 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AuthLoadingState, ProtectedRoute, PublicOnlyRoute } from '../../features/auth/components/AuthRoute'
-import { AuthenticatedAppPage } from '../../features/auth/pages/AuthenticatedAppPage'
 import { LoginPage } from '../../features/auth/pages/LoginPage'
 import { RegisterPage } from '../../features/auth/pages/RegisterPage'
 import { useAuth } from '../../features/auth/hooks/useAuth'
+import { VocabularyDetailPage } from '../../features/vocabulary/pages/VocabularyDetailPage'
+import { VocabularyPage } from '../../features/vocabulary/pages/VocabularyPage'
+import { AppShell } from '../layout/AppShell'
 
 export function AppRouter() {
   return (
@@ -29,10 +31,15 @@ export function AppRouter() {
         path="/app"
         element={
           <ProtectedRoute>
-            <AuthenticatedAppPage />
+            <AppShell />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="vocabulary" replace />} />
+        <Route path="vocabulary" element={<VocabularyPage />} />
+        <Route path="vocabulary/:id" element={<VocabularyDetailPage />} />
+        <Route path="*" element={<Navigate to="/app/vocabulary" replace />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

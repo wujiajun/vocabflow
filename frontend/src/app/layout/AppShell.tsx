@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router'
-import { useAuth, useLogoutMutation } from '../hooks/useAuth'
+import { NavLink, Outlet, useNavigate } from 'react-router'
+import { useAuth, useLogoutMutation } from '../../features/auth/hooks/useAuth'
 
-export function AuthenticatedAppPage() {
+export function AppShell() {
   const navigate = useNavigate()
   const auth = useAuth()
   const logout = useLogoutMutation()
@@ -11,7 +11,7 @@ export function AuthenticatedAppPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <div>
@@ -27,13 +27,22 @@ export function AuthenticatedAppPage() {
             {logout.isPending ? 'Signing out…' : 'Sign out'}
           </button>
         </div>
+        <nav aria-label="Main" className="mx-auto flex max-w-5xl gap-5 px-5 sm:px-8">
+          <NavLink
+            className={({ isActive }) =>
+              `border-b-2 pb-2.5 text-sm font-semibold ${
+                isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`
+            }
+            to="/app/vocabulary"
+          >
+            Vocabulary
+          </NavLink>
+        </nav>
       </header>
-      <section className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
-        <h1 className="text-3xl font-bold tracking-tight">Your learning space is ready</h1>
-        <p className="mt-3 max-w-xl leading-7 text-slate-600">
-          Vocabulary and daily learning plan experiences will appear here in later milestones.
-        </p>
-      </section>
-    </main>
+      <main className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+        <Outlet />
+      </main>
+    </div>
   )
 }
