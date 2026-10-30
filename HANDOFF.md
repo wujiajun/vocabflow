@@ -208,13 +208,13 @@ npm run preview
 
 ## 5. 进行中与工作区状态
 
-本次检查开始时工作区不是干净状态，已有内容均保留：
+此前记录的未提交/未跟踪改动已全部在提交 `84710db`（分支 `claude-code-continue`）中提交，提交后工作区干净：
 
-- `frontend/src/features/`、`frontend/src/shared/` 尚未被Git跟踪。
-- `frontend/src/app/providers/AppProviders.tsx`、`frontend/src/app/router/AppRouter.tsx` 已修改，旧基础演示测试 `frontend/src/app/App.test.tsx` 已删除，由认证测试替代。
-- `backend/pom.xml` 已有新增 `maven-compiler-plugin`、Java21 source/target和 `--enable-preview` 的未提交改动；来源、用途以及是否应保留均为**待确认**。本次没有修改或撤销它。
+- `frontend/src/features/`、`frontend/src/shared/`（3A认证实现及测试）已纳入Git跟踪。
+- `frontend/src/app/providers/AppProviders.tsx`、`frontend/src/app/router/AppRouter.tsx` 的修改已提交；旧基础演示测试 `frontend/src/app/App.test.tsx` 的删除已提交，由认证测试替代。
+- `backend/pom.xml` 新增的 `maven-compiler-plugin`（Java21 source/target 及 `--enable-preview`）也已随该提交入库；但其来源、用途以及是否应保留仍为**待确认**，提交不代表已确认需要。
 
-交接必须包含上述未提交/未跟踪文件；仅复制当前Git提交无法得到全部3A实现。不要使用reset/clean覆盖工作区，也不要自动提交。
+当前Git提交已包含全部3A实现。接手时仍以 `git status` 为准，不要使用reset/clean覆盖工作区，也不要自动提交。
 
 历史会话称3A实现及所列检查已完成，未记录仍在运行的开发任务或必须安装工具才能解决的阻塞。实际继续点是3A人工验收与第8节可证实缺口的收尾。不能凭空声称已有进行一半的Vocabulary/学习UI。
 
