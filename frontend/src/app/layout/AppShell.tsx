@@ -26,7 +26,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <a
-        className="sr-only rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+        className="sr-only rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow focus:not-sr-only focus:m-3 focus:block focus:w-fit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
         href="#main-content"
         onClick={(event) => {
           event.preventDefault()
