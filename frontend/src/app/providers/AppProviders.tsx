@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactNode } from 'react'
+import { AuthTokenProvider } from '../../features/auth/hooks/AuthTokenProvider'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,5 +19,9 @@ interface AppProvidersProps {
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthTokenProvider>{children}</AuthTokenProvider>
+    </QueryClientProvider>
+  )
 }
