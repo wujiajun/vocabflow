@@ -40,9 +40,10 @@ export function AppRouter() {
 
 function RootRoute() {
   const auth = useAuth()
-  if (auth.status === 'loading' || auth.status === 'unknown') {
+  if (auth.status === 'loading') {
     return <AuthLoadingState />
   }
 
-  return <Navigate to={auth.status === 'authenticated' ? '/app' : '/login'} replace />
+  // A failed session check is recovered from on /app, where the stored token is still in use.
+  return <Navigate to={auth.status === 'authenticated' || auth.status === 'error' ? '/app' : '/login'} replace />
 }

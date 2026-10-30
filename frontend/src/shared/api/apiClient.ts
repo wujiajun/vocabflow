@@ -57,7 +57,11 @@ export async function apiClient<T>(
     return undefined as T
   }
 
-  return (await response.json()) as T
+  try {
+    return (await response.json()) as T
+  } catch {
+    throw new ApiClientError('Received an unexpected response from VocabFlow. Please try again.', response.status)
+  }
 }
 
 async function toApiClientError(response: Response) {

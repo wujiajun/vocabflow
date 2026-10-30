@@ -7,7 +7,7 @@ import { useAuthToken } from './authTokenContext'
 
 export const currentUserQueryKey = ['auth', 'current-user'] as const
 
-export type AuthStatus = 'authenticated' | 'loading' | 'unauthenticated' | 'unknown'
+export type AuthStatus = 'authenticated' | 'error' | 'loading' | 'unauthenticated'
 
 export function useAuth() {
   const { token, clearAuthToken } = useAuthToken()
@@ -40,7 +40,19 @@ export function useAuth() {
     return { status: 'authenticated' as const, user: currentUserQuery.data }
   }
 
-  return { status: 'unknown' as const, user: undefined }
+  return {
+    status: 'error' as const,
+    user: undefined,
+    error: currentUserQuery.error,
+    isRetrying: currentUserQuery.isFetching,
+    retry: () => {
+      void currentUserQuery.refetch()
+    },
+    discardSession: () => {
+      clearAuthToken()
+      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+    },
+  }
 }
 
 export function useLoginMutation() {

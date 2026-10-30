@@ -48,6 +48,30 @@ test('parses backend API errors consistently', async () => {
   )
 })
 
+test('resolves undefined for a 204 response without a body', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
+
+  await expect(apiClient('/api/v1/auth/logout', { method: 'POST' })).resolves.toBeUndefined()
+})
+
+test.each([
+  ['an empty body', ''],
+  ['malformed JSON', '{"id":'],
+])('wraps a 200 JSON response with %s in an ApiClientError', async (_name, body) => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    ),
+  )
+
+  await expect(apiClient('/api/v1/auth/me')).rejects.toMatchObject({
+    name: 'ApiClientError',
+    status: 200,
+    message: 'Received an unexpected response from VocabFlow. Please try again.',
+  })
+})
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,

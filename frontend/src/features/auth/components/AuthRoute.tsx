@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import { AuthSessionError } from './AuthSessionError'
 
 interface AuthRouteProps {
   children: ReactNode
@@ -9,8 +10,19 @@ interface AuthRouteProps {
 export function ProtectedRoute({ children }: AuthRouteProps) {
   const auth = useAuth()
 
-  if (auth.status === 'loading' || auth.status === 'unknown') {
+  if (auth.status === 'loading') {
     return <AuthLoadingState />
+  }
+
+  if (auth.status === 'error') {
+    return (
+      <AuthSessionError
+        error={auth.error}
+        isRetrying={auth.isRetrying}
+        onRetry={auth.retry}
+        onSignOut={auth.discardSession}
+      />
+    )
   }
 
   return auth.status === 'authenticated' ? children : <Navigate to="/login" replace />
@@ -19,8 +31,19 @@ export function ProtectedRoute({ children }: AuthRouteProps) {
 export function PublicOnlyRoute({ children }: AuthRouteProps) {
   const auth = useAuth()
 
-  if (auth.status === 'loading' || auth.status === 'unknown') {
+  if (auth.status === 'loading') {
     return <AuthLoadingState />
+  }
+
+  if (auth.status === 'error') {
+    return (
+      <AuthSessionError
+        error={auth.error}
+        isRetrying={auth.isRetrying}
+        onRetry={auth.retry}
+        onSignOut={auth.discardSession}
+      />
+    )
   }
 
   return auth.status === 'authenticated' ? <Navigate to="/app" replace /> : children
