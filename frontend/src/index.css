@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 :root {
+  /* The UI is light only; this keeps browser-drawn parts (scrollbars, form controls) light too. */
+  color-scheme: light;
   color: #0f172a;
   background: #f8fafc;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
