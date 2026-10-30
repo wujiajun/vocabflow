@@ -1,3 +1,4 @@
+import { notifyTokenRejected } from './sessionEvents'
 import { getToken } from './tokenStorage'
 
 export interface ApiErrorResponse {
@@ -20,11 +21,14 @@ export class ApiClientError extends Error {
 
 interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
+  // Set to false for requests that sign the user in or out, where a 401 does not mean the stored
+  // token went stale.
+  notifyOnUnauthorized?: boolean
 }
 
 export async function apiClient<T>(
   path: string,
-  { body, headers: requestHeaders, ...options }: ApiRequestOptions = {},
+  { body, headers: requestHeaders, notifyOnUnauthorized = true, ...options }: ApiRequestOptions = {},
 ): Promise<T> {
   const headers = new Headers(requestHeaders)
   headers.set('Accept', 'application/json')
@@ -50,6 +54,9 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 401 && token && notifyOnUnauthorized) {
+      notifyTokenRejected(token)
+    }
     throw await toApiClientError(response)
   }
 

@@ -14,11 +14,12 @@ export function login(request: LoginRequest) {
   return apiClient<LoginResponse>(`${authPath}/login`, {
     method: 'POST',
     body: request,
+    notifyOnUnauthorized: false,
   })
 }
 
 export function logout() {
-  return apiClient<void>(`${authPath}/logout`, { method: 'POST' })
+  return apiClient<void>(`${authPath}/logout`, { method: 'POST', notifyOnUnauthorized: false })
 }
 
 export function getCurrentUser() {

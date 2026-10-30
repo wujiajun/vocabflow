@@ -1,18 +1,14 @@
-import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { getCurrentUser, login, logout, register } from '../api/authApi'
 import type { LoginRequest, RegisterRequest } from '../types/auth'
 import { useAuthToken } from './authTokenContext'
+import { clearSessionCache } from './sessionCache'
 
 export const currentUserQueryKey = ['auth', 'current-user'] as const
 
 export type AuthStatus = 'authenticated' | 'error' | 'loading' | 'unauthenticated'
-
-// Every cached query belongs to the signed-in user, so none may outlive their session.
-function clearSessionCache(queryClient: QueryClient) {
-  queryClient.getQueryCache().clear()
-}
 
 export function useAuth() {
   const { token, clearAuthToken } = useAuthToken()
