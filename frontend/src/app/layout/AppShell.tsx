@@ -28,15 +28,11 @@ export function AppShell() {
           </button>
         </div>
         <nav aria-label="Main" className="mx-auto flex max-w-5xl gap-5 px-5 sm:px-8">
-          <NavLink
-            className={({ isActive }) =>
-              `border-b-2 pb-2.5 text-sm font-semibold ${
-                isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`
-            }
-            to="/app/vocabulary"
-          >
+          <NavLink className={navLinkClass} to="/app/vocabulary">
             Vocabulary
+          </NavLink>
+          <NavLink className={navLinkClass} to="/app/today">
+            Today
           </NavLink>
         </nav>
       </header>
@@ -45,4 +41,10 @@ export function AppShell() {
       </main>
     </div>
   )
+}
+
+function navLinkClass({ isActive }: { isActive: boolean }) {
+  return `border-b-2 pb-2.5 text-sm font-semibold ${
+    isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
+  }`
 }
