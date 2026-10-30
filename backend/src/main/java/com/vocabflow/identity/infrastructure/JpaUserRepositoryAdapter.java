@@ -40,6 +40,11 @@ public class JpaUserRepositoryAdapter implements UserRepository {
     return users.findById(id).map(this::toDomain);
   }
 
+  @Override
+  public boolean existsById(long id) {
+    return users.existsById(id);
+  }
+
   private User toDomain(UserEntity entity) {
     return new User(
         entity.id,

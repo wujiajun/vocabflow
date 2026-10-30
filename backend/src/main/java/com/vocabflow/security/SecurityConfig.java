@@ -1,5 +1,6 @@
 package com.vocabflow.security;
 
+import com.vocabflow.identity.application.UserRepository;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class SecurityConfig {
   SecurityFilterChain filterChain(
       HttpSecurity h,
       TokenService t,
+      UserRepository users,
       JsonAuthenticationEntryPoint authenticationEntryPoint,
       JsonAccessDeniedHandler accessDeniedHandler)
       throws Exception {
@@ -44,15 +46,17 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .addFilterBefore(new JwtFilter(t), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(new JwtFilter(t, users), UsernamePasswordAuthenticationFilter.class)
         .build();
   }
 
   static class JwtFilter extends OncePerRequestFilter {
     final TokenService t;
+    final UserRepository users;
 
-    JwtFilter(TokenService x) {
+    JwtFilter(TokenService x, UserRepository u) {
       t = x;
+      users = u;
     }
 
     protected void doFilterInternal(HttpServletRequest r, HttpServletResponse s, FilterChain c)
@@ -61,7 +65,9 @@ public class SecurityConfig {
       var token = BearerTokenExtractor.extract(h);
       if (token.isPresent()) {
         Long id = t.verify(token.get());
-        if (id != null)
+        // A signature-valid token whose user is gone (deleted, or the database was reset) is
+        // treated as no token, so every protected endpoint answers the same 401.
+        if (id != null && users.existsById(id))
           SecurityContextHolder.getContext()
               .setAuthentication(
                   new UsernamePasswordAuthenticationToken(
