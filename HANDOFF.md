@@ -29,6 +29,7 @@ vocabflow/
 ├── .node-version              Node 24
 ├── .gitignore                 构建产物、依赖、IDE和本地环境文件忽略规则
 ├── .claude/agents/            可复用的子代理角色：backend-dev、frontend-dev、browser-verifier
+├── .github/workflows/ci.yml   GitHub Actions：backend（spotless:check + verify）和 frontend（npm ci、lint、typecheck、test、build）两个并行 job
 ├── backend/
 │   ├── AGENTS.md              Java/架构/验证规则
 │   ├── pom.xml                Spring Boot依赖、Spotless、Failsafe等
@@ -165,6 +166,7 @@ npm run dev
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
 - 前端：`npm run lint`、`typecheck`、`test`（90 个测试）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
+- **CI 工作流（`.github/workflows/ci.yml`）**：先在一个**干净的本地克隆**里（没有 `node_modules`、没有 `.mvn/`，`mvnw` 从零下载 Maven）逐条执行了同一批命令，全部通过。随后在 GitHub 上用 PR #3 **真正运行了一次（2026-10-30），`backend` 和 `frontend` 两个 job 都成功**：后端约 1.5 分钟（`spotless:check` 加 `verify`，runner 上的 Docker 和 Testcontainers 正常）；前端约 7.5 分钟，比本地慢得多，原因没有查（那天 GitHub Actions 正有事故，且没有读到每一步的耗时和日志，所以不能断定是事故造成的）。运行产生的警告：三个 Action 的 `@v4` 版本用 Node 20（已弃用，被强制用 Node 24 运行），`setup-java@v4` 已停止更新；已把三个都升到 `@v5`（经核对其 `action.yml` 声明 `node24`），**升级后的这次运行结果待 PR 上确认**。另有一条通知：`ubuntu-latest` 标签从 2026-10-19 起迁移到 Ubuntu 26，目前没有受影响，未固定系统版本。没有装 `actionlint`；分支保护还没有开。
 - **发音功能的浏览器验证**（Claude 桌面应用内置浏览器，Chromium 152，macOS）：该浏览器约 180 个声音，声音列表在首次 `getVoices()` 约 1.5 秒后才加载（应用没有因此出错）；设备默认的 `en-US` 声音是 Samantha，监听 `speak` 调用确认实际选中它，语速 0.9；点击后 `speaking` 为真、`aria-pressed` 随开始和结束切换；再点一次会停止；连续点两个词只有最后一个在读；离开页面立即停止；列表、详情页、今日计划的按钮都在链接之外，点击不跳转；Tab 顺序和 Enter/Space 在键盘上可用，有焦点环；375px 下无横向滚动、按钮 40×40、不与文字重叠（详情页超长标题会让按钮换到下一行）；控制台无异常。
 - **没有验证**：发音的实际音质和口音（听不到）、Safari 和 Firefox（Safari/iOS 上“先 `cancel()` 再 `speak()`”有不稳定的已知报告，未在那里验证）、“设备没有美式声音”时提示和详情页提示条的真实表现（那台设备有 en-US，只有单元测试覆盖）、浏览器不支持朗读时不显示按钮的真实表现（单元测试覆盖）；键盘与读屏（读屏器未测）、暗色模式、375px 以外的宽度、前端对 MySQL 后端的联调（浏览器验证只用了 H2）、真实 AI/字典、晚上本地日期与 UTC 日期不同时的真实页面表现（验证时本地与 UTC 同一天，只有单元测试覆盖）、生产部署。
 - 后端的并发正确性是在真实 MySQL 容器里用多线程测试验证的，没有做整个应用的压测。
@@ -294,6 +296,7 @@ npm run dev
 | 日期随页面不刷新 | 今日计划的日期在渲染时取本地日期；页面跨过午夜且不刷新、不切换页面，日期不会自动更新 |
 | 登出提示的小瑕疵 | 见第 6 节 P2：在 `/register` 被意外登出后注册成功，登录页仍显示 “You’ve been signed out…” |
 | 跨标签页同步 | shared client 的 401 处理只作用于当前标签页的状态；Context 不监听 storage 事件，另一个标签页登出后，本页要等下一次请求收到 401 才会登出 |
+| CI 的遗留事项 | 已在 GitHub 上运行成功一次（见第 3 节），但：升到 `@v5` 之后的运行待确认；前端 job 约 7.5 分钟偏慢，原因未查（可看 Actions 页面里每一步的耗时，缓存是否生效）；Action 用主版本号引用，没有固定到提交 SHA，以后可以用 Dependabot 管理；`ubuntu-latest` 正在迁移到 Ubuntu 26，若构建因此变化需要固定系统版本；还没有开分支保护，所以目前检查失败时 GitHub 也不会拦住合并。要拦住，需要在仓库设置里把 `backend`、`frontend` 设为必需的检查 |
 | 发音的声音取决于设备 | 用的是浏览器自带的声音：代码会明确挑 `en-US`，但设备上没有美式声音时只能退回别的英语声音，具体音质和口音测试无法验证，不同设备听起来不同；Linux 等环境可能完全没有英语声音（此时不显示按钮）。声音列表在有些浏览器里首次调用为空、之后才加载，代码已用 `voiceschanged` 事件处理。朗读时点击会先 `cancel()` 再 `speak()`，在 Chromium 上验证正常，但 Safari/iOS 上这个组合有不稳定的已知报告，未验证。播放中按钮的悬停提示仍是 “Play pronunciation”（只有 `aria-pressed` 表示状态）。部分浏览器的“在线声音”可能把朗读的文本发给声音提供方（未核实具体浏览器的行为，词汇本身不是敏感信息）。要统一音质和口音需要服务端语音合成并存储音频（路线图 M5） |
 | localStorage | 暴露于同源脚本/XSS；只是当前获准的临时MVP方案，读写失败也尚未专门处理 |
 | 浏览器验收的覆盖面 | 见第 3 节：键盘、读屏、暗色、MySQL 联调、晚上本地与 UTC 日期不同的真实表现仍未验证 |
