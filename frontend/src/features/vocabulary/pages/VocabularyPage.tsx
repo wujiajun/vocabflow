@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { useSearchParams } from 'react-router'
+import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { AddVocabularyForm } from '../components/AddVocabularyForm'
 import { Pagination } from '../components/Pagination'
@@ -7,6 +9,8 @@ import { pageFromParam, paramFromPage } from '../hooks/pageParam'
 import { useVocabularyList } from '../hooks/useVocabulary'
 
 export function VocabularyPage() {
+  usePageTitle('Your vocabulary')
+  const resultsRef = useRef<HTMLElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const page = pageFromParam(searchParams.get('page'))
   const list = useVocabularyList(page)
@@ -14,6 +18,13 @@ export function VocabularyPage() {
   function goToPage(nextPage: number) {
     const param = paramFromPage(nextPage)
     setSearchParams(param === undefined ? {} : { page: param })
+  }
+
+  // The button that was used is disabled while the next page loads, or for good on the last page,
+  // and a disabled button cannot keep focus. Park focus on the results instead.
+  function changePage(nextPage: number) {
+    resultsRef.current?.focus()
+    goToPage(nextPage)
   }
 
   return (
@@ -25,7 +36,7 @@ export function VocabularyPage() {
       <div className="mt-6">
         <AddVocabularyForm onAdded={() => goToPage(0)} />
       </div>
-      <section aria-label="Saved vocabulary" className="mt-8">
+      <section aria-label="Saved vocabulary" className="mt-8 outline-none" ref={resultsRef} tabIndex={-1}>
         {list.isPending ? (
           <p className="text-sm text-slate-600" role="status">
             Loading your vocabulary…
@@ -69,7 +80,7 @@ export function VocabularyPage() {
             </ul>
             <Pagination
               isLoading={list.isPlaceholderData}
-              onPageChange={goToPage}
+              onPageChange={changePage}
               page={list.data.page}
               totalPages={list.data.totalPages}
             />

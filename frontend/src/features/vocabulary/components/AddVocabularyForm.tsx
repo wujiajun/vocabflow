@@ -1,4 +1,4 @@
-import { type FormEvent, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useAddVocabulary } from '../hooks/useVocabulary'
 
@@ -9,6 +9,7 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [term, setTerm] = useState('')
   const [validationError, setValidationError] = useState<string>()
+  const [announcement, setAnnouncement] = useState('')
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -30,12 +31,20 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
       {
         onSuccess: () => {
           setTerm('')
+          setAnnouncement(`Added “${trimmedTerm}”.`)
           onAdded()
           inputRef.current?.focus()
         },
       },
     )
   }
+
+  useEffect(() => {
+    // Invalid input: put the cursor back where the problem is, so the error is read with the field.
+    if (validationError) {
+      inputRef.current?.focus()
+    }
+  }, [validationError])
 
   const error =
     validationError || (addVocabulary.isError ? authErrorMessage(addVocabulary.error, 'Unable to add that word.') : undefined)
@@ -49,8 +58,13 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
         <input
           autoComplete="off"
           className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+          aria-describedby={error ? 'new-vocabulary-term-error' : undefined}
+          aria-invalid={error ? true : undefined}
           id="new-vocabulary-term"
-          onChange={(event) => setTerm(event.target.value)}
+          onChange={(event) => {
+            setTerm(event.target.value)
+            setAnnouncement('')
+          }}
           ref={inputRef}
           type="text"
           value={term}
@@ -64,10 +78,19 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
         </button>
       </div>
       {error ? (
-        <p aria-live="polite" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
+        <p
+          aria-live="polite"
+          className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800"
+          id="new-vocabulary-term-error"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
+      {/* Always rendered: a live region is only announced if it exists before its text changes. */}
+      <p className="sr-only" role="status">
+        {announcement}
+      </p>
     </form>
   )
 }
