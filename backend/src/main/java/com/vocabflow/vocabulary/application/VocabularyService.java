@@ -4,7 +4,6 @@ import com.vocabflow.shared.web.*;
 import com.vocabflow.vocabulary.domain.*;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class VocabularyService {
@@ -21,7 +20,8 @@ public class VocabularyService {
     this.provider = provider;
   }
 
-  @Transactional
+  // Deliberately not @Transactional: the adapters catch duplicate-key errors from saveIfAbsent, and
+  // inside one shared transaction that poisons the session and hides the winner's committed row.
   public UserVocabulary add(long userId, String rawTerm) {
     VocabularyTerm term = new VocabularyTerm(rawTerm);
     VocabularyItem item =
