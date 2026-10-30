@@ -174,6 +174,10 @@ test('opens a planned word on its vocabulary detail page', async () => {
   await browserUser.click(await screen.findByRole('link', { name: /overwhelmed/ }))
 
   expect(await screen.findByText('Feeling unable to cope.')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('link', { name: '← Back to today’s plan' }))
+
+  expect(await screen.findByRole('heading', { name: 'Today’s plan' })).toBeInTheDocument()
 })
 
 function signedIn() {

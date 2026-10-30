@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { backState } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { formatVocabularyType } from '../../vocabulary/components/formatVocabulary'
 import type { DailyPlanItem } from '../types/dailyPlan'
@@ -16,6 +17,7 @@ export function PlanItemList({ items, label }: { items: DailyPlanItem[]; label: 
           >
             <Link
               className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-4 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              state={backState('/app/today', 'Back to today’s plan')}
               to={`/app/vocabulary/${item.userVocabularyId}`}
             >
               <span aria-hidden="true" className="w-6 shrink-0 text-sm font-semibold text-slate-400">
