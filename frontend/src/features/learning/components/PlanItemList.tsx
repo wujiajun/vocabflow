@@ -20,7 +20,7 @@ export function PlanItemList({ items, label }: { items: DailyPlanItem[]; label: 
               state={backState('/app/today', 'Back to today’s plan')}
               to={`/app/vocabulary/${item.userVocabularyId}`}
             >
-              <span aria-hidden="true" className="w-6 shrink-0 text-sm font-semibold text-slate-400">
+              <span aria-hidden="true" className="w-6 shrink-0 text-sm font-semibold text-slate-500">
                 {index + 1}
               </span>
               <span className="min-w-0 text-base font-semibold text-slate-950 [overflow-wrap:anywhere]">

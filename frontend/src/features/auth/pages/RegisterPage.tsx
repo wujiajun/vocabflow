@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../components/AuthError'
 import { AuthPageLayout, FormError } from './LoginPage'
 import { useRegisterMutation } from '../hooks/useAuth'
@@ -21,6 +22,7 @@ const clbLevels: ClbLevel[] = [
 ]
 
 export function RegisterPage() {
+  usePageTitle('Create account')
   const navigate = useNavigate()
   const register = useRegisterMutation()
   const [email, setEmail] = useState('')
@@ -65,12 +67,14 @@ export function RegisterPage() {
   return (
     <AuthPageLayout title="Create your account" description="Set up your VocabFlow learning preferences.">
       <form className="mt-7 space-y-5" noValidate onSubmit={submit}>
-        <FormError message={error} />
+        <FormError id="register-error" message={error} />
         <label className="block text-sm font-medium text-slate-800" htmlFor="register-email">
           Email
           <input
             autoComplete="email"
             className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'register-error' : undefined}
+            aria-invalid={error ? true : undefined}
             id="register-email"
             onChange={(event) => setEmail(event.target.value)}
             type="email"
@@ -82,6 +86,8 @@ export function RegisterPage() {
           <input
             autoComplete="new-password"
             className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'register-error' : undefined}
+            aria-invalid={error ? true : undefined}
             id="register-password"
             onChange={(event) => setPassword(event.target.value)}
             type="password"
@@ -107,6 +113,8 @@ export function RegisterPage() {
           Daily new vocabulary goal
           <input
             className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'register-error' : undefined}
+            aria-invalid={error ? true : undefined}
             id="register-daily-goal"
             max={100}
             min={1}

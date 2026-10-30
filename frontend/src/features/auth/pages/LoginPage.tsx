@@ -1,10 +1,12 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../components/AuthError'
 import { useAuthToken } from '../hooks/authTokenContext'
 import { useLoginMutation } from '../hooks/useAuth'
 
 export function LoginPage() {
+  usePageTitle('Sign in')
   const navigate = useNavigate()
   const login = useLoginMutation()
   const { signedOutUnexpectedly } = useAuthToken()
@@ -43,12 +45,14 @@ export function LoginPage() {
         </p>
       ) : null}
       <form className="mt-7 space-y-5" noValidate onSubmit={submit}>
-        <FormError message={error} />
+        <FormError id="login-error" message={error} />
         <label className="block text-sm font-medium text-slate-800" htmlFor="login-email">
           Email
           <input
             autoComplete="email"
             className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'login-error' : undefined}
+            aria-invalid={error ? true : undefined}
             id="login-email"
             onChange={(event) => setEmail(event.target.value)}
             type="email"
@@ -60,6 +64,8 @@ export function LoginPage() {
           <input
             autoComplete="current-password"
             className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'login-error' : undefined}
+            aria-invalid={error ? true : undefined}
             id="login-password"
             onChange={(event) => setPassword(event.target.value)}
             type="password"
@@ -105,13 +111,13 @@ export function AuthPageLayout({
   )
 }
 
-export function FormError({ message }: { message?: string }) {
+export function FormError({ id, message }: { id: string; message?: string }) {
   if (!message) {
     return null
   }
 
   return (
-    <p aria-live="polite" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
+    <p aria-live="polite" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" id={id} role="alert">
       {message}
     </p>
   )

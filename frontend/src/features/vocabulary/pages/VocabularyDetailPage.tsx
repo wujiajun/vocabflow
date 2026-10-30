@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { readBackTarget } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { usePageTitle } from '../../../shared/usePageTitle'
 import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentBadge } from '../components/EnrichmentBadge'
@@ -16,6 +17,7 @@ export function VocabularyDetailPage() {
   const detail = useVocabularyDetail(id)
   const accent = useVoiceAccent()
   const back = readBackTarget(useLocation().state, defaultBackTarget)
+  usePageTitle(detail.data?.term ?? 'Vocabulary')
 
   return (
     <div>

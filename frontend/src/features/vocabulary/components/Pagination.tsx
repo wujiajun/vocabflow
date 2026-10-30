@@ -18,7 +18,7 @@ export function Pagination({ page, totalPages, isLoading, onPageChange }: Pagina
       <button className={buttonClass} disabled={page === 0 || isLoading} onClick={() => onPageChange(page - 1)} type="button">
         Previous
       </button>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600" role="status">
         Page {page + 1} of {totalPages}
       </p>
       <button
