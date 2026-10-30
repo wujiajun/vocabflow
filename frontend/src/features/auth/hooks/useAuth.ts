@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { getCurrentUser, login, logout, register } from '../api/authApi'
@@ -8,6 +8,11 @@ import { useAuthToken } from './authTokenContext'
 export const currentUserQueryKey = ['auth', 'current-user'] as const
 
 export type AuthStatus = 'authenticated' | 'error' | 'loading' | 'unauthenticated'
+
+// Every cached query belongs to the signed-in user, so none may outlive their session.
+function clearSessionCache(queryClient: QueryClient) {
+  queryClient.getQueryCache().clear()
+}
 
 export function useAuth() {
   const { token, clearAuthToken } = useAuthToken()
@@ -24,7 +29,7 @@ export function useAuth() {
   useEffect(() => {
     if (staleToken) {
       clearAuthToken()
-      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+      clearSessionCache(queryClient)
     }
   }, [clearAuthToken, queryClient, staleToken])
 
@@ -50,7 +55,7 @@ export function useAuth() {
     },
     discardSession: () => {
       clearAuthToken()
-      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+      clearSessionCache(queryClient)
     },
   }
 }
@@ -62,6 +67,7 @@ export function useLoginMutation() {
   return useMutation({
     mutationFn: (request: LoginRequest) => login(request),
     onSuccess: async ({ accessToken, user }) => {
+      clearSessionCache(queryClient)
       storeToken(accessToken)
       queryClient.setQueryData(currentUserQueryKey, user)
       await queryClient.invalidateQueries({ queryKey: currentUserQueryKey })
@@ -81,7 +87,7 @@ export function useLogoutMutation() {
     mutationFn: logout,
     onSettled: () => {
       clearAuthToken()
-      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+      clearSessionCache(queryClient)
     },
   })
 }

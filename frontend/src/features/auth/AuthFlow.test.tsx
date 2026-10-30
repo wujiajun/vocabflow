@@ -286,20 +286,91 @@ test('signs out cleanly when the backend logout returns an empty success respons
   )
 })
 
-function renderApp(initialPath: string) {
+const otherUsersCacheKey = ['vocabulary', 'list', 0, 20] as const
+
+test('drops cached user data when the user signs out', async () => {
+  setToken('valid-token')
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValueOnce(jsonResponse(user)).mockResolvedValueOnce(new Response(null, { status: 204 })),
+  )
+  const browserUser = userEvent.setup()
+
+  const { queryClient } = renderApp('/app')
+  await screen.findByRole('heading', { name: 'Your learning space is ready' })
+  queryClient.setQueryData(otherUsersCacheKey, { content: [] })
+  await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
+
+  expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+  expect(queryClient.getQueryData(['auth', 'current-user'])).toBeUndefined()
+})
+
+test('drops cached user data when a stale token is rejected', async () => {
+  setToken('stale-token')
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      jsonResponse(
+        { code: 'UNAUTHORIZED', message: 'Authentication is required', timestamp: '2026-10-20T00:00:00Z' },
+        401,
+      ),
+    ),
+  )
+
+  const { queryClient } = renderApp('/app', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+
+  expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+})
+
+test('drops cached user data when the session is discarded from the retry screen', async () => {
+  setToken('valid-token')
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+  const browserUser = userEvent.setup()
+
+  const { queryClient } = renderApp('/app', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+  await screen.findByRole('alert')
+  await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
+
+  expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+})
+
+test('does not show a previous user’s cached data after a new login', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValueOnce(jsonResponse({ accessToken: 'second-token', user })).mockResolvedValueOnce(jsonResponse(user)),
+  )
+  const browserUser = userEvent.setup()
+
+  const { queryClient } = renderApp('/login', (client) => client.setQueryData(otherUsersCacheKey, { content: [] }))
+  await browserUser.type(screen.getByLabelText('Email'), user.email)
+  await browserUser.type(screen.getByLabelText('Password'), 'password123')
+  await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
+
+  await screen.findByRole('heading', { name: 'Your learning space is ready' })
+  expect(queryClient.getQueryData(otherUsersCacheKey)).toBeUndefined()
+})
+
+function renderApp(initialPath: string, prepare?: (queryClient: QueryClient) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+  prepare?.(queryClient)
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <AuthTokenProvider>
-        <MemoryRouter initialEntries={[initialPath]}>
-          <App />
-        </MemoryRouter>
-      </AuthTokenProvider>
-    </QueryClientProvider>,
-  )
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AuthTokenProvider>
+          <MemoryRouter initialEntries={[initialPath]}>
+            <App />
+          </MemoryRouter>
+        </AuthTokenProvider>
+      </QueryClientProvider>,
+    ),
+  }
 }
 
 function jsonResponse(body: unknown, status = 200) {
