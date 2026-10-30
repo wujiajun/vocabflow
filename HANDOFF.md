@@ -1,8 +1,8 @@
 # VocabFlow 开发交接
 
-核对日期：2026-10-29。本文依据当前工作区代码、配置和本次会话历史整理，供 Claude Code 等后续开发助手使用。接手时先读根目录、`backend/`、`frontend/` 中适用的 `AGENTS.md`，不要假定工具会自动加载这些规则。
+核对日期：2026-10-30。本文依据当前工作区代码、配置和近期会话中**实际运行**的检查整理，供 Claude Code 等后续开发助手使用。接手时先读根目录、`backend/`、`frontend/` 中适用的 `AGENTS.md`，不要假定工具会自动加载这些规则。
 
-本文区分“已有实现”“历史验证通过”和“待确认”。本次只维护文档，没有重新安装依赖、启动服务或重跑完整测试；不能把历史结果当作当前工作区的新验证结果。
+本文区分“已有实现”“本次实际验证过的结果”“历史记录”和“待确认”。第 3 节末尾写明了每项检查实际跑过什么、没跑什么；之后再改代码，不能把这里的结果当作新的验证。
 
 ## 1. 项目目标与用户
 
@@ -18,15 +18,17 @@ VocabFlow 是面向个人英语学习者的词汇学习平台：用户在日常�
 
 前端：React 19、严格模式 TypeScript 6、Vite 8、npm、Node 24（fnm）。React Router 使用 Declarative Mode，TanStack Query 管理服务端状态，Tailwind 使用官方 Vite 插件。测试使用 Vitest、jsdom、React Testing Library、jest-dom 和 user-event；lint 使用 Oxlint。
 
-当前前端锁文件记录：React 19.2.8、TypeScript 6.0.3、Vite 8.2.2、React Router 8.3.0、TanStack Query 5.102.8、Tailwind 4.3.3、Vitest 4.1.11、Oxlint 1.80.0。`package.json` 使用版本范围，重现安装以 `package-lock.json` 为准。
+前端锁文件记录：React 19.2.8、TypeScript 6.0.3、Vite 8.2.2、React Router 8.3.0、TanStack Query 5.102.8、Tailwind 4.3.3、Vitest 4.1.11、Oxlint 1.80.0。`package.json` 使用版本范围，重现安装以 `package-lock.json` 为准。
 
 ```text
 vocabflow/
 ├── AGENTS.md                  仓库规则与两端质量门
+├── CLAUDE.md                  给 Claude Code 的精简指引（命令、架构要点）
 ├── HANDOFF.md                 本交接文档
-├── README.md                  产品/API说明；部分内容已过时，见第8节
+├── README.md                  产品/架构/运行说明（英文）
 ├── .node-version              Node 24
 ├── .gitignore                 构建产物、依赖、IDE和本地环境文件忽略规则
+├── .claude/agents/            可复用的子代理角色：backend-dev、frontend-dev、browser-verifier
 ├── backend/
 │   ├── AGENTS.md              Java/架构/验证规则
 │   ├── pom.xml                Spring Boot依赖、Spotless、Failsafe等
@@ -38,22 +40,27 @@ vocabflow/
 │       │   ├── vocabulary/    共享词条、个人词库、补全内容、学习候选查询
 │       │   ├── learning/      每日计划、计划持久化、并发恢复
 │       │   ├── security/      Bearer校验、签名/撤销、Security JSON错误
-│       │   └── shared/        公共Web错误响应与JSON支持
+│       │   └── shared/        公共Web错误响应（ApiExceptionHandler）与JSON支持
 │       ├── main/resources/   application配置与db/migration/V1…V4
 │       └── test/java/        快速测试与integration/*IT
 ├── frontend/
 │   ├── AGENTS.md              前端工程约定
+│   ├── README.md              前端说明：命令、结构、路由、测试约定
 │   ├── package*.json          npm脚本、依赖和锁文件
 │   ├── vite.config.ts         React/Tailwind、开发代理、Vitest
 │   ├── tsconfig*.json         strict TypeScript项目配置
 │   ├── .oxlintrc.json         React/hooks/TypeScript lint规则
+│   ├── public/favicon.svg     站点图标
 │   └── src/
 │       ├── main.tsx          StrictMode、BrowserRouter入口
-│       ├── app/              App、根Providers、路由
-│       ├── features/auth/    API、类型、认证hooks、路由守卫、登录/注册/应用壳
-│       ├── shared/api/       原生fetch客户端、token存储
+│       ├── app/              App、根Providers、路由(AppRouter)、布局(AppShell)
+│       ├── features/auth/    登录/注册、当前用户、路由守卫、会话失败恢复
+│       ├── features/vocabulary/ 添加表单、分页列表、详情页
+│       ├── features/learning/   今日计划页
+│       ├── shared/api/       fetch客户端、token存储、会话事件(sessionEvents)
+│       ├── shared/date.ts    本地日历日期工具
 │       ├── index.css         Tailwind导入与基础样式
-│       └── test/setup.ts     jest-dom/Vitest初始化
+│       └── test/             Vitest初始化与共享测试工具(utils.tsx)
 └── docs/                     当前仅.gitkeep，无独立长期设计文档
 ```
 
@@ -61,11 +68,14 @@ vocabflow/
 
 - `IdentityController.java`：注册/登录/登出/当前用户的真实 API DTO。
 - `VocabularyController.java`：创建/分页/详情接口；`id` 是个人 `UserVocabulary` 的 ID。
+- `VocabularyService.java`：添加词汇的流程。**故意没有 `@Transactional`**，原因见第 7 节。
 - `LearningVocabularyQuery.java` / `JpaLearningVocabularyQuery.java`：学习模块访问词汇的端口和实现，不能绕过它直接依赖词汇 JPA。
 - `DailyLearningPlanService.java`、`DailyLearningPlanInsertTransaction.java`、`DailyLearningPlanConflictRecovery.java`：事务和并发恢复。
-- `ApiError.java` / `ApiErrorResponseFactory.java`：统一错误 JSON；MVC 与 Spring Security 仍是独立处理链。
+- `ApiError.java` / `ApiErrorResponseFactory.java` / `ApiExceptionHandler.java`：统一错误 JSON 与异常到状态码的映射；MVC 与 Spring Security 仍是独立处理链。
 - `frontend/src/features/auth/hooks/useAuth.ts`：当前用户查询与认证 mutation。
-- `frontend/src/shared/api/apiClient.ts` / `tokenStorage.ts`：HTTP 和 token 唯一集中入口。
+- `frontend/src/shared/api/apiClient.ts` / `tokenStorage.ts` / `sessionEvents.ts`：HTTP、token 和“token 被拒绝”事件的唯一集中入口。
+- `frontend/src/features/auth/hooks/AuthTokenProvider.tsx`：token 状态，以及收到 token 被拒绝事件后的登出处理。
+- `frontend/src/app/router/AppRouter.tsx`、`frontend/src/app/layout/AppShell.tsx`：全部路由与登录后外壳。
 
 ## 3. 安装、启动、测试、构建
 
@@ -79,7 +89,7 @@ node --version
 npm --version
 ```
 
-本次读取的本机版本为 Temurin Java 21.0.11、Node v24.20.0、npm 11.19.0。Node 由 fnm 管理，根 `.node-version` 为 24。已配置 fnm 的终端可在仓库根目录运行 `fnm use`；不要写死个人机器上 fnm 的绝对路径。新机器若缺少工具，先报告并取得明确安装授权。
+读取到的本机版本为 Temurin Java 21.0.11、Node v24.20.0、npm 11.19.0。Node 由 fnm 管理，根 `.node-version` 为 24。已配置 fnm 的终端可在仓库根目录运行 `fnm use`；不要写死个人机器上 fnm 的绝对路径。新机器若缺少工具，先报告并取得明确安装授权。
 
 ### 后端依赖与质量门
 
@@ -97,29 +107,30 @@ cd backend
 - `test`：运行快速单元/H2/API测试，不包含 `*IT`。
 - `verify`：通过 Failsafe 额外运行 MySQL/Testcontainers 集成测试，是完整后端质量门，需要 Docker 可用。容器使用动态端口，不依赖个人本地 MySQL。
 - `clean package`：构建可执行 jar，不替代 `verify`。
+- 只跑一个 IT：`./mvnw verify -Dit.test=<类名> -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false`。
 - IntelliJ 导入 `backend/pom.xml`，使用 JDK 21。
 
 ### 后端启动
 
-默认方式使用 MySQL；先在进程环境中配置第9节变量，并准备可连接的数据库/账号：
+默认方式使用 MySQL；先在进程环境中配置第 9 节变量，并准备可连接的数据库/账号：
 
 ```sh
 cd backend
 ./mvnw spring-boot:run
 ```
 
-只做隔离本地 API 联调时，可使用现有 H2 `test` profile，无需本地 MySQL：
+只做隔离本地联调时，可使用现有 H2 `test` profile，无需本地 MySQL，也不需要环境变量：
 
 ```sh
 cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=test
 ```
 
-后端默认端口 8080。`test` profile 数据在进程结束后丢失，账号与 token 在重启后不能视为继续有效。`dev` profile 仍使用 MySQL；`dev`/`test` 的配置仅用于本地/测试，不能用于生产。当前 `pom.xml` 的未提交 preview 改动尚待确认，见第5、8节。
+后端默认端口 8080。`test` profile 的数据在进程结束后丢失；**重启后旧 token 仍有合法签名但对应用户已不存在**，各接口的表现不一致，见第 8 节。`dev` profile 仍使用 MySQL；`dev`/`test` 的配置仅用于本地/测试，不能用于生产。
 
 ### 前端安装与质量门
 
-已有锁文件，新环境用 `npm ci` 重现依赖。仅在确需调整依赖时用 `npm install` 并审阅锁文件变化。
+已有锁文件，新环境用 `npm ci` 重现依赖（`node_modules` 不会随 Git 带过来，换目录或重新克隆后必须重装）。仅在确需调整依赖时用 `npm install` 并审阅锁文件变化。
 
 ```sh
 cd frontend
@@ -130,7 +141,7 @@ npm run test
 npm run build
 ```
 
-`npm run test` 默认非交互；`npm run test:watch` 用于开发观察。`build` 包含 TypeScript检查及 Vite构建，产物在 `frontend/dist/`。
+`npm run test` 默认非交互；`npm run test:watch` 用于开发观察。`build` 包含 TypeScript 检查及 Vite 构建，产物在 `frontend/dist/`。
 
 ### 前端启动与联调
 
@@ -141,53 +152,60 @@ cd frontend
 npm run dev
 ```
 
-访问 Vite 输出的地址，默认端口通常为 5173，以实际输出为准。Vite 开发代理将 `/api` 原路径转发至后端 8080，前端请求应始终使用相对 `/api/v1/...`。后端须同时运行。
+访问 Vite 输出的地址，默认端口通常为 5173，以实际输出为准；若 5173 已被占用，Vite 会换端口，请看输出。Vite 开发代理将 `/api` 原路径转发至后端 8080，前端请求应始终使用相对 `/api/v1/...`。后端须同时运行。
 
-构建预览：
-
-```sh
-cd frontend
-npm run preview
-```
-
-该代理不是静态构建产物的一部分。当前安装的Vite实现会在未单独设置 `preview.proxy` 时让预览服务继承 `server.proxy`，但本次没有启动preview验证；不要将本地dev/preview代理等同于生产反向代理，生产转发方案仍待确定。
+构建预览 `npm run preview` 在当前安装的 Vite 实现里会继承 `server.proxy`，但没有实际启动验证过；不要将本地 dev/preview 代理等同于生产反向代理，生产转发方案仍待确定。
 
 ### 验证记录的边界
 
-- 历史会话记录：后端完整验证曾通过（17个快速测试、10个MySQL集成测试），包括迁移、持久化约束和计划失败回滚；这些记录早于当前未提交的 `pom.xml` 改动。
-- 2026-10-20 的3A实现记录：前端 typecheck/lint/test/build通过，12个测试；以H2 test profile启动后端，通过Vite代理的register/login/me/logout均返回200。
-- 该联调是HTTP级验证，不等于真实浏览器中注册→登录→刷新→登出的完整验收。此浏览器验收、首次 `/me` 失败恢复和多标签行为仍待补充。
-- 本次文档任务没有重跑以上命令；接手修改代码后按对应质量门复验，不沿用历史成功结论。
+**本次实际运行的结果**（2026-10-29 至 10-30，在当前分支代码上）：
+
+- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 31 个测试通过；`./mvnw verify` 通过，包含 15 个 MySQL 8.4 Testcontainers IT（`MysqlFlywayIT` 1、`MysqlPersistenceIT` 9、`VocabularyConcurrencyIT` 2、`VocabularyEnrichmentRepairIT` 3）。最近一次后端改动之后没有再改后端代码。
+- **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
+- 前端：`npm run lint`、`typecheck`、`test`（68 个测试）、`build` 全部通过。
+- **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
+- **没有验证**：键盘操作与读屏、暗色模式、375px 以外的宽度、前端对 MySQL 后端的联调（浏览器验证只用了 H2）、真实 AI/字典、晚上本地日期与 UTC 日期不同时的真实页面表现（验证时本地与 UTC 同一天，只有单元测试覆盖）、生产部署。
+- 后端的并发正确性是在真实 MySQL 容器里用多线程测试验证的，没有做整个应用的压测。
+
+**历史记录**（不是本次运行）：更早的会话记录过 3A 实现的 HTTP 级联调通过，该联调不等于真实浏览器验收。
 
 ## 4. 当前进度：已有实现
 
 ### 后端 Milestone 1 与加固
 
-- 注册、登录、当前用户、登出/token撤销；BCrypt密码存储。
+- 注册、登录、当前用户、登出/token撤销；BCrypt密码存储；token 有效期 24 小时（`vocabflow.auth.token-hours`）。
 - 用户CLB等级、每日新词目标。
 - 单词/短语创建、个人词库分页、详情、跨用户访问隔离。
 - `VocabularyItem`（共享内容）与 `UserVocabulary`（用户学习关系）分离；词条规范化及重复关系约束。
-- 可替换的词汇补全端口、确定性 fake实现、补全状态；没有真实AI/字典调用。
+- 可替换的词汇补全端口、确定性 fake 实现、补全状态；没有真实AI/字典调用。
 - API DTO/领域对象/JPA分离，仓储端口与持久化适配器；统一API错误模型/工厂。
 - Flyway、MySQL、H2快速测试、MySQL Testcontainers兼容性测试、Spotless。
 
 ### 后端 Milestone 2
 
-- 每个用户/日期只有一个持久化 DailyLearningPlan，重复请求返回既有计划。
-- 从个人 `NEW` 词汇按 `createdAt ASC, id ASC` 选取至每日目标；不足时取全部。
+- 每个用户/日期只有一个持久化 DailyLearningPlan，重复请求返回既有计划。**空计划也会被保存。**
+- 从个人 `NEW` 词汇按 `createdAt ASC, id ASC` 选取至每日目标；不足时取全部。目标数是创建计划时的快照。
 - 计划项区分 NEW/REVIEW，存储快照及显式 `item_order`，重载后顺序保持稳定。
 - `DueReviewProvider` 已有边界，当前实现返回空列表。
 - 显式应用层只读事务、独立写事务和独立冲突重读事务；聚合保存失败回滚。
 - `GET /api/v1/learning/daily-plan` 及可选日期参数；缺省日期按UTC计算。
 
-### 前端基础与 Milestone 3A
+### 之后的后端修复
 
-- Router、QueryClient、Tailwind、Vitest/RTL、Oxlint、strict TypeScript、开发代理。
-- 登录/注册表单、校验、提交禁用/加载状态及错误显示。
-- token集中持久化、`/me` bootstrap、401清会话、public-only/保护路由。
-- 登出无论后端成功或失败均清本地认证状态。
-- 最小登录后应用壳，显示当前邮箱与登出按钮。
-- 3A实现已在当前工作区，**不是全部已提交**，也不是已完成生产安全/完整浏览器验收。
+- **错误映射**：畸形或缺失的 JSON 请求体 → 400 `MALFORMED_REQUEST`；参数或路径变量类型错误 → 400 `INVALID_PARAMETER`；不存在的路径 → 404 `NOT_FOUND`；方法不对 → 405 `METHOD_NOT_ALLOWED`（带 `Allow` 头）；Content-Type 不支持 → 415 `UNSUPPORTED_MEDIA_TYPE`。兜底的 500 现在会用 ERROR 级别记录方法、路径和完整堆栈，响应体仍是固定文案。
+- **词汇并发创建**：多个请求同时添加同一个新词，输掉的请求以前会因共享事务里的 Hibernate 会话被污染而抛 `AssertionFailure`，变成 500。现在已修复，并有真实 MySQL 的并发 IT 覆盖（见第 7 节）。
+- **过期 PENDING 词条的再补全**：词条停在 PENDING 超过 5 分钟，下一次有人添加这个词时会重新补全并保存（包括该用户已拥有它的情况）；5 分钟内的 PENDING 不动，避免和正在补全的并发请求重复调用；`FAILED` 的词条不会被重试。
+
+### 前端
+
+- Router、QueryClient、Tailwind、Vitest/RTL、Oxlint、strict TypeScript、开发代理、favicon。
+- 登录/注册表单、校验、提交禁用/加载状态及错误显示；token 集中持久化、`/me` bootstrap、401 清会话、public-only/保护路由；登出无论后端成功或失败均清本地认证状态。
+- **会话检查失败恢复**：`/me` 因断网或 5xx 失败时，显示带 Try again 和 Sign out 的恢复界面，不再一直卡在 “Checking your session…”（受保护路由、公开路由和根路由都覆盖）。
+- **统一 401 处理**：任何带 token 的请求收到 401，`apiClient` 会通知认证层；认证层清 token、清整个查询缓存并回登录页，登录页显示 “You’ve been signed out. Please sign in again to continue.”。登录和登出请求不触发（`notifyOnUnauthorized: false`），旧 token 的迟到 401 不会结束新会话。
+- **缓存隔离**：登出、token 被拒、恢复界面的 Sign out 和新登录前，都会清空整个查询缓存。
+- **应用外壳**：登录后有顶栏（邮箱、登出）和 Vocabulary / Today 两个标签。
+- **词汇界面**：添加表单（trim、1–255 字符校验、409/400 文案内联显示、成功后清空并保持焦点）、分页列表（最新在前）、详情页（音标、词性、释义、例句、搭配、状态、添加日期）；有加载、可重试错误、空状态；PENDING/PROCESSING 显示 “Enriching…”，FAILED 显示 “Details unavailable”。
+- **每日计划界面**：`/app/today`，按**浏览器本地日期**请求计划，显示日期、目标、新词列表（点击进入词汇详情）；复习区块仅在有内容时显示；文案如实说明“计划一天只建一次，之后添加的词不会出现在已保存的计划里”。
 
 ### 当前接口与路由
 
@@ -197,35 +215,35 @@ npm run preview
 | POST `/api/v1/auth/login` | email、password；返回 `{accessToken,user}` |
 | GET `/api/v1/auth/me` | Bearer认证，返回 `{id,email,clbLevel,dailyNewVocabularyGoal}`，无密码字段 |
 | POST `/api/v1/auth/logout` | Bearer认证，响应无业务JSON正文 |
-| POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取 |
-| GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属 |
-| GET `/api/v1/learning/daily-plan` | 返回 `{date,newVocabularyGoal,newItems,reviewItems}`，注意goal字段名与用户DTO不同 |
+| POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409 |
+| GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
+| GET `/api/v1/learning/daily-plan` | 返回 `{date,newVocabularyGoal,newItems,reviewItems}`，注意goal字段名与用户DTO不同；计划项只有 `userVocabularyId、vocabularyItemId、term、type`，没有释义 |
 | 前端 `/` | 根据认证状态跳 `/login` 或 `/app` |
 | 前端 `/login`、`/register` | 已登录者跳 `/app`；未登录者显示表单 |
-| 前端 `/app` | 保护路由，只是应用壳，未实现词汇/学习界面 |
+| 前端 `/app` | 保护路由，跳到 `/app/vocabulary`；`/app/*` 的未知路径也跳到那里 |
+| 前端 `/app/vocabulary`、`/app/vocabulary/:id` | 词汇页、详情页 |
+| 前端 `/app/today` | 今日计划页 |
 
-错误响应统一为 `{code,message,timestamp}`。前端不要创造另一套后端错误格式。CLB支持1–12，注册密码至少8字符，目标1–100；表单显式提供CLB和目标。
+错误响应统一为 `{code,message,timestamp}`，`code` 取值：`VALIDATION_ERROR`(400)、`MALFORMED_REQUEST`(400)、`INVALID_PARAMETER`(400)、`UNAUTHORIZED`(401)、`NOT_FOUND`(404)、`METHOD_NOT_ALLOWED`(405)、`CONFLICT`(409)、`UNSUPPORTED_MEDIA_TYPE`(415)、`INTERNAL_ERROR`(500)。未登录访问不存在的路径会先被安全链拦下，返回 401 而不是 404。前端不要创造另一套后端错误格式。CLB支持1–12，注册密码至少8字符，目标1–100；表单显式提供CLB和目标。
 
 ## 5. 进行中与工作区状态
 
-本次检查开始时工作区不是干净状态，已有内容均保留：
+没有未完成的开发任务。分支 `claude-code-continue` 相对 `main` 多出一批提交（以 `git log main..HEAD` 为准），没有合并到 `main`，也没有 PR。接手时仍以 `git status` 和 `git log` 为准，不要使用 reset/clean 覆盖工作区，也不要自动提交或推送。
 
-- `frontend/src/features/`、`frontend/src/shared/` 尚未被Git跟踪。
-- `frontend/src/app/providers/AppProviders.tsx`、`frontend/src/app/router/AppRouter.tsx` 已修改，旧基础演示测试 `frontend/src/app/App.test.tsx` 已删除，由认证测试替代。
-- `backend/pom.xml` 已有新增 `maven-compiler-plugin`、Java21 source/target和 `--enable-preview` 的未提交改动；来源、用途以及是否应保留均为**待确认**。本次没有修改或撤销它。
+`backend/pom.xml` 里的 `maven-compiler-plugin`（Java 21 source/target 及 `--enable-preview`）来源和用途仍为**待确认**；本次验证了它不影响编译和测试，但没有证明项目需要它。
 
-交接必须包含上述未提交/未跟踪文件；仅复制当前Git提交无法得到全部3A实现。不要使用reset/clean覆盖工作区，也不要自动提交。
+## 6. 待办事项（建议优先级，范围待用户确认）
 
-历史会话称3A实现及所列检查已完成，未记录仍在运行的开发任务或必须安装工具才能解决的阻塞。实际继续点是3A人工验收与第8节可证实缺口的收尾。不能凭空声称已有进行一半的Vocabulary/学习UI。
-
-## 6. 待办事项（建议优先级，后续里程碑范围待确认）
-
-1. **P0：交接完整性与当前基线。** 审阅未提交3A文件，确认 `pom.xml` preview改动的意图，再执行当前两端质量门。保留原作者改动，未经指示不回滚。
-2. **P0：3A认证收尾。** 为首次 `/me` 网络/5xx失败设计明确错误、重试或退出路径；补真实浏览器的注册、登录、刷新、保护路由、登出和过期token验收。
-3. **P1：补关键测试与HTTP边界。** 明确测试注册400（现有错误测试实际是409）、正常空响应登出、登录后 `/me`刷新、已登录访问公共路由、网络失败及成功响应空JSON等。无需引入新测试框架。
-4. **P1：文档/页面元信息。** 更新两份过时README；修正 `index.html` 的默认标题及失效favicon引用。
-5. **P2：下一步产品UI，范围待用户确认。** 当前已有词汇创建/列表/详情和每日计划后端，可优先对接Vocabulary UI，再对接Daily Learning Plan UI；这只是交接建议，未获确认的3B任务清单不能当作已承诺需求。
-6. **后续：** 真实字典/AI接入、失败重试、练习、评估、掌握度、间隔复习、音频、用户时区及生产认证/部署加固；具体顺序和规则均待确认。
+1. **P1：后端对“用户已不存在的 token”表现不一致。** 见第 8 节。需要单独的认证任务，让安全过滤器统一确认用户仍存在、不存在就返回 401。AGENTS.md 要求没有明确任务不能改认证契约，所以这不能在普通任务里顺手改。
+2. **P1：用户时区。** 后端缺省日期是 UTC，前端目前靠“传浏览器本地日期”绕开；是否把时区作为用户设置存进后端待产品确认。
+3. **P1：补全体验。** `FAILED` 词条没有重试；并发时两个请求可能同时补全同一个过期词条（现在的假实现无害，接真实 AI 后会重复调用，到时需要“领取标记”之类的方案，要新增迁移）；接入真实 AI/字典。
+4. **P2：前端细节。**
+   - 词汇页页码放进 URL（现在是组件内状态，从详情返回会回到第 1 页）。
+   - 被意外登出后，如果用户在 `/register` 注册成功跳到 `/login`，仍会看到 “You’ve been signed out…”，应在注册成功时清掉这个标记。
+   - 午夜后页面一直不刷新，日期不会自动更新。
+   - 详情页从“今日计划”进入后，返回链接回到词汇列表而不是今日计划。
+5. **P2：跨标签页同步和 `localStorage` 读写失败的处理。** 目前都没有。
+6. **后续：** 练习、评估、掌握度、间隔复习（现在复习项永远为空）、音频、生产认证/部署加固；具体顺序和规则均待确认。
 
 ## 7. 重要设计决定与约定
 
@@ -240,36 +258,43 @@ npm run preview
 
 - 共享词条与个人关系分离，避免重复维护内容并保证用户隔离。`VocabularyTerm` 保留清理空白后的显示大小写，`normalized()` 用 `Locale.ROOT` 转小写匹配；数据库分别保存 `term` 和 `normalized_term`。不要把规范化值当显示文本，也不要顺手改变重复规则。
 - 计划是当日持久化快照；已有计划不重选。创建计划不会推进词汇学习状态，因此不同日期目前可能再次选到相同NEW词；不是已实现的复习算法。
-- UTC `Instant` / `DATETIME(6)`，学习日期 `LocalDate`；计划默认“今天”不是用户本地时区。
+- UTC `Instant` / `DATETIME(6)`，学习日期 `LocalDate`；后端缺省的“今天”是UTC日期，不是用户本地日期。前端用浏览器本地日期（用本地年月日拼 `YYYY-MM-DD`，不要用 `toISOString()`）。
 - `getOrCreate` 为应用层 `readOnly`事务；插入/flush通过独立Spring bean的 `REQUIRES_NEW`写事务完成；重复异常在该事务结束后被adapter捕获；winner reload通过另一bean的 `REQUIRES_NEW + readOnly`执行。
 - 这是显式编排多个事务，不是整个use case只有一个可统一回滚的数据库事务。计划和全部项由同一写事务保存；不能把异常捕获移到仍会rollback-only的共享事务，也不能通过同类self-invocation让传播注解失效。
+- **`VocabularyService.add` 故意不加 `@Transactional`。** 两个仓储适配器的 `saveIfAbsent` 在适配器里捕获重复键异常；如果整个方法在一个共享事务里，异常穿过 Spring Data 的事务代理时会把外层事务标成 rollback-only，Hibernate 会话也被污染，之后同一事务里的重新查询会抛 `AssertionFailure`，输掉竞争的请求变成 500。不加外层事务时，每次仓储调用各自一个事务，重复键在事务结束后才被捕获，重新查询也拿到新的快照。代价：新词的“插入”和“补全”是两个事务，中间有很短的 PENDING 窗口；窗口内进程崩溃会留下 PENDING 词条，靠“再次添加时再补全”修复。**不要为了统一而给它加回外层事务**；并发行为由 `VocabularyConcurrencyIT` 保护。
 
 ### 认证与前端状态
 
 - 后端用BCrypt与自定义HMAC-SHA256签名Bearer token；该token不是标准三段JWT，前端应当作不透明字符串，不解码依赖内部格式。
 - 登出保存token哈希用于撤销；后端始终是授权与用户隔离的最终边界。
 - token集中暂存localStorage；待生产认证加固时重评HttpOnly cookie方案，不在后续普通UI任务中重构后端认证。
-- TanStack Query是当前用户唯一服务端状态源，Context仅协调token；页面/组件 → feature hooks → Query/mutation → feature API → shared fetch client。
-- 登录成功会先使用login响应中的user填充cache，再invalidate当前用户查询；不是“必须等新一次 `/me`成功才准入”的严格屏障。
+- TanStack Query是当前用户唯一服务端状态源，Context仅协调token（以及“是否被意外登出”这个小标记）；页面/组件 → feature hooks → Query/mutation → feature API → shared fetch client。
+- **401 处理只在一个地方：** `apiClient` 收到“带token的请求的401”就调用 `notifyTokenRejected(token)`；`AuthTokenProvider` 订阅它。新增功能不需要、也不应该自己处理 401。只有登录和登出这类“建立或结束会话”的请求才传 `notifyOnUnauthorized: false`。
+- 会话以任何方式结束时都要清空整个 QueryClient 缓存（`features/auth/hooks/sessionCache.ts`），因为所有缓存数据都属于当前用户。
+- 登录成功会先清缓存，再使用login响应中的user填充cache，然后invalidate当前用户查询；不是“必须等新一次 `/me`成功才准入”的严格屏障。
+- 前端测试用 `src/test/utils.tsx` 的 `stubApi` 按“方法加路径”桩 fetch，没配置的请求会让测试失败；用假定时器时只伪造 `Date`。
 - Router保持Declarative Mode；不要引入loaders/actions/SSR/framework mode。保持Oxlint及strict TypeScript，避免无理由 `any`。
 - 不默认引入Redux/Zustand/MobX/Axios/Next.js/GraphQL/大型UI框架；保持小组件、组合和移动优先。
 
 ## 8. 已知问题、坑与保护范围
 
-以下为源码确认或历史记录的边界，本次没有修改这些实现：
+以下为源码确认或验证中观察到的边界：
 
 | 问题/边界 | 影响与继续开发注意事项 |
 | --- | --- |
-| 首次 `/me` 非401失败 | `useAuth.ts` 无cache时返回unknown；守卫一直显示“Checking your session…”且无明确错误/手动恢复入口，是可确认的UX缺口 |
-| HTTP成功正文处理 | `apiClient.ts` 对204/非JSON直接返回空；200+JSON但空/非法正文会抛解析错误，尚无对应测试，不能泛称已覆盖全部空响应 |
-| 401与跨标签同步 | 目前仅 `/me` 的401驱动清token，shared client无统一401处理；Context不监听storage事件。新增用户数据query前需考虑失效与缓存隔离 |
+| 后端对“用户已不存在的 token”回答不一致 | 安全过滤器只校验token签名，不确认用户仍存在。H2 重启（或将来删除用户）后，旧 token 在 `/me` 返回401、每日计划返回401（“User no longer exists”），但词汇列表返回200空列表、添加词汇返回500。目前只有开发时重置H2会触发；一旦有删除/停用用户功能就会成为问题。需要单独的认证任务，不能在普通任务里改认证契约 |
+| 计划一天只建一次，空计划也保存 | 当天第一次打开今日计划时如果词库为空，会保存一个空计划，之后当天添加的词不会进入这个计划。后端语义，前端文案已说明；是否不保存空计划是产品决定 |
+| 词条补全的边界 | PENDING 超过 5 分钟才会在再次添加时被重新补全，之前只能等；只有再次添加才会触发，没人再添加就一直 PENDING；`FAILED` 不重试；两个请求同时发现同一个过期词条会各补全一次，后写入的覆盖。fake 补全是确定性的所以无害 |
+| 词汇列表缓存 | 查询有30秒 `staleTime`。在界面之外（如 curl）添加词汇后，已缓存的列表30秒内切换标签不会更新；用界面添加会正常刷新 |
+| 日期随页面不刷新 | 今日计划的日期在渲染时取本地日期；页面跨过午夜且不刷新、不切换页面，日期不会自动更新 |
+| 登出提示的小瑕疵 | 见第 6 节 P2：在 `/register` 被意外登出后注册成功，登录页仍显示 “You’ve been signed out…” |
+| 跨标签页同步 | shared client 的 401 处理只作用于当前标签页的状态；Context 不监听 storage 事件，另一个标签页登出后，本页要等下一次请求收到 401 才会登出 |
 | localStorage | 暴露于同源脚本/XSS；只是当前获准的临时MVP方案，读写失败也尚未专门处理 |
-| 真浏览器验收不足 | 历史curl联调与mock测试不能证明刷新、重定向时序、重复提交和完整登录UI都在浏览器中验收通过 |
-| README/元信息滞后 | 根README仍说前端未开始且未完整反映learning模块；前端README是模板；index.html标题仍为vite-scaffold且引用不存在的favicon.svg |
-| preview编译配置 | 当前未提交pom改动未重新验证，不代表项目确实需要Java preview；先确认意图，勿自动删除/扩散运行参数 |
+| 浏览器验收的覆盖面 | 见第 3 节：键盘、读屏、暗色、MySQL 联调、晚上本地与 UTC 日期不同的真实表现仍未验证 |
+| 登出请求在网络日志里显示 `ERR_ABORTED` | 状态是200，验证时没有追查原因，看起来无害，但没有解释清楚 |
+| preview编译配置 | `--enable-preview` 已验证不影响编译和测试，但项目是否需要它仍未知；先确认意图，勿自动删除/扩散运行参数 |
 | fake补全与复习占位 | deterministic fake不是AI；reviewItems当前为空；没有掌握度/评估/复习调度。不能为充数据编造业务算法 |
-| 并发测试边界 | 已有服务mock冲突路径、MySQL重复键和失败回滚测试；不等于已做多线程端到端get-or-create竞争测试 |
-| 词汇并发创建（待验证） | 词汇adapter的重复异常处理仍参与VocabularyService外层事务，不同于learning的隔离事务；真实竞争下的rollback-only行为待验证，不应写成已修复或已复现bug |
+| 并发测试边界 | 词汇并发创建有真实 MySQL 多线程 IT；学习计划有服务 mock 冲突路径、MySQL 重复键和失败回滚测试，但没有多线程端到端 get-or-create 竞争测试 |
 | token后续加固 | 当前token未含随机nonce，同用户同秒签发可能得到相同token；撤销记录未见过期清理任务。这些应单独评估，不能在普通前端任务中改变签名格式 |
 | 生产部署 | Vite本地服务的proxy不随dist部署；尚无完整生产SPA回退/同源API转发/CORS部署方案，禁止把开发默认DB连接及profile当生产模板 |
 
@@ -277,7 +302,7 @@ npm run preview
 
 - 不重写已完成认证/安全/词汇持久化解耦/学习事务加固，除非当前任务明确包含必要修改。
 - 不编辑既有Flyway V1–V4内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
-- 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
+- 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言（现为4）。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
 - Open-in-View已关闭；当前映射所用关联依赖明确的抓取策略，改为LAZY时必须保证事务内映射/显式fetch，不能依靠控制器持有会话。
 - 不把token存在视作唯一认证证明，不信任客户端 `userId`，不输出密码/token/密钥。
 - 不删除/削弱测试，不把真实MySQL验证替换成仅H2，也不要自动移除H2；两者承担不同责任。
@@ -299,11 +324,26 @@ npm run preview
 
 配置文件职责：
 
-- `backend/src/main/resources/application.yml`：MySQL、Flyway、Hibernate validate、关闭Open-in-View、UTC和认证配置。
+- `backend/src/main/resources/application.yml`：MySQL、Flyway、Hibernate validate、关闭Open-in-View、UTC和认证配置（含 token 有效期 24 小时）。
 - `application-dev.yml`：本地开发覆盖，仍依赖MySQL。
 - `application-test.yml`：H2隔离测试/本地联调与测试用认证配置；不得部署到生产。
 - MySQL集成基类使用容器动态JDBC参数覆盖datasource，不依赖个人数据库环境变量。
 - `frontend/vite.config.ts`：开发代理和Vitest/Tailwind集成；API客户端用相对路径。
 - `.env`被忽略不等于自动注入：当前Maven Wrapper/Spring启动脚本未配置自动加载仓库根 `.env`，后端变量需由进程环境/IDE等传入。Vite若日后使用 `VITE_*`，其值会进入客户端，不可放秘密。
 
-需要用户确认：更细用户画像和下一里程碑范围、当前preview编译配置的目的、3A最终浏览器验收结果，以及生产部署/认证硬化方案。未经确认，不把这些事项当成既定设计。
+需要用户确认：更细用户画像和下一里程碑范围、`--enable-preview` 的目的、生产部署/认证硬化方案、用户时区是否进后端。未经确认，不把这些事项当成既定设计。
+
+## 10. 协作与子会话
+
+`.claude/agents/` 里定义了三个可复用的子代理角色，规则正文引用 `AGENTS.md`/`CLAUDE.md`，不复制：
+
+- `backend-dev`：`backend/` 下的 Java 改动，必须跑 spotless、test、verify。
+- `frontend-dev`：`frontend/` 下的 React 功能，必须跑 lint、typecheck、test、build。
+- `browser-verifier`：起 H2 后端加 Vite，用内置浏览器走流程，只读不改代码；会复用已在 5173 运行的 Vite，不会 kill 不是它起的进程，结束时只停自己起的。
+
+使用时的经验：
+
+- **已经在运行的会话不会自动加载新建的角色定义**（验证过：当时派发 `browser-verifier` 返回 “not found”）。想用它们，需要新开会话，或让通用子代理先读对应的 `.md` 再照做。新会话能否自动发现这些角色还没有验证。
+- 想看过程的任务（如浏览器验证）开**独立会话**，不要用隐藏的后台子代理。反复做的验证只保留**一个**会话，换任务时用清空会话上下文的方式复用，不要每次新开，避免侧边栏堆满已经用完的会话；一次性任务做完后归档。
+- 并行只适合互不依赖的任务；两个任务改同一批文件（例如都改前端路由和应用外壳）不要并行，必要时用独立 worktree，合并由用户决定。
+- 子会话不 commit、不 push；由主会话核对结果后再提交。

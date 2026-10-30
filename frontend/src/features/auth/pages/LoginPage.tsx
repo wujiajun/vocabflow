@@ -1,11 +1,13 @@
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { authErrorMessage } from '../components/AuthError'
+import { useAuthToken } from '../hooks/authTokenContext'
 import { useLoginMutation } from '../hooks/useAuth'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const login = useLoginMutation()
+  const { signedOutUnexpectedly } = useAuthToken()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [validationError, setValidationError] = useState<string>()
@@ -35,6 +37,11 @@ export function LoginPage() {
 
   return (
     <AuthPageLayout title="Welcome back" description="Sign in to continue learning with VocabFlow.">
+      {signedOutUnexpectedly ? (
+        <p className="mt-5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+          You’ve been signed out. Please sign in again to continue.
+        </p>
+      ) : null}
       <form className="mt-7 space-y-5" noValidate onSubmit={submit}>
         <FormError message={error} />
         <label className="block text-sm font-medium text-slate-800" htmlFor="login-email">

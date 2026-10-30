@@ -4,10 +4,11 @@ import { ApiClientError } from '../../../shared/api/apiClient'
 import { getCurrentUser, login, logout, register } from '../api/authApi'
 import type { LoginRequest, RegisterRequest } from '../types/auth'
 import { useAuthToken } from './authTokenContext'
+import { clearSessionCache } from './sessionCache'
 
 export const currentUserQueryKey = ['auth', 'current-user'] as const
 
-export type AuthStatus = 'authenticated' | 'loading' | 'unauthenticated' | 'unknown'
+export type AuthStatus = 'authenticated' | 'error' | 'loading' | 'unauthenticated'
 
 export function useAuth() {
   const { token, clearAuthToken } = useAuthToken()
@@ -24,7 +25,7 @@ export function useAuth() {
   useEffect(() => {
     if (staleToken) {
       clearAuthToken()
-      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+      clearSessionCache(queryClient)
     }
   }, [clearAuthToken, queryClient, staleToken])
 
@@ -40,7 +41,19 @@ export function useAuth() {
     return { status: 'authenticated' as const, user: currentUserQuery.data }
   }
 
-  return { status: 'unknown' as const, user: undefined }
+  return {
+    status: 'error' as const,
+    user: undefined,
+    error: currentUserQuery.error,
+    isRetrying: currentUserQuery.isFetching,
+    retry: () => {
+      void currentUserQuery.refetch()
+    },
+    discardSession: () => {
+      clearAuthToken()
+      clearSessionCache(queryClient)
+    },
+  }
 }
 
 export function useLoginMutation() {
@@ -50,6 +63,7 @@ export function useLoginMutation() {
   return useMutation({
     mutationFn: (request: LoginRequest) => login(request),
     onSuccess: async ({ accessToken, user }) => {
+      clearSessionCache(queryClient)
       storeToken(accessToken)
       queryClient.setQueryData(currentUserQueryKey, user)
       await queryClient.invalidateQueries({ queryKey: currentUserQueryKey })
@@ -69,7 +83,7 @@ export function useLogoutMutation() {
     mutationFn: logout,
     onSettled: () => {
       clearAuthToken()
-      queryClient.removeQueries({ queryKey: currentUserQueryKey })
+      clearSessionCache(queryClient)
     },
   })
 }
