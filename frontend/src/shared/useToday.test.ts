@@ -70,3 +70,9 @@ test('leaves no timer or listener behind once unmounted', () => {
   expect(vi.getTimerCount()).toBe(0)
   expect(result.current).toBe('2026-10-29')
 })
+
+// The shared test setup unmounts after every test. A hook left mounted keeps its listeners and can
+// schedule React work that runs after the test file has finished (CI: "window is not defined").
+test('leaves no hook from an earlier test mounted', () => {
+  expect(document.body).toBeEmptyDOMElement()
+})
