@@ -1,5 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
+import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentBadge } from '../components/EnrichmentBadge'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
@@ -9,6 +11,7 @@ export function VocabularyDetailPage() {
   const { id: rawId } = useParams()
   const id = rawId !== undefined && /^\d+$/.test(rawId) ? Number(rawId) : undefined
   const detail = useVocabularyDetail(id)
+  const accent = useVoiceAccent()
 
   return (
     <div>
@@ -60,11 +63,17 @@ export function VocabularyDetailPage() {
       <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="min-w-0 text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">{entry.term}</h1>
+          <PronounceButton term={entry.term} />
           <EnrichmentBadge status={entry.enrichmentStatus} />
         </div>
         <p className="mt-2 text-sm text-slate-500">
           {[kind, entry.phonetic, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}
         </p>
+        {accent === 'other' ? (
+          <p className="mt-1 text-xs text-amber-800">
+            No American English voice was found on this device, so another English voice is used.
+          </p>
+        ) : null}
         <Section title="Definition">
           <p className="leading-7 text-slate-800">{entry.definition ?? 'Definition not available yet.'}</p>
         </Section>
