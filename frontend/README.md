@@ -90,5 +90,6 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 
 - Tests run against a stubbed `fetch`. Use `stubApi` from `src/test/utils.tsx`: routes are keyed `"METHOD /path"`, and a request with no route fails the test instead of quietly rendering a network error. `renderApp(path)` mounts the whole app with fresh providers and a memory router.
 - jsdom has no Web Speech API. `installSpeechSynthesis` in `src/test/speech.ts` installs a fake with controllable voices and playback; without it the pronunciation buttons are not rendered.
+- `src/app/AxeScan.test.tsx` runs axe-core (a dev dependency) on every main page and fails on any rule violation; add a page or a new error state there when you add one. jsdom cannot compute colors, so contrast is checked in a real browser instead.
 - Tests that use fake timers should fake only `Date` (`vi.useFakeTimers({ toFake: ['Date'] })`) so Testing Library's async waits keep working.
 - Do not weaken or delete a test to make it pass.
