@@ -55,6 +55,7 @@ src/
     api/tokenStorage.ts       the only code that touches localStorage
     api/sessionEvents.ts      how the client tells the auth layer a token was rejected
     date.ts                   local calendar date helpers
+    speech/                   pronunciation: PronounceButton, usePronunciation, voice choice
   test/                       Vitest setup and shared test helpers
 ```
 
@@ -79,8 +80,13 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 - When the API answers 401 to a request that carried a token, `apiClient` reports the rejected token. The provider then removes it, clears every cached query and sends the user to `/login`, which says they were signed out. Sign-in and sign-out requests opt out with `notifyOnUnauthorized: false`.
 - Every way a session ends (sign out, rejected token, discarding it from the retry screen, a new sign-in) clears the whole query cache, so one user's data is never shown to the next.
 
+## Pronunciation
+
+`PronounceButton` (in `src/shared/speech/`) speaks a word with the browser's Web Speech API. It asks for American English: `chooseVoice` picks a voice whose language is `en-US` (`en_US` on some Android devices), preferring the device's default one, and falls back to another English voice, which the button's tooltip and the detail page then say plainly. Voices load late in some browsers, so the accent is read through `useSyncExternalStore` on the `voiceschanged` event. The button renders nothing when the browser has no speech support, stops speaking when clicked again or when its page is left, and sits next to a row's link, never inside it. Browsers only allow speech after a user gesture, so there is no autoplay. What the voice actually sounds like depends on the device and cannot be checked by tests.
+
 ## Testing conventions
 
 - Tests run against a stubbed `fetch`. Use `stubApi` from `src/test/utils.tsx`: routes are keyed `"METHOD /path"`, and a request with no route fails the test instead of quietly rendering a network error. `renderApp(path)` mounts the whole app with fresh providers and a memory router.
+- jsdom has no Web Speech API. `installSpeechSynthesis` in `src/test/speech.ts` installs a fake with controllable voices and playback; without it the pronunciation buttons are not rendered.
 - Tests that use fake timers should fake only `Date` (`vi.useFakeTimers({ toFake: ['Date'] })`) so Testing Library's async waits keep working.
 - Do not weaken or delete a test to make it pass.

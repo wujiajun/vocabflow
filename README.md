@@ -2,7 +2,7 @@
 
 VocabFlow helps an English learner keep the words and phrases they meet. You save a word or phrase, the system attaches structured learning content, and a daily plan picks the words to study. The repository contains a Java backend and a React web app. The learning content is deterministic placeholder data for now; there is no live dictionary or AI provider yet.
 
-What works today: register, sign in and out; save words and phrases; browse them with pagination and open a detail page; see today's plan.
+What works today: register, sign in and out; save words and phrases; browse them with pagination and open a detail page; see today's plan; play a word's pronunciation with one click.
 
 ## Repository layout
 
@@ -132,4 +132,4 @@ Unauthenticated requests to a path that does not exist get 401 rather than 404, 
 
 ## Current limitations and next milestone
 
-There is no live dictionary or AI provider, no retry for failed enrichment, no exercises, mastery tracking, review scheduling or audio, and no user timezone preference. The web app stores the token in `localStorage` and does not sync sign-out between browser tabs, and there is no production deployment setup yet. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: an asynchronous, retryable enrichment workflow with source provenance, then the review and practice modules.
+There is no live dictionary or AI provider, no retry for failed enrichment, no exercises, mastery tracking or review scheduling, and no user timezone preference. Pronunciation uses the voices built into the user's browser (Web Speech API): it asks for American English, but which voice is used, and whether an American one exists at all, depends on the device. There are no stored recordings. The web app stores the token in `localStorage` and does not sync sign-out between browser tabs, and there is no production deployment setup yet. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: an asynchronous, retryable enrichment workflow with source provenance, then the review and practice modules.
