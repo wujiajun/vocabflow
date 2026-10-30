@@ -72,7 +72,12 @@ export function useLoginMutation() {
 }
 
 export function useRegisterMutation() {
-  return useMutation({ mutationFn: (request: RegisterRequest) => register(request) })
+  const { clearSignedOutNotice } = useAuthToken()
+
+  return useMutation({
+    mutationFn: (request: RegisterRequest) => register(request),
+    onSuccess: clearSignedOutNotice,
+  })
 }
 
 export function useLogoutMutation() {

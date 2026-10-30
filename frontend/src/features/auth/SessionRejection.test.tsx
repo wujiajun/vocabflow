@@ -132,6 +132,22 @@ test('drops the explanation once the user signs in again', async () => {
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
 })
 
+test('does not tell a user who has just registered that they were signed out', async () => {
+  stubApi({
+    'GET /api/v1/auth/me': unauthorized,
+    'POST /api/v1/auth/register': () => jsonResponse(user),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/register')
+  await browserUser.type(await screen.findByLabelText('Email'), user.email)
+  await browserUser.type(screen.getByLabelText('Password'), 'password123')
+  await browserUser.click(screen.getByRole('button', { name: 'Create account' }))
+
+  expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+})
+
 test('ignores a late rejection of a token that has already been replaced', () => {
   setToken('old-token')
   const queryClient = new QueryClient()

@@ -6,6 +6,9 @@ export interface AuthTokenContextValue {
   signedOutUnexpectedly: boolean
   storeToken: (token: string) => void
   clearAuthToken: () => void
+  // The notice is about a session that ended; once the user starts something new, such as
+  // registering, it no longer applies.
+  clearSignedOutNotice: () => void
 }
 
 export const AuthTokenContext = createContext<AuthTokenContextValue | undefined>(undefined)
