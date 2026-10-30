@@ -9,7 +9,7 @@ What works today: register, sign in and out; save words and phrases; browse them
 ```text
 backend/          Java 21 + Spring Boot + Maven backend
 frontend/         React 19 + TypeScript + Vite single-page app
-docs/             Long-lived product and architecture documentation (empty for now)
+docs/             Long-lived product and architecture documentation (ROADMAP.md, in Chinese)
 .claude/agents/   Reusable Claude Code subagent definitions (backend, frontend, browser verification)
 AGENTS.md         Repository rules and quality gates (backend/ and frontend/ have their own)
 HANDOFF.md        Current state, known gaps and protected areas, in Chinese
