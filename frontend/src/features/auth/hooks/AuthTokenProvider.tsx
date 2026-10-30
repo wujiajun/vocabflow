@@ -21,6 +21,8 @@ export function AuthTokenProvider({ children }: { children: ReactNode }) {
     setStoredToken(null)
   }, [])
 
+  const clearSignedOutNotice = useCallback(() => setSignedOutUnexpectedly(false), [])
+
   useEffect(
     () =>
       onTokenRejected((rejectedToken) => {
@@ -37,8 +39,8 @@ export function AuthTokenProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ token, signedOutUnexpectedly, storeToken, clearAuthToken }),
-    [clearAuthToken, signedOutUnexpectedly, storeToken, token],
+    () => ({ token, signedOutUnexpectedly, storeToken, clearAuthToken, clearSignedOutNotice }),
+    [clearAuthToken, clearSignedOutNotice, signedOutUnexpectedly, storeToken, token],
   )
 
   return <AuthTokenContext.Provider value={value}>{children}</AuthTokenContext.Provider>

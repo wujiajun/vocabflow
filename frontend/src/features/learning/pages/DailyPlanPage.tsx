@@ -1,11 +1,12 @@
 import { Link } from 'react-router'
-import { parseLocalDate, toLocalDateString } from '../../../shared/date'
+import { parseLocalDate } from '../../../shared/date'
+import { useToday } from '../../../shared/useToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { PlanItemList } from '../components/PlanItemList'
 import { useDailyPlan } from '../hooks/useDailyPlan'
 
 export function DailyPlanPage() {
-  const plan = useDailyPlan(toLocalDateString(new Date()))
+  const plan = useDailyPlan(useToday())
 
   return (
     <div>

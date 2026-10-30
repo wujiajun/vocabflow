@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { AddVocabularyForm } from '../components/AddVocabularyForm'
 import { Pagination } from '../components/Pagination'
 import { VocabularyListItem } from '../components/VocabularyListItem'
+import { pageFromParam, paramFromPage } from '../hooks/pageParam'
 import { useVocabularyList } from '../hooks/useVocabulary'
 
 export function VocabularyPage() {
-  const [page, setPage] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = pageFromParam(searchParams.get('page'))
   const list = useVocabularyList(page)
+
+  function goToPage(nextPage: number) {
+    const param = paramFromPage(nextPage)
+    setSearchParams(param === undefined ? {} : { page: param })
+  }
 
   return (
     <div>
@@ -16,7 +23,7 @@ export function VocabularyPage() {
         Save words and phrases as you meet them. Newest first.
       </p>
       <div className="mt-6">
-        <AddVocabularyForm onAdded={() => setPage(0)} />
+        <AddVocabularyForm onAdded={() => goToPage(0)} />
       </div>
       <section aria-label="Saved vocabulary" className="mt-8">
         {list.isPending ? (
@@ -35,6 +42,17 @@ export function VocabularyPage() {
               {list.isFetching ? 'Trying again…' : 'Try again'}
             </button>
           </div>
+        ) : list.data.content.length === 0 && page > 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
+            <p>There is no page {page + 1} of your vocabulary.</p>
+            <button
+              className="mt-2 font-semibold text-indigo-700 underline underline-offset-4"
+              onClick={() => goToPage(0)}
+              type="button"
+            >
+              Go to the first page
+            </button>
+          </div>
         ) : list.data.content.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
             No words yet. Add your first word or phrase above.
@@ -51,7 +69,7 @@ export function VocabularyPage() {
             </ul>
             <Pagination
               isLoading={list.isPlaceholderData}
-              onPageChange={setPage}
+              onPageChange={goToPage}
               page={list.data.page}
               totalPages={list.data.totalPages}
             />

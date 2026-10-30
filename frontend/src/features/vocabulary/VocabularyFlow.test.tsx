@@ -294,6 +294,78 @@ test('sends unknown app paths to the vocabulary page', async () => {
   expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
 })
 
+test('opens the page named in the URL and asks the server for that page', async () => {
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': ({ url }) =>
+      jsonResponse({ ...page([figureOut], 3, 41), page: Number(url.searchParams.get('page')) }),
+  })
+
+  renderApp('/app/vocabulary?page=3')
+
+  expect(await screen.findByText('Page 3 of 3')).toBeInTheDocument()
+  expect(fetchMock).toHaveBeenCalledWith('/api/v1/vocabulary?page=2&size=20', expect.anything())
+})
+
+test.each(['abc', '0', '-1'])('treats ?page=%s as the first page', async (value) => {
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([overwhelmed])),
+  })
+
+  renderApp(`/app/vocabulary?page=${value}`)
+
+  expect(await screen.findByText('overwhelmed')).toBeInTheDocument()
+  expect(fetchMock).toHaveBeenCalledWith('/api/v1/vocabulary?page=0&size=20', expect.anything())
+  expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining('page=-'), expect.anything())
+})
+
+test('returns to the same list page after opening an entry', async () => {
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': ({ url }) =>
+      jsonResponse({ ...page([figureOut], 3, 41), page: Number(url.searchParams.get('page')) }),
+    'GET /api/v1/vocabulary/8': () => jsonResponse(figureOut),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary?page=3')
+  await browserUser.click(await screen.findByRole('link', { name: /figure out/ }))
+  await browserUser.click(await screen.findByRole('link', { name: '← Back to vocabulary' }))
+
+  expect(await screen.findByText('Page 3 of 3')).toBeInTheDocument()
+  const listCalls = fetchMock.mock.calls.filter(([path]) => String(path).startsWith('/api/v1/vocabulary?'))
+  expect(listCalls.every(([path]) => path === '/api/v1/vocabulary?page=2&size=20')).toBe(true)
+})
+
+test('offers a way back when the page in the URL does not exist', async () => {
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': ({ url }) =>
+      url.searchParams.get('page') === '0'
+        ? jsonResponse(page([overwhelmed], 1, 1))
+        : jsonResponse({ ...page([], 1, 1), page: Number(url.searchParams.get('page')) }),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary?page=9')
+  expect(await screen.findByText('There is no page 9 of your vocabulary.')).toBeInTheDocument()
+  expect(screen.queryByText('No words yet. Add your first word or phrase above.')).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Go to the first page' }))
+
+  expect(await screen.findByText('overwhelmed')).toBeInTheDocument()
+  expect(fetchMock).toHaveBeenLastCalledWith('/api/v1/vocabulary?page=0&size=20', expect.anything())
+})
+
+test('keeps the plain empty state for a vocabulary with no words at all', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([])) })
+
+  renderApp('/app/vocabulary')
+
+  expect(await screen.findByText('No words yet. Add your first word or phrase above.')).toBeInTheDocument()
+  expect(screen.queryByText(/There is no page/)).not.toBeInTheDocument()
+})
+
 function signedIn() {
   return { 'GET /api/v1/auth/me': () => jsonResponse(user) }
 }

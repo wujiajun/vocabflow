@@ -1,4 +1,5 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
+import { backState } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import type { VocabularyEntry } from '../types/vocabulary'
 import { EnrichmentBadge } from './EnrichmentBadge'
@@ -6,11 +7,13 @@ import { describeKind } from './formatVocabulary'
 
 export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
   const kind = describeKind(entry.type, entry.partOfSpeech)
+  const location = useLocation()
 
   return (
     <li className="flex items-center rounded-xl border border-slate-200 bg-white pr-2 transition focus-within:border-indigo-300 hover:border-indigo-300 hover:bg-indigo-50/40">
       <Link
         className="block min-w-0 flex-1 rounded-xl px-4 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+        state={backState(`${location.pathname}${location.search}`, 'Back to vocabulary')}
         to={`/app/vocabulary/${entry.id}`}
       >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

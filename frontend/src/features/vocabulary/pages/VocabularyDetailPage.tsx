@@ -1,5 +1,6 @@
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
+import { readBackTarget } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -7,16 +8,19 @@ import { EnrichmentBadge } from '../components/EnrichmentBadge'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
 import { useVocabularyDetail } from '../hooks/useVocabulary'
 
+const defaultBackTarget = { path: '/app/vocabulary', label: 'Back to vocabulary' }
+
 export function VocabularyDetailPage() {
   const { id: rawId } = useParams()
   const id = rawId !== undefined && /^\d+$/.test(rawId) ? Number(rawId) : undefined
   const detail = useVocabularyDetail(id)
   const accent = useVoiceAccent()
+  const back = readBackTarget(useLocation().state, defaultBackTarget)
 
   return (
     <div>
-      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to="/app/vocabulary">
-        ← Back to vocabulary
+      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to={back.path}>
+        ← {back.label}
       </Link>
       <div className="mt-5">{renderBody()}</div>
     </div>

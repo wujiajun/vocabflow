@@ -55,6 +55,8 @@ src/
     api/tokenStorage.ts       the only code that touches localStorage
     api/sessionEvents.ts      how the client tells the auth layer a token was rejected
     date.ts                   local calendar date helpers
+    useToday.ts               today's local date; updates itself at midnight
+    navigation.ts             where a detail page's back link should return to
     speech/                   pronunciation: PronounceButton, usePronunciation, voice choice
   test/                       Vitest setup and shared test helpers
 ```
@@ -68,8 +70,8 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/` | Redirects to `/app` or `/login` depending on the session |
 | `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
 | `/app` | Redirects to `/app/vocabulary`; everything under `/app` needs a session |
-| `/app/vocabulary` | Add a word or phrase and browse the paginated list |
-| `/app/vocabulary/:id` | One vocabulary entry; `:id` is the user's own entry id |
+| `/app/vocabulary` | Add a word or phrase and browse the paginated list; the page is in the URL as `?page=N` (1-based, anything unusable means page 1) |
+| `/app/vocabulary/:id` | One vocabulary entry; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
 | `/app/today` | Today's learning plan |
 
 ## Authentication behaviour
