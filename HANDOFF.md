@@ -228,7 +228,7 @@ npm run dev
 
 ## 5. 进行中与工作区状态
 
-没有未完成的开发任务。分支 `claude-code-continue` 相对 `main` 多出一批提交（以 `git log main..HEAD` 为准），没有合并到 `main`，也没有 PR。接手时仍以 `git status` 和 `git log` 为准，不要使用 reset/clean 覆盖工作区，也不要自动提交或推送。
+没有未完成的开发任务。分支、合并和 PR 的状态以 `git status`、`git log` 和 GitHub 为准，本文不记录，因为这类信息很快就会过时。不要使用 reset/clean 覆盖工作区，也不要自动提交或推送。
 
 `backend/pom.xml` 里的 `maven-compiler-plugin`（Java 21 source/target 及 `--enable-preview`）来源和用途仍为**待确认**；本次验证了它不影响编译和测试，但没有证明项目需要它。
 
