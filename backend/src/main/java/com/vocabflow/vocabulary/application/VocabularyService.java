@@ -2,11 +2,14 @@ package com.vocabflow.vocabulary.application;
 
 import com.vocabflow.shared.web.*;
 import com.vocabflow.vocabulary.domain.*;
+import java.time.Duration;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
 
 @Service
 public class VocabularyService {
+  private static final Duration STALE_PENDING_AFTER = Duration.ofMinutes(5);
+
   private final VocabularyItemRepository items;
   private final UserVocabularyRepository userItems;
   private final VocabularyEnrichmentProvider provider;
@@ -25,7 +28,8 @@ public class VocabularyService {
   public UserVocabulary add(long userId, String rawTerm) {
     VocabularyTerm term = new VocabularyTerm(rawTerm);
     VocabularyItem item =
-        items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term));
+        completeIfStale(
+            items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term)));
     if (userItems.existsByUserIdAndVocabularyItemId(userId, item.id())) {
       throw new ConflictException("This vocabulary is already in your list");
     }
@@ -53,38 +57,47 @@ public class VocabularyService {
       return items.findByNormalizedTerm(term.normalized()).orElseThrow();
     }
 
-    VocabularyItem item = saved.get();
+    return items.save(enrich(saved.get()));
+  }
+
+  // A PENDING item older than the threshold lost its enrichment (e.g. the process stopped between
+  // insert and enrich); a younger one is most likely still being enriched by a concurrent request.
+  private VocabularyItem completeIfStale(VocabularyItem item) {
+    boolean stale =
+        item.enrichmentStatus() == EnrichmentStatus.PENDING
+            && item.createdAt().isBefore(Instant.now().minus(STALE_PENDING_AFTER));
+    return stale ? items.save(enrich(item)) : item;
+  }
+
+  private VocabularyItem enrich(VocabularyItem item) {
     try {
-      EnrichmentResult result = provider.enrich(term);
-      item =
-          new VocabularyItem(
-              item.id(),
-              item.term(),
-              result.type(),
-              result.phonetic(),
-              result.partOfSpeech(),
-              result.definition(),
-              result.examples(),
-              result.collocations(),
-              EnrichmentStatus.COMPLETED,
-              null,
-              item.createdAt());
+      EnrichmentResult result = provider.enrich(item.term());
+      return new VocabularyItem(
+          item.id(),
+          item.term(),
+          result.type(),
+          result.phonetic(),
+          result.partOfSpeech(),
+          result.definition(),
+          result.examples(),
+          result.collocations(),
+          EnrichmentStatus.COMPLETED,
+          null,
+          item.createdAt());
     } catch (Exception exception) {
-      item =
-          new VocabularyItem(
-              item.id(),
-              item.term(),
-              item.type(),
-              item.phonetic(),
-              item.partOfSpeech(),
-              item.definition(),
-              item.examples(),
-              item.collocations(),
-              EnrichmentStatus.FAILED,
-              "Enrichment could not be completed",
-              item.createdAt());
+      return new VocabularyItem(
+          item.id(),
+          item.term(),
+          item.type(),
+          item.phonetic(),
+          item.partOfSpeech(),
+          item.definition(),
+          item.examples(),
+          item.collocations(),
+          EnrichmentStatus.FAILED,
+          "Enrichment could not be completed",
+          item.createdAt());
     }
-    return items.save(item);
   }
 
   public VocabularyPage list(long userId, int page, int size) {
