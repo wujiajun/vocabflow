@@ -38,6 +38,25 @@ export function AuthTokenProvider({ children }: { children: ReactNode }) {
     [clearAuthToken, queryClient],
   )
 
+  // Another tab signed out, or signed in as someone else: follow it, and drop everything cached
+  // for the previous session. This is not an unexpected sign-out, so no notice is shown.
+  useEffect(() => {
+    function onStorage() {
+      // Whatever changed in storage, only a different token matters.
+      const storedToken = getToken()
+      if (storedToken === token) {
+        return
+      }
+
+      clearSessionCache(queryClient)
+      setStoredToken(storedToken)
+      setSignedOutUnexpectedly(false)
+    }
+
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [queryClient, token])
+
   const value = useMemo(
     () => ({ token, signedOutUnexpectedly, storeToken, clearAuthToken, clearSignedOutNotice }),
     [clearAuthToken, clearSignedOutNotice, signedOutUnexpectedly, storeToken, token],
