@@ -107,6 +107,8 @@ npm run build
 
 `.github/workflows/ci.yml` runs on every pull request and on every push to `main`, in two parallel jobs named `backend` and `frontend`. `backend` runs `./mvnw spotless:check` and `./mvnw verify` on JDK 21 (Docker is provided by the GitHub runner for the Testcontainers tests). `frontend` runs `npm ci`, `lint`, `typecheck`, `test` and `build` on the Node version in `.node-version`. These are the same commands as in the section above; run them locally before pushing.
 
+`main` is protected by a GitHub ruleset (`Protect main`): changes reach it only through a pull request, both checks must pass, and force pushes and deletion are blocked. Work on a branch and open a pull request. Repository admins can bypass the rule from the pull request page, which is meant for emergencies.
+
 ## API flow
 
 ```sh

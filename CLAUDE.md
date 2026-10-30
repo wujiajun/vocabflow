@@ -11,6 +11,10 @@ Repository rules, quality gates, and architecture constraints live in `AGENTS.md
 - `HANDOFF.md` (Chinese) has the detailed current state, API table, known gaps, and protected areas. Its notes on workspace state can lag behind; trust `git status` and the code.
 - `README.md` covers architecture, running locally, and the API and error codes; `frontend/README.md` covers frontend structure, routes, and test conventions.
 
+## Git workflow
+
+`main` is protected by a GitHub ruleset: never commit to it directly. Make a short-lived branch per task, push it, and open a pull request; the `backend` and `frontend` CI checks must pass before it can merge. Do not push, merge, or delete branches unless asked.
+
 ## Commands
 
 There is no root build. Run from `backend/` or `frontend/`.
