@@ -11,6 +11,7 @@ backend/          Java 21 + Spring Boot + Maven backend
 frontend/         React 19 + TypeScript + Vite single-page app
 docs/             Long-lived product and architecture documentation (ROADMAP.md, in Chinese)
 .claude/agents/   Reusable Claude Code subagent definitions (backend, frontend, browser verification)
+.github/workflows/ GitHub Actions CI
 AGENTS.md         Repository rules and quality gates (backend/ and frontend/ have their own)
 HANDOFF.md        Current state, known gaps and protected areas, in Chinese
 ```
@@ -101,6 +102,10 @@ npm run typecheck
 npm run test
 npm run build
 ```
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on every push to `main`, in two parallel jobs named `backend` and `frontend`. `backend` runs `./mvnw spotless:check` and `./mvnw verify` on JDK 21 (Docker is provided by the GitHub runner for the Testcontainers tests). `frontend` runs `npm ci`, `lint`, `typecheck`, `test` and `build` on the Node version in `.node-version`. These are the same commands as in the section above; run them locally before pushing.
 
 ## API flow
 
