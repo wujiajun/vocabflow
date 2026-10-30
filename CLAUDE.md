@@ -9,7 +9,7 @@ Repository rules, quality gates, and architecture constraints live in `AGENTS.md
 - Backend work: `backend/AGENTS.md`
 - Frontend work: `frontend/AGENTS.md` (no Redux/Zustand/MobX/Axios/Next.js/GraphQL/heavy UI frameworks)
 - `HANDOFF.md` (Chinese) has the detailed current state, API table, known gaps, and protected areas. Its notes on workspace state can lag behind; trust `git status` and the code.
-- `README.md` and `frontend/README.md` are partly outdated (they say the frontend has not started).
+- `README.md` covers architecture, running locally, and the API and error codes; `frontend/README.md` covers frontend structure, routes, and test conventions.
 
 ## Commands
 
@@ -65,13 +65,14 @@ Key cross-module rules:
   3. `DailyLearningPlanConflictRecovery` reloads the winning plan in a separate `REQUIRES_NEW` + readOnly transaction.
 
   These beans are separate on purpose, because self-invocation would bypass the propagation annotations.
+- Adapters' `saveIfAbsent` catch duplicate-key errors, so they must not run inside a caller's shared transaction: the caught exception marks it rollback-only and poisons the Hibernate session, and the loser of a race then fails with a 500. `VocabularyService.add` is deliberately not `@Transactional` for this reason; `VocabularyConcurrencyIT` guards it.
 
 Persistence notes:
 
 - Migrations live in `src/main/resources/db/migration`, and V1–V4 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(4)`).
 - Open-in-View is disabled. Mapping happens inside transactions.
 - MySQL ITs extend `integration/MysqlIntegrationTest`, which supplies the container datasource.
-- `pom.xml` configures `maven-compiler-plugin` with `--enable-preview`. HANDOFF marks its purpose as unconfirmed, so don't remove it or spread it to other places.
+- `pom.xml` configures `maven-compiler-plugin` with `--enable-preview`. It does not break `test` or `verify`, but nobody has confirmed why it is there, so don't remove it or spread it to other places.
 
 ## Frontend architecture
 
@@ -82,9 +83,13 @@ Data flow is: page/component → feature hook → TanStack Query → `features/<
 Auth pieces:
 
 - Token persistence lives only in `shared/api/tokenStorage.ts` (localStorage).
-- `AuthTokenProvider`/`authTokenContext` coordinate the token only.
+- `AuthTokenProvider`/`authTokenContext` coordinate the token (plus a small `signedOutUnexpectedly` flag for the login notice), never the user.
 - The current user exists only in the TanStack Query cache, via `useAuth.ts`, which bootstraps it from `/me`.
-- A 401 from `/me` clears the session. Logout always clears local state.
-- `AuthRoute` guards public-only routes (`/login`, `/register`) and protected ones (`/app`).
+- 401 handling lives in one place: `apiClient` reports a 401 to a request that carried a token via `shared/api/sessionEvents.ts`, and `AuthTokenProvider` then clears the token and the whole query cache. Features must not handle 401 themselves. Requests that sign in or out pass `notifyOnUnauthorized: false`.
+- Every way a session ends clears the entire QueryClient cache (`hooks/sessionCache.ts`), since all cached data belongs to the current user. Logout always clears local state.
+- `AuthRoute` guards public-only routes (`/login`, `/register`) and protected ones (everything under `/app`, rendered inside `app/layout/AppShell.tsx`).
+- A `/me` failure that is not a 401 shows a retry screen; it must never leave the guard on the loading state.
 
-New features go under `src/features/<name>/{api,hooks,components,pages,types}`, mirroring `features/auth`. Frontend types are API-shaped, not copies of backend domain/JPA models.
+New features go under `src/features/<name>/{api,hooks,components,pages,types}`, mirroring `features/auth`. Frontend types are API-shaped, not copies of backend domain/JPA models. The daily plan sends the browser's local date built from local date parts (`shared/date.ts`), never `toISOString()`, which is UTC.
+
+Frontend tests stub `fetch` with `stubApi` from `src/test/utils.tsx` (routes keyed `"METHOD /path"`; an unrouted request fails the test). With fake timers, fake only `Date`.

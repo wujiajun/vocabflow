@@ -1,32 +1,86 @@
-# React + TypeScript + Vite
+# VocabFlow frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The VocabFlow web app: React 19, strict TypeScript, Vite 8 and Tailwind CSS 4. It runs on Node 24 (see `../.node-version`).
 
-Currently, two official plugins are available:
+- **Routing:** React Router in Declarative Mode (`BrowserRouter` in `src/main.tsx`; no loaders, actions or framework mode).
+- **Server state:** TanStack Query. The current user lives only in the query cache.
+- **HTTP:** native `fetch` through `src/shared/api/apiClient.ts`; every call uses a relative `/api/v1/...` path.
+- **Lint and tests:** Oxlint, `tsc`, and Vitest with jsdom and React Testing Library.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Repository-wide rules are in [`../AGENTS.md`](../AGENTS.md) and [`AGENTS.md`](AGENTS.md). Do not add Redux, Zustand, MobX, Axios, Next.js, GraphQL or a heavy UI framework without approval.
 
-## React Compiler
+## Commands
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Run everything from this directory.
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm ci              # install exactly what package-lock.json records
+npm run dev         # Vite dev server on http://localhost:5173
+npm run lint        # oxlint
+npm run typecheck   # tsc -b
+npm run test        # vitest run; npm run test:watch to watch
+npm run build       # tsc -b, then a production build in dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Run a single test file with `npx vitest run src/features/auth/AuthFlow.test.tsx`, and add `-t "name"` to filter by test name. Before finishing a change, `lint`, `typecheck`, `test` and `build` must all pass.
+
+## Running against the backend
+
+The dev server proxies `/api` to `http://localhost:8080` (see `vite.config.ts`), so start the backend first. The simplest way needs no MySQL; it uses an in-memory database that is emptied whenever the backend stops:
+
+```sh
+cd ../backend
+./mvnw spring-boot:run -Dspring-boot.run.profiles=test
+```
+
+The proxy is a development convenience and is not part of the production build. There is no production hosting setup yet, and the app reads no `VITE_*` environment variables.
+
+## Structure
+
+```text
+src/
+  main.tsx                    entry: StrictMode and BrowserRouter
+  app/
+    App.tsx
+    providers/                QueryClient and auth token providers
+    router/AppRouter.tsx      all routes
+    layout/AppShell.tsx       header, Vocabulary/Today tabs, sign out, <Outlet />
+  features/
+    auth/                     sign in, register, current user, route guards
+    vocabulary/               add form, paginated list, detail page
+    learning/                 today's plan
+      <feature>/{api,hooks,components,pages,types}
+  shared/
+    api/apiClient.ts          fetch wrapper: Bearer header, error mapping, 401 reporting
+    api/tokenStorage.ts       the only code that touches localStorage
+    api/sessionEvents.ts      how the client tells the auth layer a token was rejected
+    date.ts                   local calendar date helpers
+  test/                       Vitest setup and shared test helpers
+```
+
+New features go under `src/features/<name>/` with the same layout. Data flows page or component, then a feature hook, then TanStack Query, then `features/<name>/api/*Api.ts`, then `apiClient`. Keep HTTP calls out of pages and components, and keep types shaped like the API rather than copying backend domain or JPA models.
+
+## Routes
+
+| Path | Page |
+| --- | --- |
+| `/` | Redirects to `/app` or `/login` depending on the session |
+| `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
+| `/app` | Redirects to `/app/vocabulary`; everything under `/app` needs a session |
+| `/app/vocabulary` | Add a word or phrase and browse the paginated list |
+| `/app/vocabulary/:id` | One vocabulary entry; `:id` is the user's own entry id |
+| `/app/today` | Today's learning plan |
+
+## Authentication behaviour
+
+- The Bearer token is kept in `localStorage` by `tokenStorage.ts`. That is a temporary MVP choice, not a production decision.
+- `AuthTokenProvider` holds the token (and whether the user was signed out unexpectedly); it does not hold the user.
+- If `/me` fails for a reason other than 401, such as a network error or a 5xx, the app shows a retry screen with Try again and Sign out, instead of hanging.
+- When the API answers 401 to a request that carried a token, `apiClient` reports the rejected token. The provider then removes it, clears every cached query and sends the user to `/login`, which says they were signed out. Sign-in and sign-out requests opt out with `notifyOnUnauthorized: false`.
+- Every way a session ends (sign out, rejected token, discarding it from the retry screen, a new sign-in) clears the whole query cache, so one user's data is never shown to the next.
+
+## Testing conventions
+
+- Tests run against a stubbed `fetch`. Use `stubApi` from `src/test/utils.tsx`: routes are keyed `"METHOD /path"`, and a request with no route fails the test instead of quietly rendering a network error. `renderApp(path)` mounts the whole app with fresh providers and a memory router.
+- Tests that use fake timers should fake only `Date` (`vi.useFakeTimers({ toFake: ['Date'] })`) so Testing Library's async waits keep working.
+- Do not weaken or delete a test to make it pass.
