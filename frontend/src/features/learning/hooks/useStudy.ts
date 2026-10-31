@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getStudyQueue, submitReview } from '../api/studyApi'
+import { getStudyQueue, studyMore, submitReview } from '../api/studyApi'
 import type { ReviewRequest, StudyQueue } from '../types/study'
 
 // Nothing is due, but a learning step comes up later: check now and then whether it has arrived.
@@ -28,11 +28,19 @@ export function useSubmitReview() {
     mutationFn: (request: ReviewRequest) => submitReview(request),
     onSuccess: (queue, request) => {
       queryClient.setQueryData(queueKey(request.date), queue)
-      // The word's status and what the plan lists have changed.
+      // The word's status has changed.
       void queryClient.invalidateQueries({ queryKey: ['vocabulary'] })
-      void queryClient.invalidateQueries({ queryKey: ['learning', 'daily-plan'] })
     },
     // A refused rating means the card has moved on (another tab, say): show where it stands now.
     onError: (_error, request) => queryClient.invalidateQueries({ queryKey: queueKey(request.date) }),
+  })
+}
+
+export function useStudyMore() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (date: string) => studyMore(date),
+    onSuccess: (queue, date) => queryClient.setQueryData(queueKey(date), queue),
   })
 }

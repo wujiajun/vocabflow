@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { useState } from 'react'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { useToday } from '../../../shared/useToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { StudyCardView } from '../components/StudyCardView'
+import { StudyComplete } from '../components/StudyComplete'
+import { StudyProgress } from '../components/StudyProgress'
 import { useStudyQueue } from '../hooks/useStudy'
-import type { StudyQueue } from '../types/study'
 
 export function StudyPage() {
   usePageTitle('Study')
@@ -15,10 +15,7 @@ export function StudyPage() {
 
   return (
     <div>
-      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to="/app/today">
-        ← Back to today’s plan
-      </Link>
-      <h1 className="mt-5 text-3xl font-bold tracking-tight">Study</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Study</h1>
       {queue.isPending ? (
         <p className="mt-6 text-sm text-slate-600" role="status">
           Loading your cards…
@@ -37,9 +34,7 @@ export function StudyPage() {
         </div>
       ) : (
         <>
-          <p className="mt-2 text-sm text-slate-600">
-            {queue.data.learningCount} learning · {queue.data.reviewCount} to review · {queue.data.newCount} new
-          </p>
+          <StudyProgress queue={queue.data} />
           {queue.data.unavailableCount > 0 ? (
             <p className="mt-1 text-sm text-slate-600">
               {queue.data.unavailableCount === 1
@@ -57,41 +52,15 @@ export function StudyPage() {
                 takeFocus={reviewedAny}
               />
             ) : (
-              <Finished queue={queue.data} reviewedAny={reviewedAny} />
+              <StudyComplete
+                date={date}
+                onStudyMore={() => setReviewedAny(true)}
+                queue={queue.data}
+                takeFocus={reviewedAny}
+              />
             )}
           </div>
         </>
-      )}
-    </div>
-  )
-}
-
-function Finished({ queue, reviewedAny }: { queue: StudyQueue; reviewedAny: boolean }) {
-  const headingRef = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    if (reviewedAny) {
-      headingRef.current?.focus()
-    }
-  }, [reviewedAny])
-
-  return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
-      <h2 className="text-base font-semibold text-slate-900 outline-none" ref={headingRef} tabIndex={-1}>
-        {reviewedAny ? 'You’re done for now' : 'Nothing to study right now'}
-      </h2>
-      {queue.nextDueAt ? (
-        <p className="mt-1">
-          The next card comes back at{' '}
-          {new Date(queue.nextDueAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.
-        </p>
-      ) : (
-        <p className="mt-1">
-          Reviews come back when they are due.{' '}
-          <Link className="font-semibold text-indigo-700 underline underline-offset-4" to="/app/vocabulary">
-            Go to your vocabulary
-          </Link>
-        </p>
       )}
     </div>
   )

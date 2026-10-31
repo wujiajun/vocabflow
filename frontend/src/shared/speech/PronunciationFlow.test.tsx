@@ -2,7 +2,7 @@ import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../api/tokenStorage'
-import { expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, emptyStudyQueue } from '../../test/utils'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 
 const entry = {
@@ -98,26 +98,34 @@ test('the detail page shows no accent warning when an American voice exists', as
   expect(screen.queryByText(/No American English voice/)).not.toBeInTheDocument()
 })
 
-test('every word in today’s plan can be played', async () => {
+test('the word being studied can be played before the answer is shown', async () => {
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/learning/daily-plan': () =>
+    'GET /api/v1/learning/study-queue': () =>
       jsonResponse({
-        date: '2026-10-29',
-        newVocabularyGoal: 2,
-        newItems: [
-          { userVocabularyId: 11, vocabularyItemId: 111, term: 'overwhelmed', type: 'WORD' },
-          { userVocabularyId: 12, vocabularyItemId: 112, term: 'figure out', type: 'PHRASAL_VERB' },
-        ],
-        reviewItems: [],
+        ...emptyStudyQueue,
+        newCount: 1,
+        nextCard: {
+          userVocabularyId: 11,
+          term: 'overwhelmed',
+          type: 'WORD',
+          phonetic: null,
+          partOfSpeech: null,
+          definition: 'A definition.',
+          examples: [],
+          collocations: [],
+          state: 'NEW',
+          version: 0,
+          options: [],
+        },
       }),
   })
   const browserUser = userEvent.setup()
 
-  renderApp('/app/today')
+  renderApp('/app/study')
   await browserUser.click(await screen.findByRole('button', { name: 'Play pronunciation of overwhelmed' }))
 
   expect(speech.lastUtterance()).toMatchObject({ text: 'overwhelmed' })
-  expect(screen.getAllByRole('button', { name: /Play pronunciation/ })).toHaveLength(2)
+  expect(screen.getByRole('button', { name: 'Show answer' })).toBeInTheDocument()
 })

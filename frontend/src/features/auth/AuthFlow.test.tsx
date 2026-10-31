@@ -9,9 +9,9 @@ import {
   renderApp,
   stubApi,
   user,
+  emptyStudyQueue,
 } from '../../test/utils'
 
-const emptyVocabularyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
 const cachedUserDataKey = ['test', 'cached-user-data'] as const
 const unauthorized = () => errorResponse(401, 'UNAUTHORIZED', 'Authentication is required')
 
@@ -38,12 +38,12 @@ test('loads the current user when a valid token exists and renders /app', async 
   setToken('valid-token')
   const fetchMock = stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
 
   renderApp('/app')
 
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
   expect(screen.getByText(user.email)).toBeInTheDocument()
   expect(fetchMock).toHaveBeenCalledWith(
     '/api/v1/auth/me',
@@ -65,7 +65,7 @@ test('validates and completes login with a persisted token', async () => {
   const fetchMock = stubApi({
     'POST /api/v1/auth/login': () => jsonResponse({ accessToken: 'new-token', user }),
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
   const browserUser = userEvent.setup()
 
@@ -78,7 +78,7 @@ test('validates and completes login with a persisted token', async () => {
   await browserUser.type(screen.getByLabelText('Password'), 'password123')
   await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
 
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
   expect(getToken()).toBe('new-token')
 })
 
@@ -132,13 +132,13 @@ test('clears local auth and redirects after logout even when backend logout fail
   setToken('valid-token')
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
     'POST /api/v1/auth/logout': unauthorized,
   })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
@@ -156,7 +156,7 @@ test('shows a retry screen when the first session check cannot reach the server,
       }
       return jsonResponse(user)
     },
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
   const browserUser = userEvent.setup()
 
@@ -168,7 +168,7 @@ test('shows a retry screen when the first session check cannot reach the server,
 
   await browserUser.click(screen.getByRole('button', { name: 'Try again' }))
 
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
   expect(meCalls).toBeGreaterThanOrEqual(2)
 })
 
@@ -222,12 +222,12 @@ test('redirects a signed-in user away from the public login route', async () => 
   setToken('valid-token')
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
 
   renderApp('/login')
 
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
 })
 
 test('displays backend 400 validation errors on registration', async () => {
@@ -251,13 +251,13 @@ test('signs out cleanly when the backend logout returns an empty success respons
   setToken('valid-token')
   const fetchMock = stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
     'POST /api/v1/auth/logout': () => new Response(null, { status: 204 }),
   })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
@@ -272,13 +272,13 @@ test('drops cached user data when the user signs out', async () => {
   setToken('valid-token')
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
     'POST /api/v1/auth/logout': () => new Response(null, { status: 204 }),
   })
   const browserUser = userEvent.setup()
 
   const { queryClient } = renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   queryClient.setQueryData(cachedUserDataKey, { content: [] })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
@@ -319,7 +319,7 @@ test('does not show a previous user’s cached data after a new login', async ()
   stubApi({
     'POST /api/v1/auth/login': () => jsonResponse({ accessToken: 'second-token', user }),
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
   const browserUser = userEvent.setup()
 
@@ -328,7 +328,7 @@ test('does not show a previous user’s cached data after a new login', async ()
   await browserUser.type(screen.getByLabelText('Password'), 'password123')
   await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
 
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
 })
 

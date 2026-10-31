@@ -11,12 +11,12 @@ import {
   renderApp,
   stubApi,
   user,
+  emptyStudyQueue,
 } from '../../test/utils'
 import { AuthTokenProvider } from './hooks/AuthTokenProvider'
 import { useAuthToken } from './hooks/authTokenContext'
 
 const emptyVocabularyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
-const emptyPlan = { date: '2026-10-29', newVocabularyGoal: 10, newItems: [], reviewItems: [] }
 const cachedUserDataKey = ['test', 'cached-user-data'] as const
 const unauthorized = () => errorResponse(401, 'UNAUTHORIZED', 'Authentication is required')
 const signedOutNotice = 'You’ve been signed out. Please sign in again to continue.'
@@ -35,10 +35,10 @@ afterEach(() => {
 test('signs the user out with an explanation when any query is rejected with a 401', async () => {
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/learning/daily-plan': unauthorized,
+    'GET /api/v1/learning/study-queue': unauthorized,
   })
 
-  const { queryClient } = renderApp('/app/today', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
+  const { queryClient } = renderApp('/app/study', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
   expect(screen.getByRole('status')).toHaveTextContent(signedOutNotice)
@@ -92,13 +92,13 @@ test('does not treat a wrong password as a rejected session', async () => {
 test('does not explain a sign-out the user asked for, even when the backend answers 401', async () => {
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
     'POST /api/v1/auth/logout': unauthorized,
   })
   const browserUser = userEvent.setup()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
@@ -106,26 +106,25 @@ test('does not explain a sign-out the user asked for, even when the backend answ
 })
 
 test('drops the explanation once the user signs in again', async () => {
-  let planCalls = 0
+  let queueCalls = 0
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/learning/daily-plan': () => {
-      planCalls += 1
-      return planCalls === 1 ? unauthorized() : jsonResponse(emptyPlan)
+    'GET /api/v1/learning/study-queue': () => {
+      queueCalls += 1
+      return queueCalls === 1 ? unauthorized() : jsonResponse(emptyStudyQueue)
     },
     'POST /api/v1/auth/login': () => jsonResponse({ accessToken: 'new-token', user }),
     'POST /api/v1/auth/logout': () => new Response(null, { status: 204 }),
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
   })
   const browserUser = userEvent.setup()
 
-  renderApp('/app/today')
+  renderApp('/app/study')
   expect(await screen.findByText(signedOutNotice)).toBeInTheDocument()
 
   await browserUser.type(screen.getByLabelText('Email'), user.email)
   await browserUser.type(screen.getByLabelText('Password'), 'password123')
   await browserUser.click(screen.getByRole('button', { name: 'Sign in' }))
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   await browserUser.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()

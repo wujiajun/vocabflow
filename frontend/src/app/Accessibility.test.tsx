@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../shared/api/tokenStorage'
-import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../test/utils'
+import { emptyStudyQueue, errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../test/utils'
 
 const overwhelmed = entry(7, 'overwhelmed')
 const figureOut = entry(8, 'figure out')
@@ -35,7 +35,7 @@ test('gives every signed-in page its own title', async () => {
     ...signedIn(),
     'GET /api/v1/vocabulary': () => jsonResponse(vocabularyPage([overwhelmed])),
     'GET /api/v1/vocabulary/7': () => jsonResponse(overwhelmed),
-    'GET /api/v1/learning/daily-plan': () => jsonResponse({ date: '2026-10-30', newVocabularyGoal: 10, newItems: [], reviewItems: [] }),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
   const browserUser = userEvent.setup()
 
@@ -47,9 +47,9 @@ test('gives every signed-in page its own title', async () => {
   await screen.findByRole('heading', { name: 'overwhelmed' })
   expect(document.title).toBe('overwhelmed · VocabFlow')
 
-  await browserUser.click(screen.getByRole('link', { name: 'Today' }))
-  await screen.findByRole('heading', { name: 'Today’s plan' })
-  expect(document.title).toBe('Today’s plan · VocabFlow')
+  await browserUser.click(screen.getByRole('link', { name: 'Study' }))
+  await screen.findByRole('heading', { name: 'Study' })
+  expect(document.title).toBe('Study · VocabFlow')
 })
 
 test('offers a skip link as the first stop that moves focus to the page content', async () => {

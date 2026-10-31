@@ -1,9 +1,8 @@
 import { act, cleanup, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, getToken, setToken, TOKEN_STORAGE_KEY } from '../../shared/api/tokenStorage'
-import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, emptyStudyQueue} from '../../test/utils'
 
-const emptyVocabularyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
 const cachedUserDataKey = ['test', 'cached-user-data'] as const
 const otherUser = { ...user, id: 2, email: 'other@example.com' }
 
@@ -37,7 +36,7 @@ function signedInApi() {
       }
       return jsonResponse(authorization === 'Bearer second-token' ? otherUser : user)
     },
-    'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
   })
 }
 
@@ -45,7 +44,7 @@ test('signs out here, without a notice, when another tab signs out', async () =>
   signedInApi()
 
   const { queryClient } = renderApp('/app', (client) => client.setQueryData(cachedUserDataKey, { content: [] }))
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
 
   otherTabChangesStorage(clearToken)
 
@@ -64,14 +63,14 @@ test('signs in here when another tab signs in', async () => {
 
   otherTabChangesStorage(() => setToken('first-token'))
 
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
 })
 
 test('switches to the new account and drops the previous account’s data when another tab signs in as someone else', async () => {
   signedInApi()
 
   const { queryClient } = renderApp('/app', (client) => client.setQueryData(cachedUserDataKey, { content: ['old'] }))
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   expect(await screen.findByText(user.email)).toBeInTheDocument()
 
   otherTabChangesStorage(() => setToken('second-token'))
@@ -86,7 +85,7 @@ test('also follows a storage.clear() in another tab', async () => {
   signedInApi()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
 
   otherTabChangesStorage(() => localStorage.clear(), null)
 
@@ -97,19 +96,19 @@ test('does nothing when storage changes but the token does not', async () => {
   signedInApi()
 
   renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
 
   otherTabChangesStorage(() => localStorage.setItem('something-else', 'x'), 'something-else')
   otherTabChangesStorage(() => undefined)
 
-  expect(screen.getByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Study' })).toBeInTheDocument()
   expect(getToken()).toBe('first-token')
 })
 
 test('stops listening once the app is unmounted', async () => {
   signedInApi()
   const { unmount } = renderApp('/app')
-  await screen.findByRole('heading', { name: 'Your vocabulary' })
+  await screen.findByRole('heading', { name: 'Study' })
   const removeListener = vi.spyOn(window, 'removeEventListener')
 
   unmount()

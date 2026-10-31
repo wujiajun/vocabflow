@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -14,6 +14,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   expectNoUnexpectedRequests()
 })
@@ -26,7 +27,7 @@ test('hides the answer until asked, then shows it with what each rating would do
 
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   expect(document.title).toBe('Study · VocabFlow')
-  expect(screen.getByText('0 learning · 0 to review · 1 new')).toBeInTheDocument()
+  expect(screen.getByRole('progressbar', { name: 'New words' })).toHaveAttribute('value', '0')
   expect(screen.queryByText('Feeling unable to cope.')).not.toBeInTheDocument()
   expect(screen.queryByText(/\/ˌoʊ/)).not.toBeInTheDocument()
   expect(screen.queryByRole('group', { name: /remember/ })).not.toBeInTheDocument()
@@ -83,7 +84,7 @@ test('says when studying is finished and moves focus there', async () => {
   stubApi({
     ...signedIn(),
     'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
-    'POST /api/v1/learning/cards/7/reviews': () => jsonResponse(queue({ newCount: 0 })),
+    'POST /api/v1/learning/cards/7/reviews': () => jsonResponse(queue({ newCount: 0, finished: true })),
   })
   const browserUser = userEvent.setup()
 
@@ -91,8 +92,8 @@ test('says when studying is finished and moves focus there', async () => {
   await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
   await browserUser.click(screen.getByRole('button', { name: /^Easy/ }))
 
-  expect(await screen.findByRole('heading', { name: 'You’re done for now' })).toHaveFocus()
-  expect(screen.getByRole('link', { name: 'Go to your vocabulary' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Today’s study is complete' })).toHaveFocus()
+  expect(screen.getByRole('link', { name: 'Add new words' })).toBeInTheDocument()
 })
 
 test('with nothing to study from the start, does not take focus', async () => {
@@ -100,7 +101,7 @@ test('with nothing to study from the start, does not take focus', async () => {
 
   renderApp('/app/study')
 
-  expect(await screen.findByRole('heading', { name: 'Nothing to study right now' })).not.toHaveFocus()
+  expect(await screen.findByRole('heading', { name: 'Nothing to study yet' })).not.toHaveFocus()
 })
 
 test('says when a later learning step comes back, and counts words still waiting for details', async () => {
@@ -178,7 +179,7 @@ test('ignores a second rating while the first is being saved', async () => {
       await new Promise<void>((resolve) => {
         release = resolve
       })
-      return jsonResponse(queue({ newCount: 0 }))
+      return jsonResponse(queue({ newCount: 0, finished: true }))
     },
   })
   const browserUser = userEvent.setup()
@@ -190,7 +191,7 @@ test('ignores a second rating while the first is being saved', async () => {
   await browserUser.click(screen.getByRole('button', { name: /^Easy/ }))
   release()
 
-  await screen.findByRole('heading', { name: 'You’re done for now' })
+  await screen.findByRole('heading', { name: 'Today’s study is complete' })
   expect(posts).toBe(1)
 })
 
@@ -213,47 +214,159 @@ test('offers a retry when the queue cannot be loaded', async () => {
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
 })
 
-test('the plan page leads to studying', async () => {
-  stubApi({
-    ...signedIn(),
-    'GET /api/v1/learning/daily-plan': () =>
-      jsonResponse({ date: '2026-11-01', newVocabularyGoal: 10, newItems: [], reviewItems: [] }),
-    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
-  })
-  const browserUser = userEvent.setup()
+test('opening the app goes straight to studying, and old links to Today land there too', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
+
+  const { unmount } = renderApp('/app')
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Study' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.queryByRole('link', { name: 'Today' })).not.toBeInTheDocument()
+  unmount()
 
   renderApp('/app/today')
-  expect(await screen.findByText(/Words you add now will start today’s plan/)).toBeInTheDocument()
-  await browserUser.click(screen.getByRole('link', { name: 'Start studying' }))
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  cleanup()
 
+  renderApp('/app/somewhere-else')
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
 })
 
-test('a word added after finding an empty plan shows up in today’s plan straight away', async () => {
-  let added = false
-  const word = { userVocabularyId: 7, vocabularyItemId: 70, term: 'overwhelmed', type: 'WORD' }
+test('shows progress on new words, and on reviews only when there are any', async () => {
+  let reviews = false
   stubApi({
     ...signedIn(),
-    'GET /api/v1/learning/daily-plan': () =>
-      jsonResponse({ date: '2026-11-01', newVocabularyGoal: 10, newItems: added ? [word] : [], reviewItems: [] }),
-    'GET /api/v1/vocabulary': () => jsonResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
-    'POST /api/v1/vocabulary': () => {
-      added = true
-      return jsonResponse({ id: 7, term: 'overwhelmed', enrichmentStatus: 'COMPLETED' })
+    'GET /api/v1/learning/study-queue': () =>
+      jsonResponse(
+        reviews
+          ? queue({ newStudiedCount: 3, newTargetCount: 10, reviewsDoneCount: 2, reviewCount: 3, nextCard: card() })
+          : queue({ newStudiedCount: 3, newTargetCount: 10, nextCard: card() }),
+      ),
+  })
+
+  const first = renderApp('/app/study')
+  const progress = await screen.findByRole('region', { name: 'Today’s progress' })
+  expect(progress).toHaveTextContent('New words3 / 10')
+  expect(within(progress).getByRole('progressbar', { name: 'New words' })).toHaveAttribute('max', '10')
+  expect(within(progress).queryByRole('progressbar', { name: 'Reviews' })).not.toBeInTheDocument()
+  first.unmount()
+
+  reviews = true
+  renderApp('/app/study')
+  expect(await screen.findByRole('progressbar', { name: 'Reviews' })).toHaveAttribute('value', '2')
+  expect(screen.getByRole('region', { name: 'Today’s progress' })).toHaveTextContent('Reviews2 / 5')
+})
+
+test('the finished day lists what was studied and links each word to its page and back', async () => {
+  const finished = queue({
+    finished: true,
+    newCount: 0,
+    newStudiedCount: 1,
+    studiedToday: [{ userVocabularyId: 7, term: 'overwhelmed', learningStatus: 'FAMILIAR' }],
+  })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(finished),
+    'GET /api/v1/vocabulary/7': () =>
+      jsonResponse({ id: 7, term: 'overwhelmed', enrichmentStatus: 'COMPLETED', learningStatus: 'FAMILIAR', createdAt: '2026-10-20T12:00:00Z' }),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+
+  expect(await screen.findByRole('heading', { name: 'Today’s study is complete' })).toBeInTheDocument()
+  const studied = screen.getByRole('region', { name: 'Studied today' })
+  expect(within(studied).getByRole('listitem')).toHaveTextContent('overwhelmedFamiliar')
+  expect(screen.queryByRole('button', { name: 'Study more new words' })).not.toBeInTheDocument()
+
+  await browserUser.click(within(studied).getByRole('link', { name: 'overwhelmed' }))
+  await browserUser.click(await screen.findByRole('link', { name: '← Back to study' }))
+  expect(await screen.findByRole('heading', { name: 'Today’s study is complete' })).toBeInTheDocument()
+})
+
+test('another batch starts from the finished page and moves focus to its first card', async () => {
+  const fetchMock = stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ finished: true, moreNewWords: true, newCount: 0 })),
+    'POST /api/v1/learning/study-queue/more': () => jsonResponse(queue({ nextCard: card({ term: 'figure out' }) })),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Study more new words' }))
+
+  expect(await screen.findByRole('heading', { name: 'figure out' })).toHaveFocus()
+  const post = fetchMock.mock.calls.find(([path]) => path === '/api/v1/learning/study-queue/more')
+  expect(JSON.parse(post?.[1]?.body as string)).toEqual({ date: toLocalDateString(new Date()) })
+})
+
+test('ignores a second press while another batch is starting', async () => {
+  let posts = 0
+  let release: () => void = () => undefined
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ finished: true, moreNewWords: true, newCount: 0 })),
+    'POST /api/v1/learning/study-queue/more': async () => {
+      posts += 1
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      return jsonResponse(queue({ nextCard: card() }))
     },
   })
   const browserUser = userEvent.setup()
 
-  // The app keeps data fresh for 30 seconds; the test client would otherwise re-read on every mount.
-  renderApp('/app/today', (client) => client.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 } }))
-  await screen.findByText(/Words you add now will start today’s plan/)
-  await browserUser.click(screen.getByRole('link', { name: 'Vocabulary' }))
-  await browserUser.type(await screen.findByLabelText('New word or phrase'), 'overwhelmed')
-  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
-  await screen.findByText('Added “overwhelmed”.')
-  await browserUser.click(screen.getByRole('link', { name: 'Today' }))
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Study more new words' }))
+  await waitFor(() => expect(posts).toBe(1))
+  await browserUser.click(screen.getByRole('button', { name: 'Adding words…' }))
+  release()
 
-  expect(await screen.findByText('1 new word · daily goal 10')).toBeInTheDocument()
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+  expect(posts).toBe(1)
+})
+
+test('keeps the finished page and focus on the button when another batch cannot start', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ finished: true, moreNewWords: true, newCount: 0 })),
+    'POST /api/v1/learning/study-queue/more': () => errorResponse(500, 'INTERNAL_ERROR', 'An unexpected error occurred'),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Study more new words' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.')
+  expect(screen.getByRole('button', { name: 'Study more new words' })).toHaveFocus()
+})
+
+test('asks for the local calendar date, not the UTC date', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 29, 23, 30))
+  const fetchMock = stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue()) })
+
+  renderApp('/app/study')
+
+  await screen.findByRole('heading', { name: 'Study' })
+  expect(fetchMock).toHaveBeenCalledWith('/api/v1/learning/study-queue?date=2026-10-29', expect.anything())
+})
+
+test('moves on to the next day when the page is left open past midnight', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 29, 23, 59, 30))
+  const fetchMock = stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue()) })
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'Study' })
+
+  vi.setSystemTime(new Date(2026, 9, 30, 0, 0, 30))
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+
+  await waitFor(() =>
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/learning/study-queue?date=2026-10-30', expect.anything()),
+  )
 })
 
 test.each([
@@ -279,6 +392,12 @@ function queue(overrides: Partial<StudyQueue> = {}): StudyQueue {
     unavailableCount: 0,
     nextCard: null,
     nextDueAt: null,
+    newStudiedCount: 0,
+    newTargetCount: 10,
+    reviewsDoneCount: 0,
+    finished: false,
+    moreNewWords: false,
+    studiedToday: [],
     ...overrides,
   }
 }
