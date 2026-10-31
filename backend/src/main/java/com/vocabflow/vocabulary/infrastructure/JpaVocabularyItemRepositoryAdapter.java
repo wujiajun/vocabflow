@@ -5,6 +5,7 @@ import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.domain.*;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,11 +64,17 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
     entity.definition = result.definition();
     entity.examples = JsonSupport.write(result.examples());
     entity.collocations = JsonSupport.write(result.collocations());
+    entity.senses = VocabularySenseJson.write(result.senses());
     entity.enrichmentStatus = EnrichmentStatus.COMPLETED.name();
     entity.failureReason = null;
     entity.enrichedAt = at;
     entity.enrichmentSource = source;
     items.save(entity);
+  }
+
+  @Override
+  public List<Long> findCompletedIdsWithoutSenses() {
+    return items.findCompletedIdsWithoutSenses();
   }
 
   @Override
@@ -107,7 +114,8 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
         JsonSupport.read(entity.collocations),
         EnrichmentStatus.valueOf(entity.enrichmentStatus),
         entity.failureReason,
-        entity.createdAt);
+        entity.createdAt,
+        VocabularySenseJson.read(entity.senses));
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {

@@ -31,6 +31,9 @@ public class VocabularyItemEntity {
   @Column(name = "collocations_json")
   public String collocations;
 
+  @Column(name = "senses_json")
+  public String senses;
+
   @Column(name = "enrichment_status", nullable = false)
   public String enrichmentStatus;
 

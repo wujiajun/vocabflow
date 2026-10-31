@@ -6,6 +6,7 @@ import { usePageTitle } from '../../../shared/usePageTitle'
 import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentPanel } from '../components/EnrichmentPanel'
+import { SenseTabs } from '../components/SenseTabs'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
 import { useVocabularyDetail } from '../hooks/useVocabulary'
 
@@ -63,7 +64,7 @@ export function VocabularyDetailPage() {
     }
 
     const entry = detail.data
-    const kind = describeKind(entry.type, entry.partOfSpeech)
+    const kind = describeKind(entry.type, entry.senses.length > 1 ? null : entry.partOfSpeech)
 
     return (
       <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -73,18 +74,20 @@ export function VocabularyDetailPage() {
         </div>
         <EnrichmentPanel entry={entry} onCheckAgain={() => void detail.refetch()} />
         <p className="mt-2 text-sm text-slate-500">
-          {[kind, entry.phonetic, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}
+          {[kind, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}
         </p>
         {accent === 'other' ? (
           <p className="mt-1 text-xs text-amber-800">
             No American English voice was found on this device, so another English voice is used.
           </p>
         ) : null}
-        <Section title="Definition">
-          <p className="leading-7 text-slate-800">{entry.definition ?? 'Definition not available yet.'}</p>
-        </Section>
-        <ListSection items={entry.examples} title="Examples" />
-        <ListSection items={entry.collocations} title="Collocations" />
+        <div className="mt-6">
+          {entry.senses.length > 0 ? (
+            <SenseTabs headingLevel="h2" key={entry.id} senses={entry.senses} />
+          ) : (
+            <p className="leading-7 text-slate-800">Definition not available yet.</p>
+          )}
+        </div>
         <p className="mt-8 text-xs text-slate-500">
           Added {new Date(entry.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
         </p>
@@ -95,29 +98,4 @@ export function VocabularyDetailPage() {
 
 function isNotFound(error: unknown) {
   return error instanceof ApiClientError && (error.status === 404 || error.status === 400)
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-6">
-      <h2 className="text-sm font-semibold tracking-wide text-slate-500 uppercase">{title}</h2>
-      <div className="mt-2">{children}</div>
-    </section>
-  )
-}
-
-function ListSection({ title, items }: { title: string; items: string[] | null }) {
-  if (!items || items.length === 0) {
-    return null
-  }
-
-  return (
-    <Section title={title}>
-      <ul className="list-disc space-y-1.5 pl-5 text-slate-800">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </Section>
-  )
 }

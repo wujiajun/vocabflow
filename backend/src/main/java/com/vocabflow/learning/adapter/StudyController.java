@@ -35,6 +35,14 @@ public class StudyController {
   /** Exactly one of minutes and days is set: when the card comes back after this rating. */
   record RatingOption(String rating, Long intervalMinutes, Integer intervalDays) {}
 
+  record Sense(
+      String partOfSpeech,
+      String label,
+      String phonetic,
+      String definition,
+      List<String> examples,
+      List<String> collocations) {}
+
   record Card(
       long userVocabularyId,
       String term,
@@ -44,6 +52,7 @@ public class StudyController {
       String definition,
       List<String> examples,
       List<String> collocations,
+      List<Sense> senses,
       String state,
       int version,
       List<RatingOption> options) {}
@@ -126,6 +135,17 @@ public class StudyController {
         content.definition(),
         content.examples(),
         content.collocations(),
+        content.senses().stream()
+            .map(
+                sense ->
+                    new Sense(
+                        sense.partOfSpeech(),
+                        sense.label(),
+                        sense.phonetic(),
+                        sense.definition(),
+                        sense.examples(),
+                        sense.collocations()))
+            .toList(),
         next.card().state().name(),
         next.version(),
         Arrays.stream(Rating.values())

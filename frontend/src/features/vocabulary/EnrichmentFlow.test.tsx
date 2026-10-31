@@ -221,6 +221,9 @@ function entry(overrides: Partial<VocabularyEntry> = {}): VocabularyEntry {
     definition: null,
     examples: null,
     collocations: null,
+    senses: overrides.definition
+      ? [{ partOfSpeech: null, label: null, phonetic: null, definition: overrides.definition, examples: null, collocations: null }]
+      : [],
     enrichmentStatus: 'COMPLETED',
     failureReason: null,
     learningStatus: 'NEW',

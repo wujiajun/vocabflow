@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class VocabularyApiTests {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
+  @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
   String token(String email) throws Exception {
     String v =
@@ -130,6 +131,50 @@ class VocabularyApiTests {
         .andExpect(jsonPath("$.totalElements").value(1));
     mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + b))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void returnsEachMeaningOfAWordAndASingleOneForWordsWithoutAny() throws Exception {
+    String token = token("senses@example.com");
+    long resume = add(token, "resume");
+    long other = add(token, "something plain");
+
+    mvc.perform(get("/api/v1/vocabulary/" + resume).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.senses.length()").value(2))
+        .andExpect(jsonPath("$.senses[0].label").value("document"))
+        .andExpect(jsonPath("$.senses[1].partOfSpeech").value("verb"))
+        .andExpect(jsonPath("$.senses[1].phonetic").value("/rɪˈzuːm/"))
+        .andExpect(jsonPath("$.definition").value(org.hamcrest.Matchers.startsWith("A short")));
+    mvc.perform(get("/api/v1/vocabulary/" + other).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.senses.length()").value(1));
+
+    jdbc.update(
+        "UPDATE vocabulary_items SET senses_json = NULL WHERE normalized_term = ?",
+        "something plain");
+    mvc.perform(get("/api/v1/vocabulary/" + other).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.senses.length()").value(1))
+        .andExpect(jsonPath("$.senses[0].label").isEmpty())
+        .andExpect(jsonPath("$.senses[0].definition").isNotEmpty());
+    mvc.perform(
+            get("/api/v1/learning/study-queue?date=2026-12-20")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.nextCard.term").value("resume"))
+        .andExpect(jsonPath("$.nextCard.senses.length()").value(2));
+  }
+
+  private long add(String token, String term) throws Exception {
+    return json.readTree(
+            mvc.perform(
+                    post("/api/v1/vocabulary")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"term\":\"" + term + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString())
+        .get("id")
+        .asLong();
   }
 
   private void assertApiErrorSchema(String body) throws Exception {

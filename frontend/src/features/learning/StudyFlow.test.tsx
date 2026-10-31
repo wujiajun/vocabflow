@@ -38,9 +38,32 @@ test('hides the answer until asked, then shows it with what each rating would do
   expect(screen.getByText(/\/ˌoʊvərˈwelmd\//)).toBeInTheDocument()
   expect(screen.getByText('I felt overwhelmed.')).toBeInTheDocument()
   expect(screen.getByText('feel overwhelmed')).toBeInTheDocument()
-  expect(screen.getByText('Feeling unable to cope.').parentElement).toHaveFocus()
+  expect(screen.getByText('Feeling unable to cope.').closest('[tabindex="-1"]')).toHaveFocus()
   const ratings = within(screen.getByRole('group', { name: /remember/ })).getAllByRole('button')
   expect(ratings.map((button) => button.textContent)).toEqual(['Again1 min', 'Hard1 min', 'Good10 min', 'Easy4 days'])
+})
+
+test('a card with several meanings offers them as tabs, says how many, and starts hidden again', async () => {
+  const resume = card({
+    term: 'resume',
+    senses: [
+      { partOfSpeech: 'noun', label: 'document', phonetic: '/ˈrezəmeɪ/', definition: 'A work history.', examples: ['Send it.'], collocations: [] },
+      { partOfSpeech: 'verb', label: 'start again', phonetic: '/rɪˈzuːm/', definition: 'To begin again.', examples: ['We resume soon.'], collocations: [] },
+    ],
+  })
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: resume })) })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+
+  expect(screen.getByText('2 meanings')).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'noun · document' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByText('A work history.')).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('tab', { name: 'verb · start again' }))
+  expect(screen.getByText('To begin again.')).toBeInTheDocument()
+  expect(screen.getByText('/rɪˈzuːm/')).toBeInTheDocument()
+  expect(screen.queryByText('A work history.')).not.toBeInTheDocument()
 })
 
 test('sends the rating with the card’s version and today’s date, then moves on to the next card', async () => {
@@ -294,7 +317,7 @@ test('the finished day lists what was studied and links each word to its page an
     ...signedIn(),
     'GET /api/v1/learning/study-queue': () => jsonResponse(finished),
     'GET /api/v1/vocabulary/7': () =>
-      jsonResponse({ id: 7, term: 'overwhelmed', enrichmentStatus: 'COMPLETED', learningStatus: 'FAMILIAR', createdAt: '2026-10-20T12:00:00Z' }),
+      jsonResponse({ id: 7, term: 'overwhelmed', senses: [], enrichmentStatus: 'COMPLETED', learningStatus: 'FAMILIAR', createdAt: '2026-10-20T12:00:00Z' }),
   })
   const browserUser = userEvent.setup()
 
@@ -441,6 +464,16 @@ function card(overrides: Partial<StudyCard> = {}): StudyCard {
     definition: 'Feeling unable to cope.',
     examples: ['I felt overwhelmed.'],
     collocations: ['feel overwhelmed'],
+    senses: [
+      {
+        partOfSpeech: 'adjective',
+        label: null,
+        phonetic: '/ˌoʊvərˈwelmd/',
+        definition: 'Feeling unable to cope.',
+        examples: ['I felt overwhelmed.'],
+        collocations: ['feel overwhelmed'],
+      },
+    ],
     state: 'NEW',
     version: 3,
     options: [

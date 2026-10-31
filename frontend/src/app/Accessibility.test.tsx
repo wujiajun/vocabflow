@@ -230,6 +230,7 @@ function entry(id: number, term: string) {
     definition: null,
     examples: null,
     collocations: null,
+    senses: [],
     enrichmentStatus: 'COMPLETED' as const,
     learningStatus: 'NEW' as const,
     createdAt: '2026-10-20T12:00:00Z',

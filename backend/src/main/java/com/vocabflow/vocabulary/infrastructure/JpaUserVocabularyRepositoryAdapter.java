@@ -105,7 +105,8 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
             JsonSupport.read(item.collocations),
             EnrichmentStatus.valueOf(item.enrichmentStatus),
             item.failureReason,
-            item.createdAt),
+            item.createdAt,
+            VocabularySenseJson.read(item.senses)),
         LearningStatus.valueOf(entity.learningStatus),
         entity.createdAt);
   }

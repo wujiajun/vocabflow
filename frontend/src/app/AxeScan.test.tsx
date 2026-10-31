@@ -17,6 +17,10 @@ const word = {
   definition: 'Feeling unable to deal with a situation because there is too much to do.',
   examples: ['I felt overwhelmed during my first week at work.'],
   collocations: ['feel overwhelmed'],
+  senses: [
+    { partOfSpeech: 'adjective', label: 'too much', phonetic: '/ˌoʊvərˈwelmd/', definition: 'Feeling unable to cope.', examples: ['I felt overwhelmed.'], collocations: ['feel overwhelmed'] },
+    { partOfSpeech: 'verb', label: 'defeated', phonetic: null, definition: 'Completely defeated.', examples: ['They were overwhelmed.'], collocations: [] },
+  ],
   enrichmentStatus: 'COMPLETED',
   learningStatus: 'NEW',
   createdAt: '2026-10-20T12:00:00Z',
@@ -144,6 +148,10 @@ test('the study page has no axe violations, before and after revealing the answe
     definition: 'A definition.',
     examples: ['An example.'],
     collocations: ['a collocation'],
+    senses: [
+      { partOfSpeech: 'noun', label: 'first', phonetic: '/x/', definition: 'A definition.', examples: ['An example.'], collocations: ['a collocation'] },
+      { partOfSpeech: 'verb', label: 'second', phonetic: null, definition: 'Another.', examples: [], collocations: [] },
+    ],
     state: 'NEW',
     version: 0,
     options: [option('AGAIN', 1, null), option('HARD', 1, null), option('GOOD', 10, null), option('EASY', null, 4)],

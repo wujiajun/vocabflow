@@ -11,6 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 public interface VocabularyItemJpaRepository extends JpaRepository<VocabularyItemEntity, Long> {
   Optional<VocabularyItemEntity> findByNormalizedTerm(String s);
 
+  @Query(
+      "select e.id from VocabularyItemEntity e"
+          + " where e.enrichmentStatus = 'COMPLETED' and e.senses is null order by e.id")
+  List<Long> findCompletedIdsWithoutSenses();
+
   @Transactional
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query(

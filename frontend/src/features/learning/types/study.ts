@@ -1,4 +1,4 @@
-import type { LearningStatus, VocabularyType } from '../../vocabulary/types/vocabulary'
+import type { LearningStatus, VocabularySense, VocabularyType } from '../../vocabulary/types/vocabulary'
 
 export type Rating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 
@@ -18,6 +18,7 @@ export interface StudyCard {
   definition: string | null
   examples: string[] | null
   collocations: string[] | null
+  senses: VocabularySense[]
   state: 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING'
   version: number
   options: RatingOption[]

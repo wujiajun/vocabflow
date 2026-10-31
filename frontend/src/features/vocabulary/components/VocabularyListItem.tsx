@@ -6,7 +6,8 @@ import { EnrichmentBadge } from './EnrichmentBadge'
 import { describeKind } from './formatVocabulary'
 
 export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
-  const kind = describeKind(entry.type, entry.partOfSpeech)
+  const severalMeanings = entry.senses.length > 1
+  const kind = describeKind(entry.type, severalMeanings ? null : entry.partOfSpeech)
   const location = useLocation()
 
   return (
@@ -19,6 +20,7 @@ export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-base font-semibold text-slate-950 [overflow-wrap:anywhere]">{entry.term}</span>
           {kind ? <span className="text-sm text-slate-600">{kind}</span> : null}
+          {severalMeanings ? <span className="text-sm text-slate-600">{entry.senses.length} meanings</span> : null}
           <EnrichmentBadge status={entry.enrichmentStatus} />
         </div>
         {entry.definition ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{entry.definition}</p> : null}

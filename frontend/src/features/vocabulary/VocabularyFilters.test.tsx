@@ -18,7 +18,7 @@ afterEach(() => {
 })
 
 function entry(id: number, term: string) {
-  return { id, term, type: null, phonetic: null, partOfSpeech: null, definition: null, examples: null, collocations: null, enrichmentStatus: 'COMPLETED', failureReason: null, learningStatus: 'NEW', createdAt: '2026-10-20T12:00:00Z' }
+  return { id, term, type: null, phonetic: null, partOfSpeech: null, definition: null, examples: null, collocations: null, senses: [], enrichmentStatus: 'COMPLETED', failureReason: null, learningStatus: 'NEW', createdAt: '2026-10-20T12:00:00Z' }
 }
 
 function page(content: unknown[], totalPages = 1, number = 0) {
