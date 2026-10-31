@@ -71,7 +71,7 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
 | `/app` | Redirects to `/app/vocabulary`; everything under `/app` needs a session |
 | `/app/vocabulary` | Add a word or phrase and browse the paginated list; the page is in the URL as `?page=N` (1-based, anything unusable means page 1) |
-| `/app/vocabulary/:id` | One vocabulary entry; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
+| `/app/vocabulary/:id` | One vocabulary entry; while it is still being enriched the page polls, and a failed entry offers “Retry details”; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
 | `/app/today` | Today's learning plan |
 
 ## Authentication behaviour
@@ -92,5 +92,6 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 - jsdom has no Web Speech API. `installSpeechSynthesis` in `src/test/speech.ts` installs a fake with controllable voices and playback; without it the pronunciation buttons are not rendered.
 - `src/app/AxeScan.test.tsx` runs axe-core (a dev dependency) on every main page and fails on any rule violation; add a page or a new error state there when you add one. jsdom cannot compute colors, so contrast is checked in a real browser instead.
 - `src/test/setup.ts` unmounts everything after each test, because Vitest globals are off and Testing Library cannot do it itself. A component left mounted can schedule React work that fires after the file ends; CI then fails with "window is not defined" even though every test passed.
+- Enrichment polling timings live in `features/vocabulary/hooks/pollingConfig.ts`; tests mock that module to poll in milliseconds (see `EnrichmentFlow.test.tsx`).
 - Tests that use fake timers should fake only `Date` (`vi.useFakeTimers({ toFake: ['Date'] })`) so Testing Library's async waits keep working.
 - Do not weaken or delete a test to make it pass.

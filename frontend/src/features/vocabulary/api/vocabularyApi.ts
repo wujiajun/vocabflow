@@ -14,6 +14,10 @@ export function listVocabulary(page: number, size: number) {
   return apiClient<VocabularyPage>(`${vocabularyPath}?page=${page}&size=${size}`)
 }
 
+export function retryEnrichment(id: number) {
+  return apiClient<VocabularyEntry>(`${vocabularyPath}/${id}/enrichment/retry`, { method: 'POST' })
+}
+
 export function getVocabulary(id: number) {
   return apiClient<VocabularyEntry>(`${vocabularyPath}/${id}`)
 }

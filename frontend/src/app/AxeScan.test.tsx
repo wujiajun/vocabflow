@@ -122,3 +122,22 @@ test('today’s plan has no axe violations', async () => {
 test('the page declares its language in index.html', () => {
   expect(indexHtml).toMatch(/<html[^>]*\slang="en"/)
 })
+
+test('a word that is still being enriched, and one that failed, have no axe violations', async () => {
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/vocabulary/8': () => jsonResponse(pending),
+    'GET /api/v1/vocabulary/9': () =>
+      jsonResponse({ ...word, id: 9, term: 'broken', enrichmentStatus: 'FAILED', failureReason: 'Enrichment could not be completed' }),
+  })
+
+  renderApp('/app/vocabulary/8')
+  await screen.findByText(/Filling in the details/)
+  await expectNoAxeViolations()
+  cleanup()
+
+  renderApp('/app/vocabulary/9')
+  await screen.findByRole('button', { name: 'Retry details' })
+  await expectNoAxeViolations()
+})

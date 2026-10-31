@@ -243,7 +243,7 @@ test('shows a placeholder for details that have not been enriched yet', async ()
   renderApp('/app/vocabulary/3')
 
   expect(await screen.findByRole('heading', { name: 'waiting' })).toBeInTheDocument()
-  expect(screen.getByText('Enriching…')).toBeInTheDocument()
+  expect(screen.getByText(/Filling in the details/)).toBeInTheDocument()
   expect(screen.getByText('Definition not available yet.')).toBeInTheDocument()
 })
 
@@ -383,6 +383,7 @@ function entry(overrides: Partial<VocabularyEntry> & Pick<VocabularyEntry, 'id' 
     examples: null,
     collocations: null,
     enrichmentStatus: 'COMPLETED',
+    failureReason: null,
     learningStatus: 'NEW',
     createdAt: '2026-10-20T12:00:00Z',
     ...overrides,
