@@ -42,7 +42,7 @@ vocabflow/
 │       │   ├── learning/      每日计划、计划持久化、并发恢复
 │       │   ├── security/      Bearer校验、签名/撤销、Security JSON错误
 │       │   └── shared/        公共Web错误响应（ApiExceptionHandler）与JSON支持
-│       ├── main/resources/   application配置与db/migration/V1…V5
+│       ├── main/resources/   application配置与db/migration/V1…V6
 │       └── test/java/        快速测试与integration/*IT
 ├── frontend/
 │   ├── AGENTS.md              前端工程约定
@@ -162,7 +162,7 @@ npm run dev
 
 **本次实际运行的结果**（2026-10-29 至 10-30，在当前分支代码上）：
 
-- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 55 个测试通过；`./mvnw verify` 通过，包含 19 个 MySQL 8.4 Testcontainers IT（`MysqlFlywayIT` 1、`MysqlPersistenceIT` 9、`VocabularyConcurrencyIT` 2、`VocabularyEnrichmentRepairIT` 4、`EnrichmentClaimIT` 3）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
+- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 98 个测试通过；`./mvnw verify` 通过，包含 21 个 MySQL 8.4 Testcontainers IT。最近一次后端改动是间隔复习（分支 `spaced-repetition-backend`）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
 - 前端：`npm run lint`、`typecheck`、`test`（170 个测试）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
@@ -194,6 +194,9 @@ npm run dev
 - `DueReviewProvider` 已有边界，当前实现返回空列表。
 - 显式应用层只读事务、独立写事务和独立冲突重读事务；聚合保存失败回滚。
 - `GET /api/v1/learning/daily-plan` 及可选日期参数；缺省日期按UTC计算。
+- **间隔复习（后端）**：`SpacedRepetitionScheduler` 是纯函数，实现 Anki 式 SM-2 的默认参数：学习步骤 1 和 10 分钟，毕业 1 天，Easy 4 天，初始难度系数 2.5，最低 1.3，遗忘后重学 10 分钟，之后间隔回到 1 天；没有随机抖动。过期复习按 Anki 的方式计入延迟（Hard 1/4、Good 1/2、Easy 全部）。词在第一次评分时建 `learning_cards`，每次评分写 `review_logs`。`learning_status` 由卡片决定：学习或重学中是 `LEARNING`，间隔不足 21 天是 `FAMILIAR`，21 天及以上是 `MASTERED`。
+- **学习队列**：`GET /api/v1/learning/study-queue?date=` 返回下一张卡和四个评分各自的结果。顺序：到期的学习步骤、到期复习、当天计划里的新词；都没有时，20 分钟内到期的学习步骤会提前出现（和 Anki 一样）。补全没完成的词只计数不出现。每日目标只限制新词，复习没有上限。
+- **计划**：空计划不再保存，当天加词后能生成计划。已生成的计划仍不变；复习项是生成时的快照，学习队列用的是实时数据，所以两者可能不完全一致。到期复习现在由 `CardDueReviewProvider` 提供。
 
 ### 之后的后端修复
 
@@ -228,6 +231,8 @@ npm run dev
 | POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409；创建返回的 `enrichmentStatus` 通常是 `PENDING` |
 | GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
 | POST `/api/v1/vocabulary/{id}/enrichment/retry` | 重试 `FAILED` 词条的补全；非 FAILED 409；超过每日次数 429；别人的 404 |
+| GET `/api/v1/learning/study-queue` | 下一张卡、各评分结果、各队列数量、`nextDueAt`；`date` 可选 |
+| POST `/api/v1/learning/cards/{userVocabularyId}/reviews` | `{rating,version,date}`，返回新的队列；`version` 过期 409，别人的词 404 |
 | GET `/api/v1/learning/daily-plan` | 返回 `{date,newVocabularyGoal,newItems,reviewItems}`，注意goal字段名与用户DTO不同；计划项只有 `userVocabularyId、vocabularyItemId、term、type`，没有释义 |
 | 前端 `/` | 根据认证状态跳 `/login` 或 `/app` |
 | 前端 `/login`、`/register` | 已登录者跳 `/app`；未登录者显示表单 |
@@ -302,7 +307,7 @@ npm run dev
 | 浏览器验收的覆盖面 | 见第 3 节：读屏软件、MySQL 联调、晚上本地与 UTC 日期不同的真实表现仍未验证 |
 | 登出请求在网络日志里显示 `ERR_ABORTED` | 状态是200，验证时没有追查原因，看起来无害，但没有解释清楚 |
 | preview编译配置 | `--enable-preview` 已验证不影响编译和测试，但项目是否需要它仍未知；先确认意图，勿自动删除/扩散运行参数 |
-| fake补全与复习占位 | deterministic fake不是AI；reviewItems当前为空；没有掌握度/评估/复习调度。不能为充数据编造业务算法 |
+| fake补全与复习占位 | deterministic fake不是AI；没有掌握度/评估/复习调度。不能为充数据编造业务算法 |
 | 并发测试边界 | 词汇并发创建有真实 MySQL 多线程 IT；学习计划有服务 mock 冲突路径、MySQL 重复键和失败回滚测试，但没有多线程端到端 get-or-create 竞争测试 |
 | token后续加固 | 当前token未含随机nonce，同用户同秒签发可能得到相同token；撤销记录未见过期清理任务。这些应单独评估，不能在普通前端任务中改变签名格式 |
 | 生产部署 | Vite本地服务的proxy不随dist部署；尚无完整生产SPA回退/同源API转发/CORS部署方案，禁止把开发默认DB连接及profile当生产模板 |
@@ -310,7 +315,7 @@ npm run dev
 必须保护：
 
 - 不重写已完成认证/安全/词汇持久化解耦/学习事务加固，除非当前任务明确包含必要修改。
-- 不编辑既有Flyway V1–V5内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
+- 不编辑既有Flyway V1–V6内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
 - 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言（现为4）。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
 - Open-in-View已关闭；当前映射所用关联依赖明确的抓取策略，改为LAZY时必须保证事务内映射/显式fetch，不能依靠控制器持有会话。
 - 不把token存在视作唯一认证证明，不信任客户端 `userId`，不输出密码/token/密钥。

@@ -51,7 +51,7 @@ Package root `com.vocabflow`. Modules `identity`, `vocabulary`, and `learning` e
 - `domain/`: plain Java with invariants (`Email`, `ClbLevel`, `VocabularyTerm`, `DailyLearningPlan`, …). No Spring/JPA.
 - `application/`: services plus **ports**, which are interfaces such as `UserRepository`, `VocabularyEnrichmentProvider`, `LearningVocabularyQuery`, and `DueReviewProvider`. Services may use `@Transactional` but never JPA entities or Spring Data repositories.
 - `adapter/`: REST controllers and their request/response DTOs.
-- `infrastructure/`: JPA entities, Spring Data repositories, and port adapters (`Jpa*RepositoryAdapter`). Also the enrichment providers: `ClaudeVocabularyEnrichmentAdapter` (real model, enabled with `vocabflow.enrichment.provider=claude`) and `FakeVocabularyEnrichmentAdapter` (deterministic, not AI, the default), plus the stub `EmptyDueReviewProvider` (`reviewItems` is always empty).
+- `infrastructure/`: JPA entities, Spring Data repositories, and port adapters (`Jpa*RepositoryAdapter`). Also the enrichment providers: `ClaudeVocabularyEnrichmentAdapter` (real model, enabled with `vocabflow.enrichment.provider=claude`) and `FakeVocabularyEnrichmentAdapter` (deterministic, not AI, the default).
 
 Cross-cutting packages:
 
@@ -64,6 +64,7 @@ Key cross-module rules:
 - `VocabularyItem` is shared content. `UserVocabulary` is the per-user relationship, unique on `(user_id, vocabulary_item_id)`. `/api/v1/vocabulary/{id}` takes the `UserVocabulary` id.
 - `VocabularyTerm` keeps display casing. Matching uses `normalized()` (trimmed/collapsed whitespace, `Locale.ROOT` lowercase), and both values are stored as `term` and `normalized_term`.
 - Enrichment is asynchronous. `VocabularyService.add` saves the item PENDING and hands `VocabularyEnrichmentService` to an `EnrichmentScheduler` (a small in-process thread pool; `vocabflow.enrichment.inline=true` runs it on the caller's thread and is set only in the test profile). Only the caller that wins `VocabularyItemRepository.claimForEnrichment` (one conditional UPDATE to PROCESSING; a PROCESSING item older than 5 minutes counts as lost) may call the provider, and each call is charged to the acting user's per-day count in `enrichment_usage` (UTC day). Nothing in that path may run inside a shared transaction. Retry is `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED only; 429 `ENRICHMENT_LIMIT_REACHED` when over the limit).
+- Studying uses SM-2 as Anki applies it. `learning/domain/SpacedRepetitionScheduler` is pure and deterministic. A word has a `learning_cards` row from its first rating; every rating adds a `review_logs` row. `StudyService` must stay non-transactional (`createIfAbsent` catches a duplicate key and the plan path manages its own transactions); the writes for one rating happen together in `ReviewTransaction`, a separate bean. A stale `version` gives 409. `learning_status` is derived from the card (`ReviewCard.learningStatus()`). An empty daily plan is returned but not stored.
 - The daily plan get-or-create path spans three transactions and must stay that way:
   1. `DailyLearningPlanService` runs a read-only transaction.
   2. `DailyLearningPlanInsertTransaction` writes with `REQUIRES_NEW`. Its duplicate-key exception is caught by the adapter after that transaction ends.
@@ -74,7 +75,7 @@ Key cross-module rules:
 
 Persistence notes:
 
-- Migrations live in `src/main/resources/db/migration`, and V1–V5 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(5)`).
+- Migrations live in `src/main/resources/db/migration`, and V1–V6 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(6)`).
 - Open-in-View is disabled. Mapping happens inside transactions.
 - MySQL ITs extend `integration/MysqlIntegrationTest`, which supplies the container datasource.
 - `pom.xml` configures `maven-compiler-plugin` with `--enable-preview`. It does not break `test` or `verify`, but nobody has confirmed why it is there, so don't remove it or spread it to other places.

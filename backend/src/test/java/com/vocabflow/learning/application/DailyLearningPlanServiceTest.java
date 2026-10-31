@@ -64,13 +64,44 @@ class DailyLearningPlanServiceTest {
         new DailyLearningPlan(10, 7, date, 2, clock.instant(), List.of(), List.of());
     when(plans.findByUserIdAndLearningDate(7L, date)).thenReturn(Optional.empty());
     when(users.findById(7L)).thenReturn(Optional.of(user(7L, 2)));
-    when(vocabulary.findNewVocabularyForUser(7L, 2)).thenReturn(List.of());
+    when(vocabulary.findNewVocabularyForUser(7L, 2)).thenReturn(List.of(candidate(10L, "first")));
     when(reviews.findDueReviews(7L, date)).thenReturn(List.of());
     when(plans.saveIfAbsent(any(DailyLearningPlan.class))).thenReturn(Optional.empty());
     when(conflictRecovery.reload(7L, date)).thenReturn(persisted);
 
     assertThat(service.getOrCreate(7L, date)).isEqualTo(persisted);
     verify(conflictRecovery).reload(7L, date);
+  }
+
+  @Test
+  void doesNotStoreAnEmptyPlanSoWordsAddedLaterCanStillStartOne() {
+    LocalDate date = LocalDate.of(2026, 8, 28);
+    when(plans.findByUserIdAndLearningDate(7L, date)).thenReturn(Optional.empty());
+    when(users.findById(7L)).thenReturn(Optional.of(user(7L, 2)));
+    when(vocabulary.findNewVocabularyForUser(7L, 2)).thenReturn(List.of());
+    when(reviews.findDueReviews(7L, date)).thenReturn(List.of());
+
+    DailyLearningPlan plan = service.getOrCreate(7L, date);
+
+    assertThat(plan.newItems()).isEmpty();
+    assertThat(plan.learningDate()).isEqualTo(date);
+    verify(plans, never()).saveIfAbsent(any(DailyLearningPlan.class));
+  }
+
+  @Test
+  void storesAPlanThatHasOnlyReviews() {
+    LocalDate date = LocalDate.of(2026, 8, 29);
+    when(plans.findByUserIdAndLearningDate(7L, date)).thenReturn(Optional.empty());
+    when(users.findById(7L)).thenReturn(Optional.of(user(7L, 2)));
+    when(vocabulary.findNewVocabularyForUser(7L, 2)).thenReturn(List.of());
+    when(reviews.findDueReviews(7L, date))
+        .thenReturn(List.of(new ReviewCandidate(10L, 110L, "due", VocabularyType.WORD)));
+    when(plans.saveIfAbsent(any(DailyLearningPlan.class)))
+        .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+
+    assertThat(service.getOrCreate(7L, date).reviewItems())
+        .extracting(DailyLearningPlanItem::term)
+        .containsExactly("due");
   }
 
   private User user(long id, int goal) {

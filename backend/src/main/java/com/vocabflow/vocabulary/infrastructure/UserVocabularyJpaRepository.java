@@ -13,4 +13,6 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
       Long userId, String learningStatus, Pageable pageable);
 
   Optional<UserVocabularyEntity> findByIdAndUserId(Long id, Long userId);
+
+  List<UserVocabularyEntity> findByUserIdAndIdIn(Long userId, Collection<Long> ids);
 }
