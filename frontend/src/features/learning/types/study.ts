@@ -37,9 +37,12 @@ export interface StudyQueue {
   unavailableCount: number
   nextCard: StudyCard | null
   nextDueAt: string | null
-  newStudiedCount: number
+  // Every word of this study is in exactly one of these, whether it is new or a review.
+  studiedCount: number
+  stillLearningCount: number
+  notStartedCount: number
   newTargetCount: number
-  reviewsDoneCount: number
+  goalShortfall: number
   finished: boolean
   moreNewWords: boolean
   studiedToday: StudiedWord[]

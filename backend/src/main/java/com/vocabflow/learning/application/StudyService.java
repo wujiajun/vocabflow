@@ -86,6 +86,18 @@ public class StudyService {
     Instant nextDueAt =
         next.isPresent() || learning.isEmpty() ? null : learning.getFirst().card().dueAt();
 
+    List<StudyQueue.StudiedWord> studiedToday = studiedToday(userId, date);
+    Set<Long> stillToCome = new HashSet<>();
+    for (List<StoredCard> group : List.of(learning, reviews, fresh)) {
+      group.forEach(stored -> stillToCome.add(stored.userVocabularyId()));
+    }
+    int studied =
+        (int)
+            studiedToday.stream()
+                .filter(word -> !stillToCome.contains(word.userVocabularyId()))
+                .count();
+    int target = Math.max(growth.target(plan), planned.size());
+
     return new StudyQueue(
         date,
         learningAhead.size(),
@@ -94,12 +106,12 @@ public class StudyService {
         unavailable,
         next.map(stored -> nextCard(stored, contents, now, date)).orElse(null),
         nextDueAt,
-        (int) planned.size() - newCards.size(),
-        Math.max(growth.target(plan), planned.size()),
-        cards.countReviewsDoneOn(userId, date),
+        new StudyQueue.Progress(studied, learning.size(), reviews.size() + fresh.size()),
+        target,
+        target - planned.size(),
         plan.finishedAt() != null,
         growth.hasNewWordsBeyond(plan),
-        studiedToday(userId, date));
+        studiedToday);
   }
 
   private List<StudyQueue.StudiedWord> studiedToday(long userId, LocalDate date) {

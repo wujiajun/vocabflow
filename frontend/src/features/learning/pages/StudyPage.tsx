@@ -38,8 +38,8 @@ export function StudyPage() {
           {queue.data.unavailableCount > 0 ? (
             <p className="mt-1 text-sm text-slate-600">
               {queue.data.unavailableCount === 1
-                ? '1 word is waiting for its details.'
-                : `${queue.data.unavailableCount} words are waiting for their details.`}
+                ? '1 word isn’t ready to study yet.'
+                : `${queue.data.unavailableCount} words aren’t ready to study yet.`}
             </p>
           ) : null}
           <div className="mt-6">

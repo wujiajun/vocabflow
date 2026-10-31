@@ -23,12 +23,19 @@ public record StudyQueue(
     int unavailable,
     NextCard nextCard,
     Instant nextDueAt,
-    int newStudied,
+    Progress progress,
     int newTarget,
-    int reviewsDone,
+    int goalShortfall,
     boolean finished,
     boolean moreNewWords,
     List<StudiedWord> studiedToday) {
+  /**
+   * Every word of this study is in exactly one group, whether it is new or a review: {@code
+   * studied} will not come back in this study, {@code learning} has been rated and will, and {@code
+   * notStarted} has not been rated. Words without finished details are left out.
+   */
+  public record Progress(int studied, int learning, int notStarted) {}
+
   public record StudiedWord(long userVocabularyId, String term, LearningStatus status) {}
 
   public record NextCard(
