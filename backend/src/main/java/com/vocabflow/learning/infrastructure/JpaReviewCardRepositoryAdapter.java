@@ -109,6 +109,16 @@ public class JpaReviewCardRepositoryAdapter implements ReviewCardRepository {
     logs.save(entity);
   }
 
+  @Override
+  public List<Long> findStudiedOn(long userId, LocalDate date) {
+    return logs.findStudiedOn(userId, date);
+  }
+
+  @Override
+  public int countReviewsDoneOn(long userId, LocalDate date) {
+    return logs.countReviewsDoneOn(userId, date);
+  }
+
   private void copy(ReviewCard card, LearningCardEntity entity) {
     entity.state = card.state().name();
     entity.stepIndex = card.stepIndex();

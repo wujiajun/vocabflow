@@ -10,7 +10,20 @@ public record DailyLearningPlan(
     int newVocabularyGoal,
     Instant createdAt,
     List<DailyLearningPlanItem> newItems,
-    List<DailyLearningPlanItem> reviewItems) {
+    List<DailyLearningPlanItem> reviewItems,
+    int extraNewItems,
+    Instant finishedAt) {
+  public DailyLearningPlan(
+      long id,
+      long userId,
+      LocalDate learningDate,
+      int newVocabularyGoal,
+      Instant createdAt,
+      List<DailyLearningPlanItem> newItems,
+      List<DailyLearningPlanItem> reviewItems) {
+    this(id, userId, learningDate, newVocabularyGoal, createdAt, newItems, reviewItems, 0, null);
+  }
+
   public DailyLearningPlan {
     newItems = List.copyOf(newItems);
     reviewItems = List.copyOf(reviewItems);

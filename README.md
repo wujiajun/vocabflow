@@ -30,6 +30,8 @@ The frontend is feature-oriented (`src/features/<name>/{api,hooks,components,pag
 
 Studying follows SM-2 as Anki applies it, with Anki's default settings and no random interval fuzz: learning steps of 1 and 10 minutes, a graduating interval of 1 day, 4 days for Easy, starting ease 2.5, minimum 1.3, and a 10-minute relearning step after forgetting. `GET /api/v1/learning/study-queue` returns the next card with what each rating would do: learning steps due now, then due reviews, then today's new words; with nothing else left, a step due within 20 minutes is offered early. Words whose details are not ready are counted but not offered. A rating with an out-of-date `version` returns 409. Status follows the card: `LEARNING` while in steps, `FAMILIAR` under a 21-day interval, `MASTERED` from 21 days. Every rating is stored in `review_logs`.
 
+A day's plan gains newly added words, up to the daily goal, until the day is finished: when a rating leaves nothing due and no learning step to come. After that, new words wait for another batch or the next day. Existing plan items and their order never change.
+
 `GET /api/v1/learning/daily-plan` creates or returns one stable plan for the authenticated user and learning date. Pass an optional ISO date, for example `?date=2026-08-25`; without it, “today” is the current UTC date. The web app always sends the browser's local date, because the UTC date is already tomorrow in the evening west of Greenwich. New items are selected from the user's `NEW` vocabulary oldest-first, with ID as a stable tie-breaker, up to `dailyNewVocabularyGoal`. `reviewItems` is intentionally empty until the review scheduler milestone.
 
 A plan is saved when it is first requested, even if it is empty, and it keeps the goal and items it was created with. Words added later join a later day's plan, not the one already saved.
@@ -125,7 +127,7 @@ curl -H "Authorization: Bearer $TOKEN" 'localhost:8080/api/v1/vocabulary?page=0&
 curl -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/vocabulary/1
 ```
 
-Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `POST/GET /api/v1/vocabulary`, `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry), `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED items only); `GET /api/v1/learning/daily-plan`, `GET /api/v1/learning/study-queue`, `POST /api/v1/learning/cards/{userVocabularyId}/reviews` (`{rating,version,date}`, rating is `AGAIN`, `HARD`, `GOOD` or `EASY`).
+Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `POST/GET /api/v1/vocabulary`, `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry), `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED items only); `GET /api/v1/learning/daily-plan`, `GET /api/v1/learning/study-queue`, `POST /api/v1/learning/cards/{userVocabularyId}/reviews` (`{rating,version,date}`, rating is `AGAIN`, `HARD`, `GOOD` or `EASY`), `POST /api/v1/learning/study-queue/more` (`{date}`, starts another batch of new words).
 
 Errors always use `{code,message,timestamp}`:
 

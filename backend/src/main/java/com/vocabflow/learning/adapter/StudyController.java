@@ -48,6 +48,10 @@ public class StudyController {
       int version,
       List<RatingOption> options) {}
 
+  record StudiedWord(long userVocabularyId, String term, String learningStatus) {}
+
+  record MoreRequest(@NotNull(message = "Date is required") LocalDate date) {}
+
   record QueueResponse(
       LocalDate date,
       int learningCount,
@@ -55,7 +59,13 @@ public class StudyController {
       int newCount,
       int unavailableCount,
       Card nextCard,
-      Instant nextDueAt) {}
+      Instant nextDueAt,
+      int newStudiedCount,
+      int newTargetCount,
+      int reviewsDoneCount,
+      boolean finished,
+      boolean moreNewWords,
+      List<StudiedWord> studiedToday) {}
 
   @GetMapping("/study-queue")
   public QueueResponse queue(
@@ -75,6 +85,12 @@ public class StudyController {
             userId, userVocabularyId, request.rating(), request.version(), request.date()));
   }
 
+  @PostMapping("/study-queue/more")
+  public QueueResponse more(
+      @AuthenticationPrincipal Long userId, @RequestBody @Valid MoreRequest request) {
+    return map(study.more(userId, request.date()));
+  }
+
   private QueueResponse map(StudyQueue queue) {
     return new QueueResponse(
         queue.date(),
@@ -83,7 +99,16 @@ public class StudyController {
         queue.newCount(),
         queue.unavailable(),
         queue.nextCard() == null ? null : map(queue.nextCard()),
-        queue.nextDueAt());
+        queue.nextDueAt(),
+        queue.newStudied(),
+        queue.newTarget(),
+        queue.reviewsDone(),
+        queue.finished(),
+        queue.moreNewWords(),
+        queue.studiedToday().stream()
+            .map(
+                word -> new StudiedWord(word.userVocabularyId(), word.term(), word.status().name()))
+            .toList());
   }
 
   private Card map(StudyQueue.NextCard next) {

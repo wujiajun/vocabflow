@@ -22,4 +22,10 @@ public interface ReviewCardRepository {
   boolean update(long userId, StoredCard card);
 
   void log(ReviewLogEntry entry);
+
+  /** The words rated on {@code date}, in the order they were first rated. */
+  List<Long> findStudiedOn(long userId, LocalDate date);
+
+  /** How many different words were rated on {@code date} as reviews. */
+  int countReviewsDoneOn(long userId, LocalDate date);
 }

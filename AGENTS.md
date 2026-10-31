@@ -20,7 +20,7 @@ VocabFlow is a modular-monolith product repository. Keep changes focused and lea
 - Preserve the current Bearer authentication contract unless the task explicitly includes changing it. Token storage is centralized; localStorage is a temporary MVP choice, not a production-hardening decision.
 - Preserve authenticated user isolation: backend identity comes from the authenticated principal, never a client-supplied `userId`.
 - Flyway owns schema changes; add new migrations rather than editing established migration contents. Hibernate validates the schema. Absolute timestamps use `Instant` and UTC `DATETIME(6)`; learning dates use `LocalDate`.
-- Preserve daily-plan uniqueness, deterministic selection, persisted item order, and the separate create/recovery transaction boundaries. Do not merge duplicate-key insert and winner reload into one rollback-only transaction.
+- Preserve daily-plan uniqueness, deterministic selection, persisted item order, and the separate create/recovery transaction boundaries. A stored plan may gain new words at its end (see `DailyPlanGrowth`), but its existing items and their order never change. Do not merge duplicate-key insert and winner reload into one rollback-only transaction.
 
 ## Commands and quality gates
 

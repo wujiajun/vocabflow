@@ -24,19 +24,22 @@ public class StudyService {
   // the learner wait for it.
   static final Duration LEARN_AHEAD = Duration.ofMinutes(20);
 
-  private final DailyLearningPlanService plans;
+  private final CurrentDailyPlan plans;
+  private final DailyPlanGrowth growth;
   private final ReviewCardRepository cards;
   private final LearningVocabularyQuery vocabulary;
   private final ReviewTransaction reviewTransaction;
   private final Clock clock;
 
   public StudyService(
-      DailyLearningPlanService plans,
+      CurrentDailyPlan plans,
+      DailyPlanGrowth growth,
       ReviewCardRepository cards,
       LearningVocabularyQuery vocabulary,
       ReviewTransaction reviewTransaction,
       Clock clock) {
     this.plans = plans;
+    this.growth = growth;
     this.cards = cards;
     this.vocabulary = vocabulary;
     this.reviewTransaction = reviewTransaction;
@@ -44,7 +47,7 @@ public class StudyService {
   }
 
   public StudyQueue next(long userId, LocalDate requestedDate) {
-    DailyLearningPlan plan = plans.getOrCreate(userId, requestedDate);
+    DailyLearningPlan plan = plans.get(userId, requestedDate);
     LocalDate date = plan.learningDate();
     Instant now = clock.instant();
 
@@ -90,7 +93,32 @@ public class StudyService {
         fresh.size(),
         unavailable,
         next.map(stored -> nextCard(stored, contents, now, date)).orElse(null),
-        nextDueAt);
+        nextDueAt,
+        (int) planned.size() - newCards.size(),
+        Math.max(growth.target(plan), planned.size()),
+        cards.countReviewsDoneOn(userId, date),
+        plan.finishedAt() != null,
+        growth.hasNewWordsBeyond(plan),
+        studiedToday(userId, date));
+  }
+
+  private List<StudyQueue.StudiedWord> studiedToday(long userId, LocalDate date) {
+    List<Long> studied = cards.findStudiedOn(userId, date);
+    Map<Long, StudyContent> contents = vocabulary.findStudyContent(userId, studied);
+    Map<Long, StoredCard> stored = cards.findByUserVocabularyIds(userId, studied);
+    return studied.stream()
+        .map(
+            id ->
+                new StudyQueue.StudiedWord(
+                    id, contents.get(id).term(), stored.get(id).card().learningStatus()))
+        .toList();
+  }
+
+  /** Starts another batch of new words: first up to the daily goal, then a whole goal's worth. */
+  public StudyQueue more(long userId, LocalDate date) {
+    plans.get(userId, date);
+    growth.addBatch(userId, date);
+    return next(userId, date);
   }
 
   public StudyQueue review(
@@ -105,7 +133,13 @@ public class StudyService {
     } catch (OptimisticLockingFailureException raced) {
       throw new ConflictException(ReviewTransaction.OUT_OF_DATE);
     }
-    return next(userId, date);
+    StudyQueue queue = next(userId, date);
+    // A step still to come means the day is not over, even though nothing is due right now.
+    if (queue.nextCard() == null && queue.nextDueAt() == null && !queue.finished()) {
+      growth.markFinished(userId, date, now);
+      return next(userId, date);
+    }
+    return queue;
   }
 
   private static boolean studyable(StudyContent content) {
