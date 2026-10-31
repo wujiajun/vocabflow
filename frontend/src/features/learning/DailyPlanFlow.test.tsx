@@ -49,7 +49,7 @@ test('shows today’s new words in server order and links each to its vocabulary
   expect(rows[0]).toHaveTextContent('1overwhelmedWord')
   expect(rows[1]).toHaveTextContent('2figure outPhrasal verb')
   expect(within(rows[1]).getByRole('link')).toHaveAttribute('href', '/app/vocabulary/12')
-  expect(screen.queryByText(/saved once created/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/join a later plan/)).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Review' })).not.toBeInTheDocument()
 })
 
@@ -110,7 +110,7 @@ test('tells the user why a plan below the goal does not grow when they add words
   renderApp('/app/today')
 
   expect(await screen.findByText('1 new word · daily goal 10')).toBeInTheDocument()
-  expect(screen.getByText('Today’s plan is saved once created, so words you add now won’t appear in it.')).toBeInTheDocument()
+  expect(screen.getByText('Words you add from now on will join a later plan.')).toBeInTheDocument()
 })
 
 test('shows review items in their own section when the plan has any', async () => {

@@ -4,6 +4,7 @@ import { LoginPage } from '../../features/auth/pages/LoginPage'
 import { RegisterPage } from '../../features/auth/pages/RegisterPage'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import { DailyPlanPage } from '../../features/learning/pages/DailyPlanPage'
+import { StudyPage } from '../../features/learning/pages/StudyPage'
 import { VocabularyDetailPage } from '../../features/vocabulary/pages/VocabularyDetailPage'
 import { VocabularyPage } from '../../features/vocabulary/pages/VocabularyPage'
 import { AppShell } from '../layout/AppShell'
@@ -40,6 +41,7 @@ export function AppRouter() {
         <Route path="vocabulary" element={<VocabularyPage />} />
         <Route path="vocabulary/:id" element={<VocabularyDetailPage />} />
         <Route path="today" element={<DailyPlanPage />} />
+        <Route path="study" element={<StudyPage />} />
         <Route path="*" element={<Navigate to="/app/vocabulary" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
