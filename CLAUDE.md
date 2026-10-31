@@ -77,7 +77,7 @@ Key cross-module rules:
 
 Persistence notes:
 
-- Migrations live in `src/main/resources/db/migration`, and V1–V7 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(7)`).
+- Migrations live in `src/main/resources/db/migration`, and V1–V8 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(8)`).
 - Open-in-View is disabled. Mapping happens inside transactions.
 - MySQL ITs extend `integration/MysqlIntegrationTest`, which supplies the container datasource.
 - `pom.xml` configures `maven-compiler-plugin` with `--enable-preview`. It does not break `test` or `verify`, but nobody has confirmed why it is there, so don't remove it or spread it to other places.

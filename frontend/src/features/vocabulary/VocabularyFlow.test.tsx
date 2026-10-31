@@ -59,6 +59,29 @@ test('lists saved vocabulary with its details and links each entry to its page',
   expect(screen.getByText('2 entries')).toBeInTheDocument()
 })
 
+test('a word with several meanings says so in the list, instead of one part of speech', async () => {
+  const sense = { label: null, phonetic: null, examples: null, collocations: null }
+  const resume = entry({
+    id: 9,
+    term: 'resume',
+    type: 'WORD',
+    partOfSpeech: 'noun',
+    definition: 'A work history.',
+    senses: [
+      { ...sense, partOfSpeech: 'noun', definition: 'A work history.' },
+      { ...sense, partOfSpeech: 'verb', definition: 'To begin again.' },
+    ],
+  })
+  stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([resume])) })
+
+  renderApp('/app/vocabulary')
+
+  const row = await screen.findByRole('listitem')
+  expect(row).toHaveTextContent('2 meanings')
+  expect(row).toHaveTextContent('A work history.')
+  expect(row).not.toHaveTextContent('Word · noun')
+})
+
 test('shows an empty state when nothing has been saved yet', async () => {
   stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([])) })
 
@@ -368,6 +391,18 @@ function page(content: VocabularyEntry[], totalPages = content.length === 0 ? 0 
 
 function entry(overrides: Partial<VocabularyEntry> & Pick<VocabularyEntry, 'id' | 'term'>): VocabularyEntry {
   return {
+    senses: overrides.definition
+      ? [
+          {
+            partOfSpeech: overrides.partOfSpeech ?? null,
+            label: null,
+            phonetic: overrides.phonetic ?? null,
+            definition: overrides.definition,
+            examples: overrides.examples ?? null,
+            collocations: overrides.collocations ?? null,
+          },
+        ]
+      : [],
     type: null,
     phonetic: null,
     partOfSpeech: null,

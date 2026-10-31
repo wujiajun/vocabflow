@@ -4,6 +4,7 @@ import com.vocabflow.vocabulary.domain.EnrichmentResult;
 import com.vocabflow.vocabulary.domain.EnrichmentStatus;
 import com.vocabflow.vocabulary.domain.VocabularyItem;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,4 +28,6 @@ public interface VocabularyItemRepository {
   void markCompleted(long id, EnrichmentResult result, String source, Instant at);
 
   void markFailed(long id, String reason);
+
+  List<Long> findCompletedIdsWithoutSenses();
 }

@@ -12,4 +12,5 @@ public record StudyContent(
     String definition,
     List<String> examples,
     List<String> collocations,
-    EnrichmentStatus enrichmentStatus) {}
+    EnrichmentStatus enrichmentStatus,
+    List<VocabularySense> senses) {}

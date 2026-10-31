@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { describeKind } from '../../vocabulary/components/formatVocabulary'
+import { SenseTabs } from '../../vocabulary/components/SenseTabs'
 import { useSubmitReview } from '../hooks/useStudy'
 import type { Rating, StudyCard } from '../types/study'
 import { formatInterval } from './formatInterval'
@@ -33,7 +34,7 @@ export function StudyCardView({
   const review = useSubmitReview()
   const termRef = useRef<HTMLHeadingElement>(null)
   const answerRef = useRef<HTMLDivElement>(null)
-  const kind = describeKind(card.type, card.partOfSpeech)
+  const kind = describeKind(card.type, card.senses.length > 1 ? null : card.partOfSpeech)
 
   // Only on mount: a card kept after a failed save must leave focus on the button pressed.
   useEffect(() => {
@@ -70,10 +71,8 @@ export function StudyCardView({
       {revealed ? (
         <>
           <div className="mt-4 outline-none" ref={answerRef} tabIndex={-1}>
-            <p className="text-sm text-slate-600">{[kind, card.phonetic].filter(Boolean).join(' · ')}</p>
-            <p className="mt-3 leading-7 text-slate-800">{card.definition}</p>
-            <AnswerList items={card.examples} title="Examples" />
-            <AnswerList items={card.collocations} title="Collocations" />
+            {kind ? <p className="mb-2 text-sm text-slate-600">{kind}</p> : null}
+            <SenseTabs headingLevel="h3" senses={card.senses} />
           </div>
 
           {review.isError ? (
@@ -107,22 +106,5 @@ export function StudyCardView({
         </button>
       )}
     </article>
-  )
-}
-
-function AnswerList({ title, items }: { title: string; items: string[] | null }) {
-  if (!items || items.length === 0) {
-    return null
-  }
-
-  return (
-    <section className="mt-5">
-      <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">{title}</h3>
-      <ul className="mt-2 list-disc space-y-1.5 pl-5 text-slate-800">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </section>
   )
 }

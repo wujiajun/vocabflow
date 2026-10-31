@@ -26,4 +26,4 @@ vocabflow:
     claude:
       api-key: ${VOCABFLOW_ANTHROPIC_API_KEY:}
       model: ${VOCABFLOW_ENRICHMENT_MODEL:claude-haiku-5-5}
-      timeout-seconds: 30
+      timeout-seconds: 60

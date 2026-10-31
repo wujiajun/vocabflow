@@ -52,7 +52,14 @@ public class JpaLearningVocabularyQuery implements LearningVocabularyQuery {
               item.definition,
               JsonSupport.read(item.examples),
               JsonSupport.read(item.collocations),
-              EnrichmentStatus.valueOf(item.enrichmentStatus)));
+              EnrichmentStatus.valueOf(item.enrichmentStatus),
+              VocabularySense.orSingle(
+                  VocabularySenseJson.read(item.senses),
+                  item.partOfSpeech,
+                  item.phonetic,
+                  item.definition,
+                  JsonSupport.read(item.examples),
+                  JsonSupport.read(item.collocations))));
     }
     return contents;
   }

@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import com.vocabflow.vocabulary.domain.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 class ClaudeVocabularyEnrichmentAdapterTest {
   private static final ObjectMapper JSON = new ObjectMapper();
+  private static final VocabularyTerm RESUME = new VocabularyTerm("resume");
 
   private final RestClient.Builder builder =
       RestClient.builder().baseUrl("https://api.anthropic.com");
@@ -25,87 +29,131 @@ class ClaudeVocabularyEnrichmentAdapterTest {
       new ClaudeVocabularyEnrichmentAdapter(builder.build(), "claude-haiku-5-5");
 
   @Test
-  void sendsOneRequestWithThinkingOffAndSchemaConstrainedOutputThenParsesTheEntry() {
+  void sendsOneRequestWithThinkingOffAndSchemaConstrainedOutputThenParsesEveryMeaning() {
     server
         .expect(requestTo("https://api.anthropic.com/v1/messages"))
         .andExpect(jsonPath("$.model").value("claude-haiku-5-5"))
         .andExpect(jsonPath("$.thinking.type").value("disabled"))
         .andExpect(jsonPath("$.messages[0].role").value("user"))
-        .andExpect(jsonPath("$.messages[0].content").value("Figure Out"))
+        .andExpect(jsonPath("$.messages[0].content").value("<term>resume</term>"))
         .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
-        .andExpect(jsonPath("$.output_config.format.schema.required").isArray())
-        .andRespond(withSuccess(reply(validEntry()), MediaType.APPLICATION_JSON));
+        .andExpect(jsonPath("$.output_config.format.schema.required[0]").value("term"))
+        .andRespond(withSuccess(reply(entry()), MediaType.APPLICATION_JSON));
 
-    EnrichmentResult result = adapter.enrich(new VocabularyTerm("Figure Out"));
+    EnrichmentResult result = adapter.enrich(RESUME);
 
     server.verify();
-    assertThat(result.type()).isEqualTo(VocabularyType.PHRASAL_VERB);
-    assertThat(result.phonetic()).isEqualTo("/ˈfɪɡjər aʊt/");
-    assertThat(result.partOfSpeech()).isEqualTo("phrasal verb");
-    assertThat(result.definition()).isEqualTo("To understand or solve something.");
-    assertThat(result.examples()).containsExactly("I need to figure out this problem.");
-    assertThat(result.collocations()).containsExactly("figure out how", "figure it out");
+    assertThat(result.type()).isEqualTo(VocabularyType.WORD);
+    assertThat(result.senses()).hasSize(2);
+    VocabularySense second = result.senses().get(1);
+    assertThat(second.partOfSpeech()).isEqualTo("verb");
+    assertThat(second.label()).isEqualTo("start again");
+    assertThat(second.phonetic()).isEqualTo("/rɪˈzuːm/");
+    assertThat(second.definition()).isEqualTo("To begin again.");
+    assertThat(second.examples()).containsExactly("The meeting will resume.");
+    assertThat(second.collocations()).containsExactly("resume work");
     assertThat(adapter.source()).isEqualTo("claude:claude-haiku-5-5");
   }
 
   @Test
-  void anEmptyPhoneticBecomesNull() {
-    Map<String, Object> entry = validEntry();
-    entry.put("phonetic", "  ");
+  void theFirstMeaningFillsTheSummaryFields() {
+    EnrichmentResult result = parse(entry());
 
-    assertThat(parse(entry).phonetic()).isNull();
+    assertThat(result.definition()).isEqualTo("A document listing your experience.");
+    assertThat(result.partOfSpeech()).isEqualTo("noun");
+    assertThat(result.phonetic()).isEqualTo("/ˈrezəmeɪ/");
+    assertThat(result.examples()).containsExactly("Send me your resume.");
   }
 
   @Test
-  void anEmptyPartOfSpeechBecomesNullBecauseSomeExpressionsHaveNone() {
-    Map<String, Object> entry = validEntry();
-    entry.put("partOfSpeech", " ");
+  void refusesAnEntryForADifferentTerm() {
+    Map<String, Object> entry = entry();
+    entry.put("term", "call off");
 
-    assertThat(parse(entry).partOfSpeech()).isNull();
+    assertThatThrownBy(() -> parse(entry))
+        .isInstanceOf(EnrichmentRejectedException.class)
+        .hasMessage("Model reply describes a different term");
   }
 
   @Test
-  void rejectsAnUnknownType() {
-    Map<String, Object> entry = validEntry();
-    entry.put("type", "SLANG");
+  void theTermMatchIgnoresCaseAndExtraSpacing() {
+    Map<String, Object> entry = entry();
+    entry.put("term", "  RESUME ");
 
-    assertThatThrownBy(() -> parse(entry)).isInstanceOf(IllegalStateException.class);
+    assertThat(parse(entry).senses()).hasSize(2);
   }
 
   @Test
-  void rejectsMissingEmptyOrOverlongFields() {
-    for (String field : List.of("partOfSpeech", "definition", "examples")) {
-      Map<String, Object> missing = validEntry();
-      missing.remove(field);
-      assertThatThrownBy(() -> parse(missing))
-          .as("missing " + field)
-          .isInstanceOf(IllegalStateException.class);
+  void refusesAMissingTerm() {
+    Map<String, Object> entry = entry();
+    entry.remove("term");
+
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
+  void thereIsNoLimitOnHowManyMeaningsAWordHas() {
+    Map<String, Object> entry = entry();
+    entry.put("senses", java.util.Collections.nCopies(12, sense("noun", "x")));
+
+    assertThat(parse(entry).senses()).hasSize(12);
+  }
+
+  @Test
+  void blankOptionalFieldsBecomeNull() {
+    Map<String, Object> sense = sense(" ", " ");
+    sense.put("phonetic", " ");
+    Map<String, Object> entry = entry();
+    entry.put("senses", List.of(sense));
+
+    VocabularySense parsed = parse(entry).senses().getFirst();
+    assertThat(parsed.partOfSpeech()).isNull();
+    assertThat(parsed.label()).isNull();
+    assertThat(parsed.phonetic()).isNull();
+  }
+
+  @Test
+  void rejectsAnUnknownTypeOrNoMeanings() {
+    Map<String, Object> badType = entry();
+    badType.put("type", "SLANG");
+    assertThatThrownBy(() -> parse(badType)).isInstanceOf(EnrichmentRejectedException.class);
+
+    Map<String, Object> none = entry();
+    none.put("senses", List.of());
+    assertThatThrownBy(() -> parse(none)).isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
+  void rejectsAMeaningWithMissingEmptyOrOverlongFields() {
+    for (String field : List.of("definition", "examples", "label")) {
+      Map<String, Object> sense = sense("noun", "x");
+      sense.remove(field);
+      assertRejected(sense);
     }
-    Map<String, Object> blank = validEntry();
+    Map<String, Object> blank = sense("noun", "x");
     blank.put("definition", " ");
-    assertThatThrownBy(() -> parse(blank)).isInstanceOf(IllegalStateException.class);
-    Map<String, Object> overlong = validEntry();
+    assertRejected(blank);
+    Map<String, Object> overlong = sense("noun", "x");
     overlong.put("definition", "x".repeat(1001));
-    assertThatThrownBy(() -> parse(overlong)).isInstanceOf(IllegalStateException.class);
-    Map<String, Object> noExamples = validEntry();
+    assertRejected(overlong);
+    Map<String, Object> longLabel = sense("noun", "x".repeat(61));
+    assertRejected(longLabel);
+    Map<String, Object> noExamples = sense("noun", "x");
     noExamples.put("examples", List.of());
-    assertThatThrownBy(() -> parse(noExamples)).isInstanceOf(IllegalStateException.class);
-    Map<String, Object> tooMany = validEntry();
+    assertRejected(noExamples);
+    Map<String, Object> tooMany = sense("noun", "x");
     tooMany.put("collocations", List.of("a", "b", "c", "d", "e", "f", "g", "h", "i"));
-    assertThatThrownBy(() -> parse(tooMany)).isInstanceOf(IllegalStateException.class);
-    Map<String, Object> badElement = validEntry();
-    badElement.put("examples", List.of(" "));
-    assertThatThrownBy(() -> parse(badElement)).isInstanceOf(IllegalStateException.class);
+    assertRejected(tooMany);
   }
 
   @Test
   void rejectsAReplyThatIsNotJsonOrWasCutOffOrRefused() throws Exception {
     assertThatThrownBy(() -> parseRaw("end_turn", "not json"))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(EnrichmentRejectedException.class);
     for (String stop : List.of("max_tokens", "refusal")) {
-      assertThatThrownBy(() -> parseRaw(stop, JSON.writeValueAsString(validEntry())))
+      assertThatThrownBy(() -> parseRaw(stop, JSON.writeValueAsString(entry())))
           .as(stop)
-          .isInstanceOf(IllegalStateException.class);
+          .isInstanceOf(EnrichmentRejectedException.class);
     }
   }
 
@@ -113,7 +161,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
   void anHttpErrorSurfacesAsAnExceptionForTheServiceToRecordAsFailed() {
     server.expect(requestTo("https://api.anthropic.com/v1/messages")).andRespond(withServerError());
 
-    assertThatThrownBy(() -> adapter.enrich(new VocabularyTerm("x")))
+    assertThatThrownBy(() -> adapter.enrich(RESUME))
         .isInstanceOf(RestClientResponseException.class);
   }
 
@@ -124,10 +172,16 @@ class ClaudeVocabularyEnrichmentAdapterTest {
         .hasMessageContaining("VOCABFLOW_ANTHROPIC_API_KEY");
   }
 
+  private void assertRejected(Map<String, Object> sense) {
+    Map<String, Object> entry = entry();
+    entry.put("senses", List.of(sense));
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(RuntimeException.class);
+  }
+
   private EnrichmentResult parse(Map<String, Object> entry) {
     try {
       return parseRaw("end_turn", JSON.writeValueAsString(entry));
-    } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+    } catch (JsonProcessingException exception) {
       throw new IllegalStateException(exception);
     }
   }
@@ -141,21 +195,44 @@ class ClaudeVocabularyEnrichmentAdapterTest {
                       "stop_reason",
                       stopReason,
                       "content",
-                      List.of(Map.of("type", "text", "text", text))))));
-    } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+                      List.of(Map.of("type", "text", "text", text))))),
+          RESUME);
+    } catch (JsonProcessingException exception) {
       throw new IllegalStateException(exception);
     }
   }
 
-  private static Map<String, Object> validEntry() {
-    Map<String, Object> entry = new java.util.HashMap<>();
-    entry.put("type", "PHRASAL_VERB");
-    entry.put("phonetic", "/ˈfɪɡjər aʊt/");
-    entry.put("partOfSpeech", "phrasal verb");
-    entry.put("definition", "To understand or solve something.");
-    entry.put("examples", List.of("I need to figure out this problem."));
-    entry.put("collocations", List.of("figure out how", "figure it out"));
+  private static Map<String, Object> entry() {
+    Map<String, Object> first = new HashMap<>();
+    first.put("partOfSpeech", "noun");
+    first.put("label", "document");
+    first.put("phonetic", "/ˈrezəmeɪ/");
+    first.put("definition", "A document listing your experience.");
+    first.put("examples", List.of("Send me your resume."));
+    first.put("collocations", List.of("update a resume"));
+    Map<String, Object> second = new HashMap<>();
+    second.put("partOfSpeech", "verb");
+    second.put("label", "start again");
+    second.put("phonetic", "/rɪˈzuːm/");
+    second.put("definition", "To begin again.");
+    second.put("examples", List.of("The meeting will resume."));
+    second.put("collocations", List.of("resume work"));
+    Map<String, Object> entry = new HashMap<>();
+    entry.put("term", "resume");
+    entry.put("type", "WORD");
+    entry.put("senses", List.of(first, second));
     return entry;
+  }
+
+  private static Map<String, Object> sense(String partOfSpeech, String label) {
+    Map<String, Object> sense = new HashMap<>();
+    sense.put("partOfSpeech", partOfSpeech);
+    sense.put("label", label);
+    sense.put("phonetic", "/x/");
+    sense.put("definition", "A definition.");
+    sense.put("examples", List.of("An example."));
+    sense.put("collocations", List.of("a collocation"));
+    return sense;
   }
 
   private static String reply(Map<String, Object> entry) {
@@ -166,7 +243,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
               "end_turn",
               "content",
               List.of(Map.of("type", "text", "text", JSON.writeValueAsString(entry)))));
-    } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+    } catch (JsonProcessingException exception) {
       throw new IllegalStateException(exception);
     }
   }

@@ -21,6 +21,14 @@ public class VocabularyController {
 
   record Create(@NotBlank @Size(max = 255) String term) {}
 
+  record Sense(
+      String partOfSpeech,
+      String label,
+      String phonetic,
+      String definition,
+      List<String> examples,
+      List<String> collocations) {}
+
   record Item(
       long id,
       String term,
@@ -30,6 +38,7 @@ public class VocabularyController {
       String definition,
       List<String> examples,
       List<String> collocations,
+      List<Sense> senses,
       String enrichmentStatus,
       String failureReason,
       String learningStatus,
@@ -48,6 +57,17 @@ public class VocabularyController {
         item.definition(),
         item.examples(),
         item.collocations(),
+        item.displaySenses().stream()
+            .map(
+                sense ->
+                    new Sense(
+                        sense.partOfSpeech(),
+                        sense.label(),
+                        sense.phonetic(),
+                        sense.definition(),
+                        sense.examples(),
+                        sense.collocations()))
+            .toList(),
         item.enrichmentStatus().name(),
         item.failureReason(),
         userVocabulary.learningStatus().name(),

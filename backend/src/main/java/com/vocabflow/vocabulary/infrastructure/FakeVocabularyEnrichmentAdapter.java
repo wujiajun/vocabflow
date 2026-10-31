@@ -20,6 +20,24 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
   @Override
   public EnrichmentResult enrich(VocabularyTerm t) {
     String n = t.normalized();
+    if (n.equals("resume"))
+      return EnrichmentResult.ofSenses(
+          VocabularyType.WORD,
+          List.of(
+              new VocabularySense(
+                  "noun",
+                  "document",
+                  "/ˈrezəmeɪ/",
+                  "A short document listing your education and work experience.",
+                  List.of("Please send me your resume."),
+                  List.of("update a resume")),
+              new VocabularySense(
+                  "verb",
+                  "start again",
+                  "/rɪˈzuːm/",
+                  "To begin again after stopping.",
+                  List.of("The meeting will resume after lunch."),
+                  List.of("resume work"))));
     if (n.equals("overwhelmed"))
       return new EnrichmentResult(
           VocabularyType.WORD,
