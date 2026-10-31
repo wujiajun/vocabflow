@@ -50,6 +50,14 @@ export function StudyComplete({
         </p>
       ) : null}
 
+      {queue.goalShortfall > 0 && !queue.moreNewWords ? (
+        <p className="mt-2 text-sm text-slate-600">
+          {queue.goalShortfall === 1
+            ? 'Add 1 more word to reach today’s goal.'
+            : `Add ${queue.goalShortfall} more words to reach today’s goal.`}
+        </p>
+      ) : null}
+
       {queue.studiedToday.length > 0 ? (
         <section aria-label="Studied today" className="mt-5">
           <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Studied today</h3>

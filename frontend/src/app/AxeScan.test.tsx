@@ -142,7 +142,7 @@ test('the study page has no axe violations, before and after revealing the answe
     version: 0,
     options: [option('AGAIN', 1, null), option('HARD', 1, null), option('GOOD', 10, null), option('EASY', null, 4)],
   }
-  const base = { ...emptyStudyQueue, newCount: 1, unavailableCount: 1, reviewCount: 1, reviewsDoneCount: 1 }
+  const base = { ...emptyStudyQueue, newCount: 1, unavailableCount: 1, reviewCount: 1, studiedCount: 1, stillLearningCount: 1, notStartedCount: 2 }
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...base, nextCard }),

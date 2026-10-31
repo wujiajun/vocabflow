@@ -27,7 +27,7 @@ test('hides the answer until asked, then shows it with what each rating would do
 
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   expect(document.title).toBe('Study · VocabFlow')
-  expect(screen.getByRole('progressbar', { name: 'New words' })).toHaveAttribute('value', '0')
+  expect(screen.getByRole('img', { name: '0 studied, 0 learning, 1 not started, 1 in total' })).toBeInTheDocument()
   expect(screen.queryByText('Feeling unable to cope.')).not.toBeInTheDocument()
   expect(screen.queryByText(/\/ˌoʊ/)).not.toBeInTheDocument()
   expect(screen.queryByRole('group', { name: /remember/ })).not.toBeInTheDocument()
@@ -114,7 +114,7 @@ test('says when a later learning step comes back, and counts words still waiting
   renderApp('/app/study')
 
   expect(await screen.findByText(/The next card comes back at/)).toBeInTheDocument()
-  expect(screen.getByText('2 words are waiting for their details.')).toBeInTheDocument()
+  expect(screen.getByText('2 words aren’t ready to study yet.')).toBeInTheDocument()
 })
 
 test('keeps the card and explains when a rating cannot be saved', async () => {
@@ -231,36 +231,63 @@ test('opening the app goes straight to studying, and old links to Today land the
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
 })
 
-test('shows progress on new words, and on reviews only when there are any', async () => {
-  let reviews = false
+test('shows the three groups as a bar in proportion, with their counts and the total', async () => {
   stubApi({
     ...signedIn(),
     'GET /api/v1/learning/study-queue': () =>
-      jsonResponse(
-        reviews
-          ? queue({ newStudiedCount: 3, newTargetCount: 10, reviewsDoneCount: 2, reviewCount: 3, nextCard: card() })
-          : queue({ newStudiedCount: 3, newTargetCount: 10, nextCard: card() }),
-      ),
+      jsonResponse(queue({ studiedCount: 2, stillLearningCount: 8, notStartedCount: 10, nextCard: card() })),
+  })
+
+  renderApp('/app/study')
+
+  const bar = await screen.findByRole('img', { name: '2 studied, 8 learning, 10 not started, 20 in total' })
+  expect(bar).toHaveAttribute('viewBox', '0 0 20 1')
+  const segments = [...bar.querySelectorAll('rect')].map((rect) => [rect.getAttribute('x'), rect.getAttribute('width')])
+  expect(segments).toEqual([
+    ['0', '2'],
+    ['2', '8'],
+    ['10', '10'],
+  ])
+  const legend = screen.getByRole('region', { name: 'Study progress' })
+  expect(legend).toHaveTextContent('Studied 2')
+  expect(legend).toHaveTextContent('Learning 8')
+  expect(legend).toHaveTextContent('Not started 10')
+  expect(legend).toHaveTextContent('Total 20')
+})
+
+test('shows no bar when this study holds no words', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ notStartedCount: 0 })) })
+
+  renderApp('/app/study')
+
+  await screen.findByRole('heading', { name: 'Nothing to study yet' })
+  expect(screen.queryByRole('region', { name: 'Study progress' })).not.toBeInTheDocument()
+})
+
+test('suggests adding words when the library falls short of the goal, but not when more can be studied', async () => {
+  let more = false
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () =>
+      jsonResponse(queue({ finished: true, newCount: 0, goalShortfall: 8, moreNewWords: more })),
   })
 
   const first = renderApp('/app/study')
-  const progress = await screen.findByRole('region', { name: 'Today’s progress' })
-  expect(progress).toHaveTextContent('New words3 / 10')
-  expect(within(progress).getByRole('progressbar', { name: 'New words' })).toHaveAttribute('max', '10')
-  expect(within(progress).queryByRole('progressbar', { name: 'Reviews' })).not.toBeInTheDocument()
+  expect(await screen.findByText('Add 8 more words to reach today’s goal.')).toBeInTheDocument()
   first.unmount()
 
-  reviews = true
+  more = true
   renderApp('/app/study')
-  expect(await screen.findByRole('progressbar', { name: 'Reviews' })).toHaveAttribute('value', '2')
-  expect(screen.getByRole('region', { name: 'Today’s progress' })).toHaveTextContent('Reviews2 / 5')
+  await screen.findByRole('button', { name: 'Study more new words' })
+  expect(screen.queryByText(/to reach today’s goal/)).not.toBeInTheDocument()
 })
 
 test('the finished day lists what was studied and links each word to its page and back', async () => {
   const finished = queue({
     finished: true,
     newCount: 0,
-    newStudiedCount: 1,
+    studiedCount: 1,
+    notStartedCount: 0,
     studiedToday: [{ userVocabularyId: 7, term: 'overwhelmed', learningStatus: 'FAMILIAR' }],
   })
   stubApi({
@@ -392,9 +419,11 @@ function queue(overrides: Partial<StudyQueue> = {}): StudyQueue {
     unavailableCount: 0,
     nextCard: null,
     nextDueAt: null,
-    newStudiedCount: 0,
+    studiedCount: 0,
+    stillLearningCount: 0,
+    notStartedCount: overrides.newCount ?? 1,
     newTargetCount: 10,
-    reviewsDoneCount: 0,
+    goalShortfall: 0,
     finished: false,
     moreNewWords: false,
     studiedToday: [],

@@ -56,7 +56,8 @@ class StudyProgressApiTests {
 
     JsonNode queue = queue(token);
     assertThat(planNewIds(token)).containsExactly(first, second, third);
-    assertThat(queue.path("newStudiedCount").asInt()).isEqualTo(1);
+    assertThat(queue.path("studiedCount").asInt()).isEqualTo(1);
+    assertThat(queue.path("notStartedCount").asInt()).isEqualTo(2);
     assertThat(queue.path("finished").asBoolean()).isFalse();
   }
 
@@ -70,8 +71,9 @@ class StudyProgressApiTests {
 
     assertThat(finished.path("finished").asBoolean()).isTrue();
     assertThat(finished.path("nextCard").isNull()).isTrue();
-    assertThat(finished.path("newStudiedCount").asInt()).isEqualTo(1);
+    assertThat(finished.path("studiedCount").asInt()).isEqualTo(1);
     assertThat(finished.path("newTargetCount").asInt()).isEqualTo(5);
+    assertThat(finished.path("goalShortfall").asInt()).as("only 1 of 5 exists").isEqualTo(4);
     assertThat(finished.path("moreNewWords").asBoolean()).isFalse();
     JsonNode studied = finished.path("studiedToday").get(0);
     assertThat(studied.path("userVocabularyId").asLong()).isEqualTo(first);
@@ -150,7 +152,8 @@ class StudyProgressApiTests {
 
     JsonNode batch = more(token);
     assertThat(batch.path("newTargetCount").asInt()).isEqualTo(4);
-    assertThat(batch.path("newStudiedCount").asInt()).isEqualTo(2);
+    assertThat(batch.path("studiedCount").asInt()).isEqualTo(2);
+    assertThat(batch.path("notStartedCount").asInt()).as("the total grew").isEqualTo(2);
     assertThat(planNewIds(token)).containsExactly(first, second, third, fourth);
     assertThat(fifth).isNotZero();
   }
@@ -169,33 +172,84 @@ class StudyProgressApiTests {
   }
 
   @Test
-  void reviewsDoneCountsWordsRatedAsReviewsOnThatDay() throws Exception {
+  void everyWordIsInExactlyOneGroupThroughoutAStudy() throws Exception {
+    String token = token("progress-groups@example.com", 3);
+    long first = add(token, "groups first");
+    long second = add(token, "groups second");
+    long third = add(token, "groups third");
+
+    assertGroups(queue(token), 0, 0, 3);
+
+    assertGroups(reviewAs(token, first, "AGAIN", 0), 0, 1, 2);
+    assertGroups(reviewAs(token, second, "GOOD", 0), 0, 2, 1);
+    assertGroups(review(token, third), 1, 2, 0);
+    assertGroups(reviewAs(token, second, "GOOD", 1), 2, 1, 0);
+    assertGroups(reviewAs(token, first, "AGAIN", 1), 2, 1, 0);
+    JsonNode finished = reviewAs(token, first, "EASY", 2);
+    assertGroups(finished, 3, 0, 0);
+    assertThat(finished.path("finished").asBoolean()).isTrue();
+  }
+
+  @Test
+  void aReviewCountsLikeAnyOtherWordAndGoesBackToLearningIfForgotten() throws Exception {
     String token = token("progress-reviews@example.com", 5);
     long first = add(token, "reviews first");
+    long second = add(token, "reviews second");
     queue(token);
     review(token, first);
+    review(token, second);
 
-    JsonNode due =
-        read(get("/api/v1/learning/study-queue").queryParam("date", "2026-12-05"), token);
-    assertThat(due.path("reviewCount").asInt()).isEqualTo(1);
-    assertThat(due.path("reviewsDoneCount").asInt()).isZero();
+    String later = "2026-12-05";
+    JsonNode due = read(get("/api/v1/learning/study-queue").queryParam("date", later), token);
+    assertGroups(due, 0, 0, 2);
 
-    JsonNode done =
-        json.readTree(
-            mvc.perform(
-                    post("/api/v1/learning/cards/" + first + "/reviews")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(
-                            "{\"rating\":\"GOOD\",\"version\":"
-                                + due.path("nextCard").path("version").asInt()
-                                + ",\"date\":\"2026-12-05\"}"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString());
-    assertThat(done.path("reviewsDoneCount").asInt()).isEqualTo(1);
-    assertThat(done.path("reviewCount").asInt()).isZero();
+    JsonNode forgotten = reviewOn(token, first, "AGAIN", 1, later);
+    assertGroups(forgotten, 0, 1, 1);
+    JsonNode remembered = reviewOn(token, second, "GOOD", 1, later);
+    assertGroups(remembered, 1, 1, 0);
+    assertGroups(reviewOn(token, first, "GOOD", 2, later), 2, 0, 0);
+  }
+
+  @Test
+  void wordsWithoutFinishedDetailsAreLeftOutOfTheGroups() throws Exception {
+    String token = token("progress-details@example.com", 5);
+    add(token, "details waiting term");
+    add(token, "details ready term");
+    jdbc.update(
+        "UPDATE vocabulary_items SET enrichment_status = 'FAILED' WHERE normalized_term = ?",
+        "details waiting term");
+
+    JsonNode queue = queue(token);
+
+    assertGroups(queue, 0, 0, 1);
+    assertThat(queue.path("unavailableCount").asInt()).isEqualTo(1);
+  }
+
+  private void assertGroups(JsonNode queue, int studied, int learning, int notStarted) {
+    assertThat(queue.path("studiedCount").asInt()).as("studied").isEqualTo(studied);
+    assertThat(queue.path("stillLearningCount").asInt()).as("learning").isEqualTo(learning);
+    assertThat(queue.path("notStartedCount").asInt()).as("not started").isEqualTo(notStarted);
+  }
+
+  private JsonNode reviewOn(String token, long id, String rating, int version, String date)
+      throws Exception {
+    return json.readTree(
+        mvc.perform(
+                post("/api/v1/learning/cards/" + id + "/reviews")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\"rating\":\""
+                            + rating
+                            + "\",\"version\":"
+                            + version
+                            + ",\"date\":\""
+                            + date
+                            + "\"}"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString());
   }
 
   @Test

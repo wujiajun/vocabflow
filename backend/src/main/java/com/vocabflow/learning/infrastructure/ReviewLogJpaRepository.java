@@ -15,11 +15,4 @@ public interface ReviewLogJpaRepository extends JpaRepository<ReviewLogEntity, L
        order by min(r.id)
       """)
   List<Long> findStudiedOn(@Param("userId") long userId, @Param("date") LocalDate date);
-
-  @Query(
-      """
-      select count(distinct r.userVocabularyId) from ReviewLogEntity r
-       where r.userId = :userId and r.reviewDate = :date and r.stateBefore = 'REVIEW'
-      """)
-  int countReviewsDoneOn(@Param("userId") long userId, @Param("date") LocalDate date);
 }
