@@ -37,7 +37,8 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
       - phonetic: IPA in slashes using North American pronunciation, or an empty string for a \
       multi-word item where it is not meaningful.
-      - partOfSpeech: for example noun, verb, adjective, phrasal verb.
+      - partOfSpeech: for example noun, verb, adjective, phrasal verb. For an idiom or fixed \
+      expression use the closest label, such as idiom or expression.
       - definition: one clear sentence in plain English a learner can understand.
       - examples: 2 or 3 natural example sentences in everyday Canadian contexts.
       - collocations: 3 to 6 common word combinations.
@@ -159,10 +160,11 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       throw new EnrichmentRejectedException("Model reply had an unknown type");
     }
     String phonetic = text(entry, "phonetic");
+    String partOfSpeech = text(entry, "partOfSpeech");
     return new EnrichmentResult(
         type,
         phonetic.isBlank() ? null : bounded(phonetic, "phonetic", 255),
-        bounded(required(entry, "partOfSpeech"), "partOfSpeech", 255),
+        partOfSpeech.isBlank() ? null : bounded(partOfSpeech, "partOfSpeech", 255),
         bounded(required(entry, "definition"), "definition", 1000),
         strings(entry, "examples", 1, 5, 300),
         strings(entry, "collocations", 0, 8, 100));
