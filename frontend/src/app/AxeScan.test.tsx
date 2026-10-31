@@ -169,3 +169,18 @@ test('the study page has no axe violations, before and after revealing the answe
   await screen.findByRole('heading', { name: 'Today’s study is complete' })
   await expectNoAxeViolations()
 })
+
+test('the settings page has no axe violations, including with an error shown', async () => {
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/settings')
+  const input = await screen.findByLabelText('Daily new vocabulary goal')
+  await expectNoAxeViolations()
+
+  await browserUser.clear(input)
+  await browserUser.type(input, '0')
+  await browserUser.click(screen.getByRole('button', { name: 'Save' }))
+  await screen.findByRole('alert')
+  await expectNoAxeViolations()
+})

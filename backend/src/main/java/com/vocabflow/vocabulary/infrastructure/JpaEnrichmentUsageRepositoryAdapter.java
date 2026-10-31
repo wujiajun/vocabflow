@@ -24,7 +24,9 @@ public class JpaEnrichmentUsageRepositoryAdapter implements EnrichmentUsageRepos
       return true;
     }
     if (usage.findByUserIdAndUsageDate(userId, day).isPresent()) {
-      return false; // row exists, so the increment failed only because the limit is reached
+      // It may have been created just after the increment above found nothing, so only a second
+      // failure means the limit is really reached.
+      return usage.increment(userId, day, limit) == 1;
     }
     EnrichmentUsageEntity first = new EnrichmentUsageEntity();
     first.userId = userId;

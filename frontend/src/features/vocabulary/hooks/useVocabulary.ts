@@ -8,16 +8,16 @@ export const vocabularyPageSize = 20
 const vocabularyKeys = {
   all: ['vocabulary'] as const,
   lists: () => [...vocabularyKeys.all, 'list'] as const,
-  list: (page: number) => [...vocabularyKeys.lists(), page, vocabularyPageSize] as const,
+  list: (page: number, filter: string) => [...vocabularyKeys.lists(), page, vocabularyPageSize, filter] as const,
   detail: (id: number) => [...vocabularyKeys.all, 'detail', id] as const,
 }
 
-export function useVocabularyList(page: number) {
+export function useVocabularyList(page: number, filter = '') {
   const refetchInterval = useEnrichmentRefetchInterval(pageHasUnfinished)
 
   return useQuery({
-    queryKey: vocabularyKeys.list(page),
-    queryFn: () => listVocabulary(page, vocabularyPageSize),
+    queryKey: vocabularyKeys.list(page, filter),
+    queryFn: () => listVocabulary(page, vocabularyPageSize, filter),
     placeholderData: keepPreviousData,
     refetchInterval,
   })

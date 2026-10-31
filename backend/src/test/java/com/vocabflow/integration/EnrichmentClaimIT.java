@@ -95,6 +95,19 @@ class EnrichmentClaimIT extends MysqlIntegrationTest {
     assertThat(usage.tryConsume(user, day, 0)).isFalse();
   }
 
+  @Test
+  void racingFirstCallsOfTheDayAreNotMistakenForReachingTheLimit() throws Exception {
+    long user = users.saveAndFlush(user("usage-first-race@example.com")).id;
+
+    for (int round = 0; round < 40; round++) {
+      LocalDate day = LocalDate.of(2026, 1, 1).plusDays(round);
+
+      List<Boolean> outcomes = race(() -> usage.tryConsume(user, day, 1000));
+
+      assertThat(outcomes).as("round %d, far below the limit", round).containsOnly(true);
+    }
+  }
+
   private List<Boolean> race(Callable<Boolean> task) throws Exception {
     ExecutorService executor = Executors.newFixedThreadPool(RACERS);
     CyclicBarrier barrier = new CyclicBarrier(RACERS);

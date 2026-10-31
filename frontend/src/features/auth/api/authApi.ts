@@ -22,6 +22,10 @@ export function logout() {
   return apiClient<void>(`${authPath}/logout`, { method: 'POST', notifyOnUnauthorized: false })
 }
 
+export function updateDailyGoal(dailyNewVocabularyGoal: number) {
+  return apiClient<AuthUser>(`${authPath}/me`, { method: 'PATCH', body: { dailyNewVocabularyGoal } })
+}
+
 export function getCurrentUser() {
   return apiClient<AuthUser>(`${authPath}/me`)
 }

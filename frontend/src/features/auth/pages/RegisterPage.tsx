@@ -28,7 +28,8 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [clbLevel, setClbLevel] = useState<ClbLevel>('CLB_4')
-  const [dailyNewVocabularyGoal, setDailyNewVocabularyGoal] = useState(10)
+  // Kept as typed, so the field can be emptied: turning it into a number would show 0 instead.
+  const [dailyNewVocabularyGoal, setDailyNewVocabularyGoal] = useState('10')
   const [inviteCode, setInviteCode] = useState('')
   const [validationError, setValidationError] = useState<string>()
 
@@ -51,14 +52,15 @@ export function RegisterPage() {
       return
     }
 
-    if (!Number.isInteger(dailyNewVocabularyGoal) || dailyNewVocabularyGoal < 1 || dailyNewVocabularyGoal > 100) {
+    const parsedGoal = dailyNewVocabularyGoal.trim() === '' ? Number.NaN : Number(dailyNewVocabularyGoal)
+    if (!Number.isInteger(parsedGoal) || parsedGoal < 1 || parsedGoal > 100) {
       setValidationError('Daily vocabulary goal must be between 1 and 100.')
       return
     }
 
     setValidationError(undefined)
     register.mutate(
-      { email: trimmedEmail, password, clbLevel, dailyNewVocabularyGoal, inviteCode: inviteCode.trim() || undefined },
+      { email: trimmedEmail, password, clbLevel, dailyNewVocabularyGoal: parsedGoal, inviteCode: inviteCode.trim() || undefined },
       { onSuccess: () => navigate('/login', { replace: true, state: { registered: true } }) },
     )
   }
@@ -119,7 +121,7 @@ export function RegisterPage() {
             id="register-daily-goal"
             max={100}
             min={1}
-            onChange={(event) => setDailyNewVocabularyGoal(Number(event.target.value))}
+            onChange={(event) => setDailyNewVocabularyGoal(event.target.value)}
             type="number"
             value={dailyNewVocabularyGoal}
           />
