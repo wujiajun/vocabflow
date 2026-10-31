@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../shared/api/tokenStorage'
 import { installSpeechSynthesis, voice } from '../test/speech'
 import indexHtml from '../../index.html?raw'
+import manifest from '../../public/manifest.webmanifest?raw'
 import { expectNoAxeViolations } from '../test/axe'
 import { emptyStudyQueue, errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../test/utils'
 
@@ -101,6 +102,11 @@ test('the vocabulary detail page has no axe violations', async () => {
   await screen.findByRole('heading', { name: 'overwhelmed' })
 
   await expectNoAxeViolations()
+})
+
+test('the whole site belongs to the installed app, so no page opens outside it', () => {
+  expect(indexHtml).toContain('<link rel="manifest" href="/manifest.webmanifest" />')
+  expect(JSON.parse(manifest)).toMatchObject({ scope: '/', start_url: '/', display: 'standalone' })
 })
 
 test('the page declares its language in index.html', () => {
