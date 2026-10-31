@@ -29,6 +29,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState('')
   const [clbLevel, setClbLevel] = useState<ClbLevel>('CLB_4')
   const [dailyNewVocabularyGoal, setDailyNewVocabularyGoal] = useState(10)
+  const [inviteCode, setInviteCode] = useState('')
   const [validationError, setValidationError] = useState<string>()
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -57,7 +58,7 @@ export function RegisterPage() {
 
     setValidationError(undefined)
     register.mutate(
-      { email: trimmedEmail, password, clbLevel, dailyNewVocabularyGoal },
+      { email: trimmedEmail, password, clbLevel, dailyNewVocabularyGoal, inviteCode: inviteCode.trim() || undefined },
       { onSuccess: () => navigate('/login', { replace: true, state: { registered: true } }) },
     )
   }
@@ -121,6 +122,19 @@ export function RegisterPage() {
             onChange={(event) => setDailyNewVocabularyGoal(Number(event.target.value))}
             type="number"
             value={dailyNewVocabularyGoal}
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-800" htmlFor="register-invite-code">
+          Invite code
+          <input
+            autoComplete="off"
+            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            aria-describedby={error ? 'register-error' : undefined}
+            aria-invalid={error ? true : undefined}
+            id="register-invite-code"
+            onChange={(event) => setInviteCode(event.target.value)}
+            type="text"
+            value={inviteCode}
           />
         </label>
         <button

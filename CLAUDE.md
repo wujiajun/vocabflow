@@ -32,6 +32,8 @@ Backend (JDK 21, Maven Wrapper):
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=test       # in-memory H2, no MySQL; data lost on exit
 ```
 
+Whole app (Docker): `cp .env.example .env`, fill it in, then `docker compose up -d --build --wait`; serves `http://localhost:8088`. `scripts/backup.sh` and `scripts/restore.sh` handle data.
+
 Frontend (Node 24 via `.node-version`/fnm):
 
 ```sh

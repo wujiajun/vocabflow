@@ -32,6 +32,11 @@ public class ApiExceptionHandler {
     return responses.response(HttpStatus.CONFLICT, "CONFLICT", x.getMessage());
   }
 
+  @ExceptionHandler(ForbiddenException.class)
+  ResponseEntity<ApiError> forbidden(ForbiddenException x) {
+    return responses.response(HttpStatus.FORBIDDEN, "INVALID_INVITE_CODE", x.getMessage());
+  }
+
   @ExceptionHandler(TooManyRequestsException.class)
   ResponseEntity<ApiError> tooMany(TooManyRequestsException x) {
     return responses.response(

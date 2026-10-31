@@ -15,6 +15,8 @@ vocabflow:
   auth:
     secret: "${VOCABFLOW_AUTH_SECRET}"
     token-hours: 24
+    # When set, registering requires this code. Empty means anyone may register.
+    invite-code: ${VOCABFLOW_INVITE_CODE:}
   enrichment:
     # fake (deterministic placeholder content) or claude (real model; needs VOCABFLOW_ANTHROPIC_API_KEY)
     provider: ${VOCABFLOW_ENRICHMENT_PROVIDER:fake}

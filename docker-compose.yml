@@ -1,0 +1,54 @@
+name: vocabflow
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: vocabflow
+      MYSQL_USER: vocabflow
+      MYSQL_PASSWORD: ${VOCABFLOW_DB_PASSWORD:?Set it in .env; see .env.example}
+      MYSQL_ROOT_PASSWORD: ${VOCABFLOW_DB_ROOT_PASSWORD:?Set it in .env; see .env.example}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      VOCABFLOW_DB_URL: jdbc:mysql://mysql:3306/vocabflow?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      VOCABFLOW_DB_USERNAME: vocabflow
+      VOCABFLOW_DB_PASSWORD: ${VOCABFLOW_DB_PASSWORD:?Set it in .env; see .env.example}
+      VOCABFLOW_AUTH_SECRET: ${VOCABFLOW_AUTH_SECRET:?Set it in .env; see .env.example}
+      VOCABFLOW_INVITE_CODE: ${VOCABFLOW_INVITE_CODE:?Set it in .env; see .env.example}
+      VOCABFLOW_ENRICHMENT_PROVIDER: ${VOCABFLOW_ENRICHMENT_PROVIDER:-fake}
+      VOCABFLOW_ANTHROPIC_API_KEY: ${VOCABFLOW_ANTHROPIC_API_KEY:-}
+      VOCABFLOW_ENRICHMENT_MODEL: ${VOCABFLOW_ENRICHMENT_MODEL:-claude-haiku-5-5}
+      VOCABFLOW_ENRICHMENT_DAILY_LIMIT: ${VOCABFLOW_ENRICHMENT_DAILY_LIMIT:-50}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      # 0.0.0.0 lets other devices on the network connect. Use 127.0.0.1 for this computer only.
+      - "${VOCABFLOW_BIND_ADDRESS:-0.0.0.0}:${VOCABFLOW_PORT:-8088}:80"
+
+volumes:
+  mysql-data:
