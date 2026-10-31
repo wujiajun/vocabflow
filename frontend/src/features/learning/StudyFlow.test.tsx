@@ -129,7 +129,7 @@ test('keeps the card and explains when a rating cannot be saved', async () => {
   await browserUser.click(screen.getByRole('button', { name: /^Hard/ }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.')
-  expect(screen.getByRole('button', { name: /^Hard/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^Hard/ })).toHaveFocus()
 })
 
 test('moves on without an error when another tab already reviewed the card', async () => {
@@ -163,7 +163,7 @@ test('moves on without an error when another tab already reviewed the card', asy
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   finishRefetch()
 
-  expect(await screen.findByRole('heading', { name: 'figure out' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'figure out' })).toHaveFocus()
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
@@ -227,6 +227,33 @@ test('the plan page leads to studying', async () => {
   await browserUser.click(screen.getByRole('link', { name: 'Start studying' }))
 
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+})
+
+test('a word added after finding an empty plan shows up in today’s plan straight away', async () => {
+  let added = false
+  const word = { userVocabularyId: 7, vocabularyItemId: 70, term: 'overwhelmed', type: 'WORD' }
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/daily-plan': () =>
+      jsonResponse({ date: '2026-11-01', newVocabularyGoal: 10, newItems: added ? [word] : [], reviewItems: [] }),
+    'GET /api/v1/vocabulary': () => jsonResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
+    'POST /api/v1/vocabulary': () => {
+      added = true
+      return jsonResponse({ id: 7, term: 'overwhelmed', enrichmentStatus: 'COMPLETED' })
+    },
+  })
+  const browserUser = userEvent.setup()
+
+  // The app keeps data fresh for 30 seconds; the test client would otherwise re-read on every mount.
+  renderApp('/app/today', (client) => client.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 } }))
+  await screen.findByText(/Words you add now will start today’s plan/)
+  await browserUser.click(screen.getByRole('link', { name: 'Vocabulary' }))
+  await browserUser.type(await screen.findByLabelText('New word or phrase'), 'overwhelmed')
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+  await screen.findByText('Added “overwhelmed”.')
+  await browserUser.click(screen.getByRole('link', { name: 'Today' }))
+
+  expect(await screen.findByText('1 new word · daily goal 10')).toBeInTheDocument()
 })
 
 test.each([

@@ -53,7 +53,7 @@ export function StudyPage() {
                 card={queue.data.nextCard}
                 date={date}
                 key={`${queue.data.nextCard.userVocabularyId}-${queue.data.nextCard.version}`}
-                onReviewed={() => setReviewedAny(true)}
+                onRate={() => setReviewedAny(true)}
                 takeFocus={reviewedAny}
               />
             ) : (

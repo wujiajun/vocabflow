@@ -22,12 +22,12 @@ export function StudyCardView({
   card,
   date,
   takeFocus,
-  onReviewed,
+  onRate,
 }: {
   card: StudyCard
   date: string
   takeFocus: boolean
-  onReviewed: () => void
+  onRate: () => void
 }) {
   const [revealed, setRevealed] = useState(false)
   const review = useSubmitReview()
@@ -35,11 +35,13 @@ export function StudyCardView({
   const answerRef = useRef<HTMLDivElement>(null)
   const kind = describeKind(card.type, card.partOfSpeech)
 
+  // Only on mount: a card kept after a failed save must leave focus on the button pressed.
   useEffect(() => {
     if (takeFocus) {
       termRef.current?.focus()
     }
-  }, [takeFocus])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (revealed) {
@@ -51,10 +53,9 @@ export function StudyCardView({
     if (review.isPending) {
       return
     }
-    review.mutate(
-      { userVocabularyId: card.userVocabularyId, rating, version: card.version, date },
-      { onSuccess: onReviewed },
-    )
+    // Not a callback on the mutation: this card may be gone by the time the request settles.
+    onRate()
+    review.mutate({ userVocabularyId: card.userVocabularyId, rating, version: card.version, date })
   }
 
   return (

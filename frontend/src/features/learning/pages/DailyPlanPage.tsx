@@ -70,7 +70,7 @@ function PlanContent({ plan }: { plan: NonNullable<ReturnType<typeof useDailyPla
             <PlanItemList items={plan.newItems} label="New words" />
             {count < plan.newVocabularyGoal ? (
               <p className="mt-4 text-sm text-slate-600">
-                Today’s plan is saved once created, so words you add now won’t appear in it.
+                Words you add from now on will join a later plan.
               </p>
             ) : null}
           </>
