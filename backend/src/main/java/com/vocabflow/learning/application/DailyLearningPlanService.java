@@ -73,6 +73,10 @@ public class DailyLearningPlanService {
     DailyLearningPlan plan =
         new DailyLearningPlan(
             0, userId, learningDate, goal, Instant.now(clock), newItems, reviewItems);
+    // An empty plan is not stored: words added later today can still start a plan for today.
+    if (newItems.isEmpty() && reviewItems.isEmpty()) {
+      return plan;
+    }
     return plans.saveIfAbsent(plan).orElseGet(() -> conflictRecovery.reload(userId, learningDate));
   }
 }
