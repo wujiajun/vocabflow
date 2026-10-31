@@ -2,34 +2,36 @@ package com.vocabflow.vocabulary.application;
 
 import com.vocabflow.shared.web.*;
 import com.vocabflow.vocabulary.domain.*;
-import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
 public class VocabularyService {
-  private static final Duration STALE_PENDING_AFTER = Duration.ofMinutes(5);
-
   private final VocabularyItemRepository items;
   private final UserVocabularyRepository userItems;
-  private final VocabularyEnrichmentProvider provider;
+  private final VocabularyEnrichmentService enrichment;
+  private final EnrichmentScheduler scheduler;
 
   public VocabularyService(
       VocabularyItemRepository items,
       UserVocabularyRepository userItems,
-      VocabularyEnrichmentProvider provider) {
+      VocabularyEnrichmentService enrichment,
+      EnrichmentScheduler scheduler) {
     this.items = items;
     this.userItems = userItems;
-    this.provider = provider;
+    this.enrichment = enrichment;
+    this.scheduler = scheduler;
   }
 
   // Deliberately not @Transactional: the adapters catch duplicate-key errors from saveIfAbsent, and
   // inside one shared transaction that poisons the session and hides the winner's committed row.
+  // Enrichment runs in the background, so the returned item is as it was when it was saved.
   public UserVocabulary add(long userId, String rawTerm) {
     VocabularyTerm term = new VocabularyTerm(rawTerm);
     VocabularyItem item =
-        completeIfStale(
-            items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term)));
+        items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term));
+    scheduleIfUnfinished(item, userId);
     if (userItems.existsByUserIdAndVocabularyItemId(userId, item.id())) {
       throw new ConflictException("This vocabulary is already in your list");
     }
@@ -52,52 +54,35 @@ public class VocabularyService {
             EnrichmentStatus.PENDING,
             null,
             Instant.now());
-    var saved = items.saveIfAbsent(pending);
-    if (saved.isEmpty()) {
-      return items.findByNormalizedTerm(term.normalized()).orElseThrow();
-    }
-
-    return items.save(enrich(saved.get()));
+    return items
+        .saveIfAbsent(pending)
+        .orElseGet(() -> items.findByNormalizedTerm(term.normalized()).orElseThrow());
   }
 
-  // A PENDING item older than the threshold lost its enrichment (e.g. the process stopped between
-  // insert and enrich); a younger one is most likely still being enriched by a concurrent request.
-  private VocabularyItem completeIfStale(VocabularyItem item) {
-    boolean stale =
-        item.enrichmentStatus() == EnrichmentStatus.PENDING
-            && item.createdAt().isBefore(Instant.now().minus(STALE_PENDING_AFTER));
-    return stale ? items.save(enrich(item)) : item;
+  // PENDING is new or stranded, PROCESSING may be a lost worker; the claim decides who proceeds, so
+  // scheduling for an item that another request is already enriching is harmless.
+  private void scheduleIfUnfinished(VocabularyItem item, long userId) {
+    if (item.enrichmentStatus() == EnrichmentStatus.PENDING
+        || item.enrichmentStatus() == EnrichmentStatus.PROCESSING) {
+      scheduler.schedule(
+          () -> enrichment.claimAndEnrich(item.id(), userId, Set.of(EnrichmentStatus.PENDING)));
+    }
   }
 
-  private VocabularyItem enrich(VocabularyItem item) {
-    try {
-      EnrichmentResult result = provider.enrich(item.term());
-      return new VocabularyItem(
-          item.id(),
-          item.term(),
-          result.type(),
-          result.phonetic(),
-          result.partOfSpeech(),
-          result.definition(),
-          result.examples(),
-          result.collocations(),
-          EnrichmentStatus.COMPLETED,
-          null,
-          item.createdAt());
-    } catch (Exception exception) {
-      return new VocabularyItem(
-          item.id(),
-          item.term(),
-          item.type(),
-          item.phonetic(),
-          item.partOfSpeech(),
-          item.definition(),
-          item.examples(),
-          item.collocations(),
-          EnrichmentStatus.FAILED,
-          "Enrichment could not be completed",
-          item.createdAt());
+  public UserVocabulary retryEnrichment(long userId, long id) {
+    UserVocabulary owned = detail(userId, id);
+    long itemId = owned.item().id();
+    if (owned.item().enrichmentStatus() != EnrichmentStatus.FAILED) {
+      throw new ConflictException("Only failed enrichment can be retried");
     }
+    if (!enrichment.hasQuota(userId)) {
+      throw new TooManyRequestsException("Daily enrichment limit reached");
+    }
+    if (enrichment.claim(itemId, Set.of(EnrichmentStatus.FAILED))
+        && !scheduler.schedule(() -> enrichment.enrich(itemId, userId))) {
+      items.markFailed(itemId, "Enrichment is busy; try again shortly");
+    }
+    return detail(userId, id);
   }
 
   public VocabularyPage list(long userId, int page, int size) {

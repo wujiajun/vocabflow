@@ -14,6 +14,7 @@ export interface VocabularyEntry {
   examples: string[] | null
   collocations: string[] | null
   enrichmentStatus: EnrichmentStatus
+  failureReason: string | null
   learningStatus: LearningStatus
   createdAt: string
 }

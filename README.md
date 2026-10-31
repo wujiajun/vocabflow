@@ -22,7 +22,7 @@ This is a modular monolith arranged by business capability: `identity`, `vocabul
 
 `UserVocabulary` is the user-owned learning relationship and begins as `NEW`; `VocabularyItem` holds shared vocabulary knowledge. The database unique constraint on `(user_id, vocabulary_item_id)` and an application check prevent duplicate personal learning records. Terms trim/collapse whitespace and compare case-insensitively; there is no fuzzy matching. Adding the same new term from several requests at once is safe: the loser of the race reuses the winner's shared item.
 
-`VocabularyEnrichmentProvider` is an application port. `FakeVocabularyEnrichmentAdapter` provides deterministic fixtures for `overwhelmed` and `figure out`, plus predictable fallback content. Enrichment state is recorded as PENDING/PROCESSING/COMPLETED/FAILED. A failed item remains usable. A shared item that is still PENDING five minutes after it was created (for example because the process stopped before enrichment finished) is enriched again the next time someone adds that term; FAILED items are not retried yet.
+`VocabularyEnrichmentProvider` is an application port with two adapters, chosen by `vocabflow.enrichment.provider`: `fake` (default; deterministic fixtures, not AI) and `claude` (one Claude Messages API call per term, default model `claude-haiku-5-5`, thinking off, schema-constrained JSON that is validated again before it is stored). Adding a word saves it as PENDING and returns immediately; a background worker fills it in, so clients poll `GET /api/v1/vocabulary/{id}` (or the list) until the status is COMPLETED or FAILED. Only one worker can claim a shared item (a conditional database update), so concurrent adds of the same term cost one model call, and a PROCESSING item whose worker was lost (older than five minutes) is claimed again the next time someone adds that term. A FAILED item stays usable and can be retried with `POST /api/v1/vocabulary/{id}/enrichment/retry`. Each model call counts against the acting user's daily limit (UTC day, default 50); beyond it, new words are saved but marked FAILED (`Daily enrichment limit reached`) and a retry returns 429. The source (`claude:<model>` or `fake`), attempt count and time are stored with the content.
 
 The frontend is feature-oriented (`src/features/<name>/{api,hooks,components,pages,types}`) and talks to the backend through one shared fetch client. See [frontend/README.md](frontend/README.md).
 
@@ -51,6 +51,10 @@ export VOCABFLOW_DB_URL='jdbc:mysql://localhost:3306/vocabflow?createDatabaseIfN
 export VOCABFLOW_DB_USERNAME=vocabflow
 export VOCABFLOW_DB_PASSWORD='your-password'
 export VOCABFLOW_AUTH_SECRET='a-long-random-development-secret-at-least-32-chars'
+# Optional, for real enrichment (otherwise the fake provider is used):
+export VOCABFLOW_ENRICHMENT_PROVIDER=claude
+export VOCABFLOW_ANTHROPIC_API_KEY='your-anthropic-api-key'
+# Optional: VOCABFLOW_ENRICHMENT_MODEL (default claude-haiku-5-5), VOCABFLOW_ENRICHMENT_DAILY_LIMIT (default 50)
 ```
 
 The application intentionally fails at startup when `VOCABFLOW_DB_PASSWORD` or `VOCABFLOW_AUTH_SECRET` is absent from the default profile. The `dev` and `test` profiles use local/test-only values; never use them in production.
@@ -119,7 +123,7 @@ curl -H "Authorization: Bearer $TOKEN" 'localhost:8080/api/v1/vocabulary?page=0&
 curl -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/vocabulary/1
 ```
 
-Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `POST/GET /api/v1/vocabulary`, `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry); `GET /api/v1/learning/daily-plan`.
+Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `POST/GET /api/v1/vocabulary`, `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry), `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED items only); `GET /api/v1/learning/daily-plan`.
 
 Errors always use `{code,message,timestamp}`:
 
@@ -133,10 +137,11 @@ Errors always use `{code,message,timestamp}`:
 | 405 | `METHOD_NOT_ALLOWED` | The HTTP method is not supported (the `Allow` header lists the right ones) |
 | 409 | `CONFLICT` | The email is already registered, or the word is already in the user's list |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | The request content type is not supported |
+| 429 | `ENRICHMENT_LIMIT_REACHED` | Retrying enrichment after the user's daily enrichment limit is used up |
 | 500 | `INTERNAL_ERROR` | Unexpected failure; the cause is only in the server log |
 
 Unauthenticated requests to a path that does not exist get 401 rather than 404, because authentication is checked first.
 
 ## Current limitations and next milestone
 
-There is no live dictionary or AI provider, no retry for failed enrichment, no exercises, mastery tracking or review scheduling, and no user timezone preference. Pronunciation uses the voices built into the user's browser (Web Speech API): it asks for American English, but which voice is used, and whether an American one exists at all, depends on the device. There are no stored recordings. The web app stores the token in `localStorage`; sign-in and sign-out are synced between browser tabs, except when the browser refuses to store the token, in which case the session lasts only for that tab. There is no production deployment setup yet. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: an asynchronous, retryable enrichment workflow with source provenance, then the review and practice modules.
+The real enrichment provider has only been tested against a mocked HTTP server, not against the live API. The web app polls for unfinished words (every 3 seconds, for up to 2 minutes) and offers a retry button on failed ones. There are no exercises, mastery tracking or review scheduling, and no user timezone preference. Pronunciation uses the voices built into the user's browser (Web Speech API): it asks for American English, but which voice is used, and whether an American one exists at all, depends on the device. There are no stored recordings. The web app stores the token in `localStorage`; sign-in and sign-out are synced between browser tabs, except when the browser refuses to store the token, in which case the session lasts only for that tab. There is no production deployment setup yet. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: try the real provider with a key, then the review and practice modules.

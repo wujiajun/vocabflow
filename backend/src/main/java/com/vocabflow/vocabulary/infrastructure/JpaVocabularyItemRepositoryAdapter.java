@@ -4,7 +4,10 @@ import com.vocabflow.shared.infrastructure.JsonSupport;
 import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.domain.*;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +17,11 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
 
   public JpaVocabularyItemRepositoryAdapter(VocabularyItemJpaRepository items) {
     this.items = items;
+  }
+
+  @Override
+  public Optional<VocabularyItem> findById(long id) {
+    return items.findById(id).map(this::map);
   }
 
   @Override
@@ -36,6 +44,38 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
   @Override
   public VocabularyItem save(VocabularyItem item) {
     return map(items.save(entity(item)));
+  }
+
+  @Override
+  public boolean claimForEnrichment(
+      long id, Set<EnrichmentStatus> claimable, Instant now, Instant staleBefore) {
+    return items.claim(
+            id, claimable.stream().map(Enum::name).collect(Collectors.toSet()), now, staleBefore)
+        == 1;
+  }
+
+  @Override
+  public void markCompleted(long id, EnrichmentResult result, String source, Instant at) {
+    VocabularyItemEntity entity = items.findById(id).orElseThrow();
+    entity.type = result.type() == null ? null : result.type().name();
+    entity.phonetic = result.phonetic();
+    entity.partOfSpeech = result.partOfSpeech();
+    entity.definition = result.definition();
+    entity.examples = JsonSupport.write(result.examples());
+    entity.collocations = JsonSupport.write(result.collocations());
+    entity.enrichmentStatus = EnrichmentStatus.COMPLETED.name();
+    entity.failureReason = null;
+    entity.enrichedAt = at;
+    entity.enrichmentSource = source;
+    items.save(entity);
+  }
+
+  @Override
+  public void markFailed(long id, String reason) {
+    VocabularyItemEntity entity = items.findById(id).orElseThrow();
+    entity.enrichmentStatus = EnrichmentStatus.FAILED.name();
+    entity.failureReason = reason;
+    items.save(entity);
   }
 
   private VocabularyItemEntity entity(VocabularyItem item) {

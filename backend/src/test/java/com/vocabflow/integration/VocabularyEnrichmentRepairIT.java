@@ -46,14 +46,34 @@ class VocabularyEnrichmentRepairIT extends MysqlIntegrationTest {
   }
 
   @Test
-  void addingARecentPendingTermDoesNotEnrichIt() {
-    long user = users.saveAndFlush(user("repair-recent@example.com")).id;
-    VocabularyItemEntity recent = pendingItem("being enriched", Duration.ofSeconds(10));
+  void addingAFreshProcessingTermLeavesItToItsWorker() {
+    long user = users.saveAndFlush(user("repair-processing@example.com")).id;
+    VocabularyItemEntity working = pendingItem("being enriched", Duration.ofSeconds(10));
+    working.enrichmentStatus = "PROCESSING";
+    working.enrichmentStartedAt = Instant.now().minus(Duration.ofSeconds(10));
+    vocabularyItems.saveAndFlush(working);
 
     vocabularyService.add(user, "being enriched");
 
-    assertThat(vocabularyItems.findById(recent.id).orElseThrow().enrichmentStatus)
-        .isEqualTo("PENDING");
+    assertThat(vocabularyItems.findById(working.id).orElseThrow().enrichmentStatus)
+        .isEqualTo("PROCESSING");
+  }
+
+  @Test
+  void addingATermWhoseWorkerWasLostReclaimsAndCompletesIt() {
+    long user = users.saveAndFlush(user("repair-lost@example.com")).id;
+    VocabularyItemEntity lost = pendingItem("lost worker", Duration.ofHours(1));
+    lost.enrichmentStatus = "PROCESSING";
+    lost.enrichmentStartedAt = Instant.now().minus(Duration.ofHours(1));
+    vocabularyItems.saveAndFlush(lost);
+
+    vocabularyService.add(user, "lost worker");
+
+    VocabularyItemEntity reloaded = vocabularyItems.findById(lost.id).orElseThrow();
+    assertThat(reloaded.enrichmentStatus).isEqualTo("COMPLETED");
+    assertThat(reloaded.enrichmentSource).isEqualTo("fake");
+    assertThat(reloaded.enrichedAt).isNotNull();
+    assertThat(reloaded.enrichmentAttempts).isEqualTo(1);
   }
 
   private VocabularyItemEntity pendingItem(String term, Duration age) {

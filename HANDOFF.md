@@ -42,7 +42,7 @@ vocabflow/
 │       │   ├── learning/      每日计划、计划持久化、并发恢复
 │       │   ├── security/      Bearer校验、签名/撤销、Security JSON错误
 │       │   └── shared/        公共Web错误响应（ApiExceptionHandler）与JSON支持
-│       ├── main/resources/   application配置与db/migration/V1…V4
+│       ├── main/resources/   application配置与db/migration/V1…V5
 │       └── test/java/        快速测试与integration/*IT
 ├── frontend/
 │   ├── AGENTS.md              前端工程约定
@@ -162,9 +162,9 @@ npm run dev
 
 **本次实际运行的结果**（2026-10-29 至 10-30，在当前分支代码上）：
 
-- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 36 个测试通过；`./mvnw verify` 通过，包含 15 个 MySQL 8.4 Testcontainers IT（`MysqlFlywayIT` 1、`MysqlPersistenceIT` 9、`VocabularyConcurrencyIT` 2、`VocabularyEnrichmentRepairIT` 3）。最近一次后端改动是让安全过滤器拒绝“用户已不存在”的 token（`MissingUserTokenApiTests` 5 个测试，浏览器里用重启 H2 后的旧 token 验证过），之后没有再改后端代码。
+- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 55 个测试通过；`./mvnw verify` 通过，包含 19 个 MySQL 8.4 Testcontainers IT（`MysqlFlywayIT` 1、`MysqlPersistenceIT` 9、`VocabularyConcurrencyIT` 2、`VocabularyEnrichmentRepairIT` 4、`EnrichmentClaimIT` 3）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
-- 前端：`npm run lint`、`typecheck`、`test`（159 个测试）、`build` 全部通过。
+- 前端：`npm run lint`、`typecheck`、`test`（170 个测试）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
 - **CI 工作流（`.github/workflows/ci.yml`）**：先在一个**干净的本地克隆**里（没有 `node_modules`、没有 `.mvn/`，`mvnw` 从零下载 Maven）逐条执行了同一批命令，全部通过。随后在 GitHub 上用 PR #3 **真正运行了两次（2026-10-30），两次 `backend` 和 `frontend` 都成功**，已合并（`930a3e9`）。第一次（`@v4` 的 Action）后端约 1.5 分钟、前端约 7.5 分钟，并带有警告：三个 Action 的 `@v4` 用 Node 20（已弃用，被强制用 Node 24 运行），`setup-java@v4` 已停止更新。把三个都升到 `@v5`（经核对其 `action.yml` 声明 `node24`）后第二次运行：后端约 1 分钟，前端约 1 分 40 秒，**这些警告消失了**，只剩一条通知：`ubuntu-latest` 标签从 2026-10-19 起迁移到 Ubuntu 26，目前没有受影响，未固定系统版本。runner 上的 Docker 和 Testcontainers 正常（后端 `verify` 含集成测试，成功）。前端第一次那么慢，第二次快得多，很可能是那天 GitHub Actions 的故障造成的，但这只是推断：没有读到每一步的耗时和日志。没有装 `actionlint`。**分支保护已开启**（2026-10-30，GitHub Rulesets 里的 `Protect main`，对默认分支 `main` 生效）：必须走 PR（必需审批数为 0，因为是一个人开发，GitHub 不允许批准自己的 PR）、必须通过 `backend` 和 `frontend` 两个检查、禁止删除和强制推送；仓库管理员只能在 PR 页面上绕过，留给紧急情况；没有要求线性历史（我们用 merge commit），也没有要求分支必须是最新的。已用公开接口核对这些规则确实在 `main` 上生效。
 - **发音功能的浏览器验证**（Claude 桌面应用内置浏览器，Chromium 152，macOS）：该浏览器约 180 个声音，声音列表在首次 `getVoices()` 约 1.5 秒后才加载（应用没有因此出错）；设备默认的 `en-US` 声音是 Samantha，监听 `speak` 调用确认实际选中它，语速 0.9；点击后 `speaking` 为真、`aria-pressed` 随开始和结束切换；再点一次会停止；连续点两个词只有最后一个在读；离开页面立即停止；列表、详情页、今日计划的按钮都在链接之外，点击不跳转；Tab 顺序和 Enter/Space 在键盘上可用，有焦点环；375px 下无横向滚动、按钮 40×40、不与文字重叠（详情页超长标题会让按钮换到下一行）；控制台无异常。
@@ -182,7 +182,7 @@ npm run dev
 - 用户CLB等级、每日新词目标。
 - 单词/短语创建、个人词库分页、详情、跨用户访问隔离。
 - `VocabularyItem`（共享内容）与 `UserVocabulary`（用户学习关系）分离；词条规范化及重复关系约束。
-- 可替换的词汇补全端口、确定性 fake 实现、补全状态；没有真实AI/字典调用。
+- 可替换的词汇补全端口、确定性 fake 实现（默认）、Claude 实现（`VOCABFLOW_ENRICHMENT_PROVIDER=claude`，未用真实密钥验证过）、补全状态。
 - API DTO/领域对象/JPA分离，仓储端口与持久化适配器；统一API错误模型/工厂。
 - Flyway、MySQL、H2快速测试、MySQL Testcontainers兼容性测试、Spotless。
 
@@ -199,7 +199,11 @@ npm run dev
 
 - **错误映射**：畸形或缺失的 JSON 请求体 → 400 `MALFORMED_REQUEST`；参数或路径变量类型错误 → 400 `INVALID_PARAMETER`；不存在的路径 → 404 `NOT_FOUND`；方法不对 → 405 `METHOD_NOT_ALLOWED`（带 `Allow` 头）；Content-Type 不支持 → 415 `UNSUPPORTED_MEDIA_TYPE`。兜底的 500 现在会用 ERROR 级别记录方法、路径和完整堆栈，响应体仍是固定文案。
 - **词汇并发创建**：多个请求同时添加同一个新词，输掉的请求以前会因共享事务里的 Hibernate 会话被污染而抛 `AssertionFailure`，变成 500。现在已修复，并有真实 MySQL 的并发 IT 覆盖（见第 7 节）。
-- **过期 PENDING 词条的再补全**：词条停在 PENDING 超过 5 分钟，下一次有人添加这个词时会重新补全并保存（包括该用户已拥有它的情况）；5 分钟内的 PENDING 不动，避免和正在补全的并发请求重复调用；`FAILED` 的词条不会被重试。
+- **异步补全与领取标记（M5 后端）**：`POST /api/v1/vocabulary` 只保存词条为 `PENDING` 并立刻返回（返回的是保存时的快照，补全结果要通过 GET 读到）；补全由进程内小线程池（2 个线程，队列 200，队列满则词条留在 PENDING，下次添加同一个词会再调度）在后台执行。只有 `claimForEnrichment` 条件更新成功的调用者才能调用 provider：状态在允许集合内，或已是 `PROCESSING` 但开始时间早于 5 分钟前（认为 worker 丢了）。添加路径只允许领取 `PENDING`；重试路径只允许领取 `FAILED`。所以并发添加同一个词只花一次模型调用，进程崩溃留下的 PENDING/PROCESSING 会在下次有人添加该词时被重领（包括该用户已拥有它的情况）。
+- **重试**：`POST /api/v1/vocabulary/{id}/enrichment/retry`（id 是 `UserVocabulary` id，只能重试自己词库里状态为 `FAILED` 的词；其他状态 409；超出每日次数 429 `ENRICHMENT_LIMIT_REACHED`；别人的 404）。请求内同步领取，再交给后台执行，响应里是领取后的当前状态。没有无限自动重试。
+- **每日次数上限**：`enrichment_usage(user_id, usage_date, request_count)`，按 UTC 日期，每次调用 provider 前原子加一（默认 50，`VOCABFLOW_ENRICHMENT_DAILY_LIMIT`）。次数记在触发补全的那个用户名下（添加者或重试者）。超限时新词仍会保存，但词条被标为 `FAILED`，`failureReason` 是 `Daily enrichment limit reached`，重试接口则直接 429。
+- **来源记录**：补全成功时写入 `enrichment_source`（`claude:<模型名>` 或 `fake`）、`enriched_at`；`enrichment_attempts` 记录领取次数；`failureReason` 现在也出现在词汇 API 的响应里。
+- **Claude 适配器**：Spring `RestClient` 直连 Messages API，不引入 SDK；`thinking: disabled`、`output_config.format` 要求 JSON Schema，服务端再次严格校验（类型枚举、非空、长度、例句 1–5 条、搭配 0–8 条），不合格或 `stop_reason` 不是 `end_turn` 都算失败。超时 30 秒（`vocabflow.enrichment.claude.timeout-seconds`）。日志只记异常类名，不记密钥、请求或响应内容。配置 `claude` 但没有密钥时应用启动失败。
 
 ### 前端
 
@@ -209,7 +213,7 @@ npm run dev
 - **统一 401 处理**：任何带 token 的请求收到 401，`apiClient` 会通知认证层；认证层清 token、清整个查询缓存并回登录页，登录页显示 “You’ve been signed out. Please sign in again to continue.”。登录和登出请求不触发（`notifyOnUnauthorized: false`），旧 token 的迟到 401 不会结束新会话。
 - **缓存隔离**：登出、token 被拒、恢复界面的 Sign out 和新登录前，都会清空整个查询缓存。
 - **应用外壳**：登录后有顶栏（邮箱、登出）和 Vocabulary / Today 两个标签。
-- **词汇界面**：添加表单（trim、1–255 字符校验、409/400 文案内联显示、成功后清空并保持焦点）、分页列表（最新在前；页码在 URL 里，如 `?page=2`，从 1 开始，无效值按第 1 页处理，页码不存在时提示并可回到第 1 页）、详情页（音标、词性、释义、例句、搭配、状态、添加日期；“返回”链接回到打开它的地方：同一页列表或今日计划，只接受 `/app/` 开头的站内路径）；有加载、可重试错误、空状态；PENDING/PROCESSING 显示 “Enriching…”，FAILED 显示 “Details unavailable”。
+- **词汇界面**：添加表单（trim、1–255 字符校验、409/400 文案内联显示、成功后清空并保持焦点）、分页列表（最新在前；页码在 URL 里，如 `?page=2`，从 1 开始，无效值按第 1 页处理，页码不存在时提示并可回到第 1 页）、详情页（音标、词性、释义、例句、搭配、状态、添加日期；“返回”链接回到打开它的地方：同一页列表或今日计划，只接受 `/app/` 开头的站内路径）；有加载、可重试错误、空状态。列表里 PENDING/PROCESSING 显示 “Enriching…” 徽章，FAILED 显示 “Details unavailable”；包含未完成词条的列表、未完成的详情每 3 秒重新读取一次，最多 2 分钟（`hooks/pollingConfig.ts`），之后不再自动读取。详情页有 `EnrichmentPanel`：补全中显示 “Filling in the details…” 和 “Check now”；完成时在 `role="status"` 区域朗读 “Details are ready.”；FAILED 显示失败原因和 “Retry details” 按钮（点击后焦点移到状态区；超限等错误内联显示，与失败原因相同时不重复）。刚添加的未完成词条在详情缓存里被标为已过期，打开详情页会立刻向服务器重读，而不是显示添加时的快照（应用的 `staleTime` 是 30 秒）。
 - **每日计划界面**：`/app/today`，按**浏览器本地日期**请求计划，显示日期、目标、新词列表（点击进入词汇详情）；复习区块仅在有内容时显示；文案如实说明“计划一天只建一次，之后添加的词不会出现在已保存的计划里”。
 - **发音**：词汇列表每一行、详情页标题旁、今日计划每一行都有播放按钮，点击用浏览器自带的 Web Speech API 朗读该词（`shared/speech/`）。优先选 `en-US` 的声音（兼容 Android 的 `en_US` 写法），语速 0.9；再点一次停止，离开页面会停止；浏览器不支持时不渲染按钮；设备上没有美式声音时，按钮提示和详情页会如实说明正在用别的英语声音。按钮放在行的链接旁边，不在链接里面。没有服务端音频，没有自动播放。
 
@@ -221,8 +225,9 @@ npm run dev
 | POST `/api/v1/auth/login` | email、password；返回 `{accessToken,user}` |
 | GET `/api/v1/auth/me` | Bearer认证，返回 `{id,email,clbLevel,dailyNewVocabularyGoal}`，无密码字段 |
 | POST `/api/v1/auth/logout` | Bearer认证，响应无业务JSON正文 |
-| POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409 |
+| POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409；创建返回的 `enrichmentStatus` 通常是 `PENDING` |
 | GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
+| POST `/api/v1/vocabulary/{id}/enrichment/retry` | 重试 `FAILED` 词条的补全；非 FAILED 409；超过每日次数 429；别人的 404 |
 | GET `/api/v1/learning/daily-plan` | 返回 `{date,newVocabularyGoal,newItems,reviewItems}`，注意goal字段名与用户DTO不同；计划项只有 `userVocabularyId、vocabularyItemId、term、type`，没有释义 |
 | 前端 `/` | 根据认证状态跳 `/login` 或 `/app` |
 | 前端 `/login`、`/register` | 已登录者跳 `/app`；未登录者显示表单 |
@@ -230,7 +235,7 @@ npm run dev
 | 前端 `/app/vocabulary`、`/app/vocabulary/:id` | 词汇页、详情页 |
 | 前端 `/app/today` | 今日计划页 |
 
-错误响应统一为 `{code,message,timestamp}`，`code` 取值：`VALIDATION_ERROR`(400)、`MALFORMED_REQUEST`(400)、`INVALID_PARAMETER`(400)、`UNAUTHORIZED`(401)、`NOT_FOUND`(404)、`METHOD_NOT_ALLOWED`(405)、`CONFLICT`(409)、`UNSUPPORTED_MEDIA_TYPE`(415)、`INTERNAL_ERROR`(500)。未登录访问不存在的路径会先被安全链拦下，返回 401 而不是 404。前端不要创造另一套后端错误格式。CLB支持1–12，注册密码至少8字符，目标1–100；表单显式提供CLB和目标。
+错误响应统一为 `{code,message,timestamp}`，`code` 取值：`VALIDATION_ERROR`(400)、`MALFORMED_REQUEST`(400)、`INVALID_PARAMETER`(400)、`UNAUTHORIZED`(401)、`NOT_FOUND`(404)、`METHOD_NOT_ALLOWED`(405)、`CONFLICT`(409)、`UNSUPPORTED_MEDIA_TYPE`(415)、`ENRICHMENT_LIMIT_REACHED`(429)、`INTERNAL_ERROR`(500)。未登录访问不存在的路径会先被安全链拦下，返回 401 而不是 404。前端不要创造另一套后端错误格式。CLB支持1–12，注册密码至少8字符，目标1–100；表单显式提供CLB和目标。
 
 ## 5. 进行中与工作区状态
 
@@ -243,7 +248,7 @@ npm run dev
 按里程碑组织的完整路线图（M4 加固到 M8 上线准备，以及各自需要用户决定的事项）见 `docs/ROADMAP.md`；下面是最近的具体待办。
 
 1. **P1：用户时区。** 后端缺省日期是 UTC，前端目前靠“传浏览器本地日期”绕开；是否把时区作为用户设置存进后端待产品确认。
-2. **P1：补全体验。** `FAILED` 词条没有重试；并发时两个请求可能同时补全同一个过期词条（现在的假实现无害，接真实 AI 后会重复调用，到时需要“领取标记”之类的方案，要新增迁移）；接入真实 AI/字典。
+2. **P1：补全体验（前后端都已做）。** 后端的异步补全、领取标记、重试、次数上限，前端的轮询、重试按钮、失败和超限文案都已完成，并在真实浏览器里对着真实后端（H2、假 provider、每日上限设为 1）验证过：添加、自动补全、超限变 FAILED、详情页失败说明、重试被 429 拒绝。**没有验证的**：真实 Claude 适配器（没有密钥）；补全需要超过 2 分钟的情况（轮询停止后只能点 “Check now” 或刷新）；卡死的 PENDING/PROCESSING 在详情页没有办法修复，只有再次添加同一个词才会重领。
 3. **后续：** 练习、评估、掌握度、间隔复习（现在复习项永远为空）、音频、生产认证/部署加固；具体顺序和规则均待确认。
 
 ## 7. 重要设计决定与约定
@@ -262,7 +267,7 @@ npm run dev
 - UTC `Instant` / `DATETIME(6)`，学习日期 `LocalDate`；后端缺省的“今天”是UTC日期，不是用户本地日期。前端用浏览器本地日期（用本地年月日拼 `YYYY-MM-DD`，不要用 `toISOString()`）。
 - `getOrCreate` 为应用层 `readOnly`事务；插入/flush通过独立Spring bean的 `REQUIRES_NEW`写事务完成；重复异常在该事务结束后被adapter捕获；winner reload通过另一bean的 `REQUIRES_NEW + readOnly`执行。
 - 这是显式编排多个事务，不是整个use case只有一个可统一回滚的数据库事务。计划和全部项由同一写事务保存；不能把异常捕获移到仍会rollback-only的共享事务，也不能通过同类self-invocation让传播注解失效。
-- **`VocabularyService.add` 故意不加 `@Transactional`。** 两个仓储适配器的 `saveIfAbsent` 在适配器里捕获重复键异常；如果整个方法在一个共享事务里，异常穿过 Spring Data 的事务代理时会把外层事务标成 rollback-only，Hibernate 会话也被污染，之后同一事务里的重新查询会抛 `AssertionFailure`，输掉竞争的请求变成 500。不加外层事务时，每次仓储调用各自一个事务，重复键在事务结束后才被捕获，重新查询也拿到新的快照。代价：新词的“插入”和“补全”是两个事务，中间有很短的 PENDING 窗口；窗口内进程崩溃会留下 PENDING 词条，靠“再次添加时再补全”修复。**不要为了统一而给它加回外层事务**；并发行为由 `VocabularyConcurrencyIT` 保护。
+- **`VocabularyService.add` 故意不加 `@Transactional`。** 两个仓储适配器的 `saveIfAbsent` 在适配器里捕获重复键异常；如果整个方法在一个共享事务里，异常穿过 Spring Data 的事务代理时会把外层事务标成 rollback-only，Hibernate 会话也被污染，之后同一事务里的重新查询会抛 `AssertionFailure`，输掉竞争的请求变成 500。不加外层事务时，每次仓储调用各自一个事务，重复键在事务结束后才被捕获，重新查询也拿到新的快照。代价：新词的“插入”和“补全”是两个独立步骤，补全现在在后台线程里，PENDING 窗口是正常状态；窗口内进程崩溃会留下 PENDING/PROCESSING 词条，靠“再次添加时领取并补全”修复。补全路径（`VocabularyEnrichmentService`、`JpaEnrichmentUsageRepositoryAdapter`）同样不能放进共享事务。**不要为了统一而给它加回外层事务**；并发行为由 `VocabularyConcurrencyIT` 保护。
 
 ### 认证与前端状态
 
@@ -285,7 +290,7 @@ npm run dev
 | --- | --- |
 | “用户已不存在的 token” | 已处理：`JwtFilter` 在设置认证前调用 `UserRepository.existsById`，用户不存在就当作没带 token，所有受保护接口统一返回标准 401（此前词汇列表 200、添加词汇 500）。代价是每个带 token 的请求多一次主键查询，规模变大时再考虑缓存。token 校验和用户检查是两次独立查询，两者之间用户被删除的竞态极小，下游原有的 “User no longer exists” 401 作为兜底。没有做停用用户、撤销某用户全部 token、token 加随机数，这些仍在路线图 M4。浏览器验证没有看网络日志，也没有试过过期或签名错误的 token |
 | 计划一天只建一次，空计划也保存 | 当天第一次打开今日计划时如果词库为空，会保存一个空计划，之后当天添加的词不会进入这个计划。后端语义，前端文案已说明；是否不保存空计划是产品决定 |
-| 词条补全的边界 | PENDING 超过 5 分钟才会在再次添加时被重新补全，之前只能等；只有再次添加才会触发，没人再添加就一直 PENDING；`FAILED` 不重试；两个请求同时发现同一个过期词条会各补全一次，后写入的覆盖。fake 补全是确定性的所以无害 |
+| 词条补全的边界 | 只有再次添加同一个词（或点重试）才会重领丢失的 PENDING/PROCESSING 或 FAILED，没人操作就一直停着；线程池队列满时词条留在 PENDING；每日次数按 UTC 日期；超限会把新词标为 `FAILED`（不是单独的状态）；后端没有定时任务 |
 | 词汇列表缓存 | 查询有30秒 `staleTime`。在界面之外（如 curl）添加词汇后，已缓存的列表30秒内切换标签不会更新；用界面添加会正常刷新 |
 | 跨标签页同步 | `AuthTokenProvider` 监听 `storage` 事件：另一个标签页登出或换账号，本页会跟着变并清空整个查询缓存，不显示“已登出”提示。降级：浏览器拒绝写入 `localStorage` 时，令牌只保存在当前标签页内存里（`tokenStorage.ts`），本页能用，但刷新后要重新登录，标签页之间也无法同步。真实浏览器验证覆盖了登出、登录、换账号和存储抛 `SecurityError`（用同源 iframe 注入脚本模拟）；没有看切换瞬间的画面（只检查了最终状态，单元测试断言缓存被清），没有测 `window.localStorage` 这个属性本身抛异常的浏览器，也没有在存储失败的情况下刷新确认会话丢失 |
 | CI 的遗留事项 | 已在 GitHub 上运行成功两次（见第 3 节）。分支保护已开启（见第 3 节），检查不过就合并不了；仓库管理员只能在 PR 页面绕过，留给紧急情况。遗留：Action 用主版本号引用（`@v5`），没有固定到提交 SHA，以后可以用 Dependabot 管理；`ubuntu-latest` 正在迁移到 Ubuntu 26，若构建因此变化需要固定系统版本；第一次运行时前端 job 偏慢的原因没有查清（第二次正常），如果以后又变慢，看 Actions 页面里每一步的耗时和缓存是否生效 |
@@ -305,7 +310,7 @@ npm run dev
 必须保护：
 
 - 不重写已完成认证/安全/词汇持久化解耦/学习事务加固，除非当前任务明确包含必要修改。
-- 不编辑既有Flyway V1–V4内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
+- 不编辑既有Flyway V1–V5内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
 - 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言（现为4）。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
 - Open-in-View已关闭；当前映射所用关联依赖明确的抓取策略，改为LAZY时必须保证事务内映射/显式fetch，不能依靠控制器持有会话。
 - 不把token存在视作唯一认证证明，不信任客户端 `userId`，不输出密码/token/密钥。
@@ -320,6 +325,10 @@ npm run dev
 | `VOCABFLOW_DB_URL` | 默认MySQL JDBC连接；application.yml有本地默认值，按部署环境配置 |
 | `VOCABFLOW_DB_USERNAME` | 数据库用户名；有本地默认值 |
 | `VOCABFLOW_DB_PASSWORD` | 默认profile所需数据库密码；从外部提供 |
+| `VOCABFLOW_ENRICHMENT_PROVIDER` | `fake`（默认）或 `claude` |
+| `VOCABFLOW_ANTHROPIC_API_KEY` | `claude` 时必需；从外部提供，勿写进仓库/日志 |
+| `VOCABFLOW_ENRICHMENT_MODEL` | 默认 `claude-haiku-5-5` |
+| `VOCABFLOW_ENRICHMENT_DAILY_LIMIT` | 每用户每天补全调用上限，默认 50 |
 | `VOCABFLOW_AUTH_SECRET` | 默认profile所需HMAC签名密钥；从外部提供，勿写进仓库/日志 |
 | `SPRING_PROFILES_ACTIVE` | Spring可选profile选择入口；也可用上述Maven启动参数选择profile |
 | `SERVER_PORT` | Spring可选端口覆盖入口；若改变需同步考虑Vite代理目标 |

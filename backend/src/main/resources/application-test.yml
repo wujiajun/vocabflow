@@ -6,3 +6,5 @@ spring:
 vocabflow:
   auth:
     secret: "test-secret-not-for-production"
+  enrichment:
+    inline: true
