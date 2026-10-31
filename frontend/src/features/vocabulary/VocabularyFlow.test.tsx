@@ -44,7 +44,7 @@ afterEach(() => {
 test('lists saved vocabulary with its details and links each entry to its page', async () => {
   stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([overwhelmed, figureOut])) })
 
-  renderApp('/app')
+  renderApp('/app/vocabulary')
 
   expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
   const list = await screen.findByRole('list')
@@ -284,14 +284,6 @@ test('shows a retryable error when an entry cannot be loaded', async () => {
   await browserUser.click(screen.getByRole('button', { name: 'Try again' }))
 
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
-})
-
-test('sends unknown app paths to the vocabulary page', async () => {
-  stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([])) })
-
-  renderApp('/app/somewhere-else')
-
-  expect(await screen.findByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
 })
 
 test('opens the page named in the URL and asks the server for that page', async () => {

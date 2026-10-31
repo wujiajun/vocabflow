@@ -1,4 +1,4 @@
-import type { VocabularyType } from '../../vocabulary/types/vocabulary'
+import type { LearningStatus, VocabularyType } from '../../vocabulary/types/vocabulary'
 
 export type Rating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 
@@ -23,6 +23,12 @@ export interface StudyCard {
   options: RatingOption[]
 }
 
+export interface StudiedWord {
+  userVocabularyId: number
+  term: string
+  learningStatus: LearningStatus
+}
+
 export interface StudyQueue {
   date: string
   learningCount: number
@@ -31,6 +37,12 @@ export interface StudyQueue {
   unavailableCount: number
   nextCard: StudyCard | null
   nextDueAt: string | null
+  newStudiedCount: number
+  newTargetCount: number
+  reviewsDoneCount: number
+  finished: boolean
+  moreNewWords: boolean
+  studiedToday: StudiedWord[]
 }
 
 export interface ReviewRequest {

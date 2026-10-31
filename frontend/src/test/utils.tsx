@@ -12,6 +12,22 @@ export const user = {
   dailyNewVocabularyGoal: 10,
 } as const
 
+export const emptyStudyQueue = {
+  date: '2026-11-01',
+  learningCount: 0,
+  reviewCount: 0,
+  newCount: 0,
+  unavailableCount: 0,
+  nextCard: null,
+  nextDueAt: null,
+  newStudiedCount: 0,
+  newTargetCount: 10,
+  reviewsDoneCount: 0,
+  finished: false,
+  moreNewWords: false,
+  studiedToday: [],
+}
+
 export function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,

@@ -44,11 +44,11 @@ src/
     App.tsx
     providers/                QueryClient and auth token providers
     router/AppRouter.tsx      all routes
-    layout/AppShell.tsx       header, Vocabulary/Today tabs, sign out, <Outlet />
+    layout/AppShell.tsx       header, Study/Vocabulary tabs, sign out, <Outlet />
   features/
     auth/                     sign in, register, current user, route guards
     vocabulary/               add form, paginated list, detail page
-    learning/                 today's plan
+    learning/                 study page and today's progress
       <feature>/{api,hooks,components,pages,types}
   shared/
     api/apiClient.ts          fetch wrapper: Bearer header, error mapping, 401 reporting
@@ -69,11 +69,10 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | --- | --- |
 | `/` | Redirects to `/app` or `/login` depending on the session |
 | `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
-| `/app` | Redirects to `/app/vocabulary`; everything under `/app` needs a session |
+| `/app` | Redirects to `/app/study`; everything under `/app` needs a session |
 | `/app/vocabulary` | Add a word or phrase and browse the paginated list; the page is in the URL as `?page=N` (1-based, anything unusable means page 1) |
-| `/app/study` | Flashcards: reveal the answer, then rate it Again, Hard, Good or Easy; each button shows when the card comes back |
+| `/app/study` | The home page. Today's progress and flashcards: reveal the answer, then rate it Again, Hard, Good or Easy. When nothing is due it lists what was studied and offers another batch of new words |
 | `/app/vocabulary/:id` | One vocabulary entry; while it is still being enriched the page polls, and a failed entry offers “Retry details”; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
-| `/app/today` | Today's learning plan |
 
 ## Authentication behaviour
 

@@ -44,8 +44,6 @@ export function useAddVocabulary() {
       // An unfinished entry is seeded as already stale, so opening its page reads the server again
       // instead of showing this snapshot for the whole stale time.
       queryClient.setQueryData(vocabularyKeys.detail(entry.id), entry, entryIsUnfinished(entry) ? { updatedAt: 0 } : undefined)
-      // An empty plan is not stored, so a new word can start today's plan.
-      void queryClient.invalidateQueries({ queryKey: ['learning'] })
       return queryClient.invalidateQueries({ queryKey: vocabularyKeys.lists() })
     },
   })

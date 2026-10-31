@@ -5,7 +5,7 @@ import { clearToken, setToken } from '../shared/api/tokenStorage'
 import { installSpeechSynthesis, voice } from '../test/speech'
 import indexHtml from '../../index.html?raw'
 import { expectNoAxeViolations } from '../test/axe'
-import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../test/utils'
+import { emptyStudyQueue, errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../test/utils'
 
 const word = {
   id: 7,
@@ -22,12 +22,6 @@ const word = {
 }
 const pending = { ...word, id: 8, term: 'waiting', enrichmentStatus: 'PENDING' }
 const vocabularyPage = { content: [word, pending], page: 0, size: 20, totalElements: 41, totalPages: 3 }
-const plan = {
-  date: '2026-10-30',
-  newVocabularyGoal: 10,
-  newItems: [{ userVocabularyId: 7, term: 'overwhelmed', type: 'WORD' }],
-  reviewItems: [],
-}
 
 beforeEach(() => {
   clearToken()
@@ -48,7 +42,6 @@ function signedInApi() {
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/vocabulary': () => jsonResponse(vocabularyPage),
     'GET /api/v1/vocabulary/7': () => jsonResponse(word),
-    'GET /api/v1/learning/daily-plan': () => jsonResponse(plan),
     'POST /api/v1/vocabulary': () => errorResponse(409, 'CONFLICT', 'This vocabulary is already in your list'),
   })
 }
@@ -110,15 +103,6 @@ test('the vocabulary detail page has no axe violations', async () => {
   await expectNoAxeViolations()
 })
 
-test('today’s plan has no axe violations', async () => {
-  signedInApi()
-
-  renderApp('/app/today')
-  await screen.findByRole('list', { name: 'New words' })
-
-  await expectNoAxeViolations()
-})
-
 test('the page declares its language in index.html', () => {
   expect(indexHtml).toMatch(/<html[^>]*\slang="en"/)
 })
@@ -158,11 +142,19 @@ test('the study page has no axe violations, before and after revealing the answe
     version: 0,
     options: [option('AGAIN', 1, null), option('HARD', 1, null), option('GOOD', 10, null), option('EASY', null, 4)],
   }
-  const base = { date: '2026-11-01', learningCount: 0, reviewCount: 0, newCount: 1, unavailableCount: 1, nextDueAt: null }
+  const base = { ...emptyStudyQueue, newCount: 1, unavailableCount: 1, reviewCount: 1, reviewsDoneCount: 1 }
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...base, nextCard }),
-    'POST /api/v1/learning/cards/7/reviews': () => jsonResponse({ ...base, newCount: 0, nextCard: null }),
+    'POST /api/v1/learning/cards/7/reviews': () => jsonResponse({
+        ...base,
+        newCount: 0,
+        reviewCount: 0,
+        nextCard: null,
+        finished: true,
+        moreNewWords: true,
+        studiedToday: [{ userVocabularyId: 7, term: 'overwhelmed', learningStatus: 'FAMILIAR' }],
+      }),
   })
   const browserUser = userEvent.setup()
 
@@ -174,6 +166,6 @@ test('the study page has no axe violations, before and after revealing the answe
   await expectNoAxeViolations()
 
   await browserUser.click(screen.getByRole('button', { name: /^Good/ }))
-  await screen.findByRole('heading', { name: 'You’re done for now' })
+  await screen.findByRole('heading', { name: 'Today’s study is complete' })
   await expectNoAxeViolations()
 })

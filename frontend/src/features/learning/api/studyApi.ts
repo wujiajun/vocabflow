@@ -5,6 +5,10 @@ export function getStudyQueue(date: string) {
   return apiClient<StudyQueue>(`/api/v1/learning/study-queue?date=${date}`)
 }
 
+export function studyMore(date: string) {
+  return apiClient<StudyQueue>('/api/v1/learning/study-queue/more', { method: 'POST', body: { date } })
+}
+
 export function submitReview({ userVocabularyId, rating, version, date }: ReviewRequest) {
   return apiClient<StudyQueue>(`/api/v1/learning/cards/${userVocabularyId}/reviews`, {
     method: 'POST',

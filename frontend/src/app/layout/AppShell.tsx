@@ -51,11 +51,11 @@ export function AppShell() {
           </button>
         </div>
         <nav aria-label="Main" className="mx-auto flex max-w-5xl gap-5 px-5 sm:px-8">
+          <NavLink className={navLinkClass} to="/app/study">
+            Study
+          </NavLink>
           <NavLink className={navLinkClass} to="/app/vocabulary">
             Vocabulary
-          </NavLink>
-          <NavLink className={navLinkClass} to="/app/today">
-            Today
           </NavLink>
         </nav>
       </header>

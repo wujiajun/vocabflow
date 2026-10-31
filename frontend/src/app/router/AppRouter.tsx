@@ -3,7 +3,6 @@ import { AuthLoadingState, ProtectedRoute, PublicOnlyRoute } from '../../feature
 import { LoginPage } from '../../features/auth/pages/LoginPage'
 import { RegisterPage } from '../../features/auth/pages/RegisterPage'
 import { useAuth } from '../../features/auth/hooks/useAuth'
-import { DailyPlanPage } from '../../features/learning/pages/DailyPlanPage'
 import { StudyPage } from '../../features/learning/pages/StudyPage'
 import { VocabularyDetailPage } from '../../features/vocabulary/pages/VocabularyDetailPage'
 import { VocabularyPage } from '../../features/vocabulary/pages/VocabularyPage'
@@ -37,12 +36,11 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="vocabulary" replace />} />
+        <Route index element={<Navigate to="study" replace />} />
         <Route path="vocabulary" element={<VocabularyPage />} />
         <Route path="vocabulary/:id" element={<VocabularyDetailPage />} />
-        <Route path="today" element={<DailyPlanPage />} />
         <Route path="study" element={<StudyPage />} />
-        <Route path="*" element={<Navigate to="/app/vocabulary" replace />} />
+        <Route path="*" element={<Navigate to="/app/study" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
