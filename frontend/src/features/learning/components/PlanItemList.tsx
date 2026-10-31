@@ -26,7 +26,7 @@ export function PlanItemList({ items, label }: { items: DailyPlanItem[]; label: 
               <span className="min-w-0 text-base font-semibold text-slate-950 [overflow-wrap:anywhere]">
                 {item.term}
               </span>
-              {type ? <span className="ml-auto shrink-0 text-sm text-slate-500">{type}</span> : null}
+              {type ? <span className="ml-auto shrink-0 text-sm text-slate-600">{type}</span> : null}
             </Link>
             <PronounceButton term={item.term} />
           </li>
