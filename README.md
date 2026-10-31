@@ -2,7 +2,7 @@
 
 VocabFlow helps an English learner keep the words and phrases they meet. You save a word or phrase, the system attaches structured learning content, and a daily plan picks the words to study. The repository contains a Java backend and a React web app. The learning content is deterministic placeholder data for now; there is no live dictionary or AI provider yet.
 
-What works today: register, sign in and out; save words and phrases; browse them with pagination and open a detail page; see today's plan; play a word's pronunciation with one click.
+What works today: register, sign in and out; save words and phrases; browse them with pagination and open a detail page; study them with Anki-style flashcards and spaced repetition; play a word's pronunciation with one click.
 
 ## Repository layout
 

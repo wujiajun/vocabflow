@@ -57,7 +57,7 @@ vocabflow/
 │       ├── app/              App、根Providers、路由(AppRouter)、布局(AppShell)
 │       ├── features/auth/    登录/注册、当前用户、路由守卫、会话失败恢复
 │       ├── features/vocabulary/ 添加表单、分页列表、详情页
-│       ├── features/learning/   今日计划页
+│       ├── features/learning/   学习页（首页）和当天进度
 │       ├── shared/api/       fetch客户端、token存储、会话事件(sessionEvents)
 │       ├── shared/date.ts    本地日历日期工具；useToday.ts：跨过午夜自动更新的“今天”；navigation.ts：详情页“返回”目标
 │       ├── shared/speech/    发音：播放按钮、选声音、朗读状态（Web Speech API）
@@ -164,7 +164,7 @@ npm run dev
 
 - 后端：`./mvnw spotless:check` 通过；`./mvnw test` 121 个测试通过；`./mvnw verify` 通过，包含 24 个 MySQL 8.4 Testcontainers IT。最近一次后端改动是间隔复习（分支 `spaced-repetition-backend`）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
-- 前端：`npm run lint`、`typecheck`、`test`（189 个测试）、`build` 全部通过。
+- 前端：`npm run lint`、`typecheck`、`test`（184 个测试）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
 - **CI 工作流（`.github/workflows/ci.yml`）**：先在一个**干净的本地克隆**里（没有 `node_modules`、没有 `.mvn/`，`mvnw` 从零下载 Maven）逐条执行了同一批命令，全部通过。随后在 GitHub 上用 PR #3 **真正运行了两次（2026-10-30），两次 `backend` 和 `frontend` 都成功**，已合并（`930a3e9`）。第一次（`@v4` 的 Action）后端约 1.5 分钟、前端约 7.5 分钟，并带有警告：三个 Action 的 `@v4` 用 Node 20（已弃用，被强制用 Node 24 运行），`setup-java@v4` 已停止更新。把三个都升到 `@v5`（经核对其 `action.yml` 声明 `node24`）后第二次运行：后端约 1 分钟，前端约 1 分 40 秒，**这些警告消失了**，只剩一条通知：`ubuntu-latest` 标签从 2026-10-19 起迁移到 Ubuntu 26，目前没有受影响，未固定系统版本。runner 上的 Docker 和 Testcontainers 正常（后端 `verify` 含集成测试，成功）。前端第一次那么慢，第二次快得多，很可能是那天 GitHub Actions 的故障造成的，但这只是推断：没有读到每一步的耗时和日志。没有装 `actionlint`。**分支保护已开启**（2026-10-30，GitHub Rulesets 里的 `Protect main`，对默认分支 `main` 生效）：必须走 PR（必需审批数为 0，因为是一个人开发，GitHub 不允许批准自己的 PR）、必须通过 `backend` 和 `frontend` 两个检查、禁止删除和强制推送；仓库管理员只能在 PR 页面上绕过，留给紧急情况；没有要求线性历史（我们用 merge commit），也没有要求分支必须是最新的。已用公开接口核对这些规则确实在 `main` 上生效。
 - **发音功能的浏览器验证**（Claude 桌面应用内置浏览器，Chromium 152，macOS）：该浏览器约 180 个声音，声音列表在首次 `getVoices()` 约 1.5 秒后才加载（应用没有因此出错）；设备默认的 `en-US` 声音是 Samantha，监听 `speak` 调用确认实际选中它，语速 0.9；点击后 `speaking` 为真、`aria-pressed` 随开始和结束切换；再点一次会停止；连续点两个词只有最后一个在读；离开页面立即停止；列表、详情页、今日计划的按钮都在链接之外，点击不跳转；Tab 顺序和 Enter/Space 在键盘上可用，有焦点环；375px 下无横向滚动、按钮 40×40、不与文字重叠（详情页超长标题会让按钮换到下一行）；控制台无异常。
@@ -197,7 +197,7 @@ npm run dev
 - **间隔复习（后端）**：`SpacedRepetitionScheduler` 是纯函数，实现 Anki 式 SM-2 的默认参数：学习步骤 1 和 10 分钟，毕业 1 天，Easy 4 天，初始难度系数 2.5，最低 1.3，遗忘后重学 10 分钟，之后间隔回到 1 天；没有随机抖动。过期复习按 Anki 的方式计入延迟（Hard 1/4、Good 1/2、Easy 全部）。词在第一次评分时建 `learning_cards`，每次评分写 `review_logs`。`learning_status` 由卡片决定：学习或重学中是 `LEARNING`，间隔不足 21 天是 `FAMILIAR`，21 天及以上是 `MASTERED`。
 - **本机部署（M8）**：`docker-compose.yml` 含 MySQL 8.4、后端、Caddy（托管前端、转发 `/api`、CSP 和安全响应头）。只开放 Web 端口（默认 8088，默认绑定 0.0.0.0，局域网可访问），MySQL 和后端不对外。**只有 HTTP，局域网内密码和 token 是明文**，不能直接上公网；上公网前必须加 HTTPS 和登录频率限制。邀请码在邀请码错误时先于其他校验拒绝，不泄露邮箱是否已注册。`GET /api/v1/health` 公开，只返回状态。备份恢复已实测（备份、改坏、恢复后数据和复习记录都回来，多余的表被清除）。没有从另一台设备实际访问过（只从本机通过局域网 IP 访问），macOS 防火墙可能需要放行。
 - **iPhone 主屏幕图标**：iOS 不用 SVG favicon，所以有 `public/apple-touch-icon.png`（180×180，由 favicon 去掉圆角生成）和固定的应用名。没有 PWA manifest。
-- **学习页**：`/app/study`（今日计划页的 “Start studying” 进入）。先只显示词和发音，“Show answer” 后显示音标、释义、例句、搭配和四个评分按钮（带下次时间）。焦点：翻面后到答案，评分后到下一张卡的词，学完到结束标题。保存中的第二次点击被忽略；另一个标签页已评分（409）时不报错，直接读取最新队列。没有键盘快捷键（1–4、空格）；窄屏要滚动才能看到按钮；在学习页时顶部导航没有高亮项；今日计划页不显示学习进度，没有词时也显示 “Start studying”。Again/Hard 的卡片在没有别的卡时会提前回来（20 分钟提前量），和按钮上写的时间不一致，这是 Anki 的行为。已由独立验证会话在浏览器里走过流程（手机和桌面宽度），跨天只通过接口看过，没在屏幕上看过。
+- **学习页（首页）**：`/app/study`，登录后直接进入。顶部有新词和复习的进度条（原生 `<progress>`，因为 CSP 禁止内联样式）。先只显示词和发音，“Show answer” 后显示音标、释义、例句、搭配和四个评分按钮（带下次时间）。焦点：翻面后到答案，评分后到下一张卡的词，学完到完成标题。没有可学的卡时显示完成页：今天学过的词（可进详情再返回）、“Study more new words”（有新词时）、“Add new words”。新词第一次评分就计入进度，哪怕评 Again。没有键盘快捷键；窄屏要滚动才能看到按钮；同一个词连续出现时焦点停在同名标题上，读屏可能不会提示换了卡。已由独立验证会话在桌面和手机宽度走过流程；屏幕上的第二天复习和 “Reviews” 进度条没看过，只通过接口看过到期数量。
 - **每日进度（后端）**：计划不再固定不变。新词按添加顺序往后追加，已有的词和顺序不变。规则：还没结束且未满每日目标时，读取计划或队列会自动补词；评完一张卡后，没有可学的卡也没有未来的学习步骤，当天就算结束，此后新加的词不再自动加入。`POST /api/v1/learning/study-queue/more`（`{date}`）开始新一批：先补满目标，已满则再多一批（大小等于每日词数，记在 `extra_new_items`），解除结束状态；没有新词可加时什么都不变。补词由 `DailyPlanGrowth` 在独立事务里持行锁完成，和创建、恢复计划的事务分开。队列响应新增 `newStudiedCount`、`newTargetCount`、`reviewsDoneCount`、`finished`、`moreNewWords`、`studiedToday`。
 - **学习队列**：`GET /api/v1/learning/study-queue?date=` 返回下一张卡和四个评分各自的结果。顺序：到期的学习步骤、到期复习、当天计划里的新词；都没有时，20 分钟内到期的学习步骤会提前出现（和 Anki 一样）。补全没完成的词只计数不出现。每日目标只限制新词，复习没有上限。
 - **计划**：空计划不再保存，当天加词后能生成计划。新词可追加（见“每日进度”）；复习项是生成时的快照，学习队列用的是实时数据，所以两者可能不完全一致。到期复习现在由 `CardDueReviewProvider` 提供。
@@ -219,10 +219,10 @@ npm run dev
 - **会话检查失败恢复**：`/me` 因断网或 5xx 失败时，显示带 Try again 和 Sign out 的恢复界面，不再一直卡在 “Checking your session…”（受保护路由、公开路由和根路由都覆盖）。
 - **统一 401 处理**：任何带 token 的请求收到 401，`apiClient` 会通知认证层；认证层清 token、清整个查询缓存并回登录页，登录页显示 “You’ve been signed out. Please sign in again to continue.”。登录和登出请求不触发（`notifyOnUnauthorized: false`），旧 token 的迟到 401 不会结束新会话。
 - **缓存隔离**：登出、token 被拒、恢复界面的 Sign out 和新登录前，都会清空整个查询缓存。
-- **应用外壳**：登录后有顶栏（邮箱、登出）和 Vocabulary / Today 两个标签。
+- **应用外壳**：登录后有顶栏（邮箱、登出）和 Study / Vocabulary 两个标签。
 - **词汇界面**：添加表单（trim、1–255 字符校验、409/400 文案内联显示、成功后清空并保持焦点）、分页列表（最新在前；页码在 URL 里，如 `?page=2`，从 1 开始，无效值按第 1 页处理，页码不存在时提示并可回到第 1 页）、详情页（音标、词性、释义、例句、搭配、状态、添加日期；“返回”链接回到打开它的地方：同一页列表或今日计划，只接受 `/app/` 开头的站内路径）；有加载、可重试错误、空状态。列表里 PENDING/PROCESSING 显示 “Enriching…” 徽章，FAILED 显示 “Details unavailable”；包含未完成词条的列表、未完成的详情每 3 秒重新读取一次，最多 2 分钟（`hooks/pollingConfig.ts`），之后不再自动读取。详情页有 `EnrichmentPanel`：补全中显示 “Filling in the details…” 和 “Check now”；完成时在 `role="status"` 区域朗读 “Details are ready.”；FAILED 显示失败原因和 “Retry details” 按钮（点击后焦点移到状态区；超限等错误内联显示，与失败原因相同时不重复）。刚添加的未完成词条在详情缓存里被标为已过期，打开详情页会立刻向服务器重读，而不是显示添加时的快照（应用的 `staleTime` 是 30 秒）。
-- **每日计划界面**：`/app/today`，按**浏览器本地日期**请求计划，显示日期、目标、新词列表（点击进入词汇详情）；复习区块仅在有内容时显示；文案如实说明“计划一天只建一次，之后添加的词不会出现在已保存的计划里”。
-- **发音**：词汇列表每一行、详情页标题旁、今日计划每一行都有播放按钮，点击用浏览器自带的 Web Speech API 朗读该词（`shared/speech/`）。优先选 `en-US` 的声音（兼容 Android 的 `en_US` 写法），语速 0.9；再点一次停止，离开页面会停止；浏览器不支持时不渲染按钮；设备上没有美式声音时，按钮提示和详情页会如实说明正在用别的英语声音。按钮放在行的链接旁边，不在链接里面。没有服务端音频，没有自动播放。
+- **每日计划**：今日计划页已去掉（`/app/today` 落到学习页），学习页按**浏览器本地日期**请求队列。`GET /learning/daily-plan` 接口还在，前端已不用。
+- **发音**：词汇列表每一行、详情页标题旁、学习卡片上都有播放按钮，点击用浏览器自带的 Web Speech API 朗读该词（`shared/speech/`）。优先选 `en-US` 的声音（兼容 Android 的 `en_US` 写法），语速 0.9；再点一次停止，离开页面会停止；浏览器不支持时不渲染按钮；设备上没有美式声音时，按钮提示和详情页会如实说明正在用别的英语声音。按钮放在行的链接旁边，不在链接里面。没有服务端音频，没有自动播放。
 
 ### 当前接口与路由
 
@@ -244,7 +244,7 @@ npm run dev
 | 前端 `/login`、`/register` | 已登录者跳 `/app`；未登录者显示表单 |
 | 前端 `/app` | 保护路由，跳到 `/app/vocabulary`；`/app/*` 的未知路径也跳到那里 |
 | 前端 `/app/vocabulary`、`/app/vocabulary/:id` | 词汇页、详情页 |
-| 前端 `/app/today` | 今日计划页 |
+| 前端 `/app/study` | 学习页（首页），`/app/today` 和未知路径都落到这里 |
 
 错误响应统一为 `{code,message,timestamp}`，`code` 取值：`VALIDATION_ERROR`(400)、`MALFORMED_REQUEST`(400)、`INVALID_PARAMETER`(400)、`UNAUTHORIZED`(401)、`INVALID_INVITE_CODE`(403)、`NOT_FOUND`(404)、`METHOD_NOT_ALLOWED`(405)、`CONFLICT`(409)、`UNSUPPORTED_MEDIA_TYPE`(415)、`ENRICHMENT_LIMIT_REACHED`(429)、`INTERNAL_ERROR`(500)。未登录访问不存在的路径会先被安全链拦下，返回 401 而不是 404。前端不要创造另一套后端错误格式。CLB支持1–12，注册密码至少8字符，目标1–100；表单显式提供CLB和目标。
 
@@ -300,7 +300,7 @@ npm run dev
 | 问题/边界 | 影响与继续开发注意事项 |
 | --- | --- |
 | “用户已不存在的 token” | 已处理：`JwtFilter` 在设置认证前调用 `UserRepository.existsById`，用户不存在就当作没带 token，所有受保护接口统一返回标准 401（此前词汇列表 200、添加词汇 500）。代价是每个带 token 的请求多一次主键查询，规模变大时再考虑缓存。token 校验和用户检查是两次独立查询，两者之间用户被删除的竞态极小，下游原有的 “User no longer exists” 401 作为兜底。没有做停用用户、撤销某用户全部 token、token 加随机数，这些仍在路线图 M4。浏览器验证没有看网络日志，也没有试过过期或签名错误的 token |
-| 计划一天只建一次，空计划也保存 | 当天第一次打开今日计划时如果词库为空，会保存一个空计划，之后当天添加的词不会进入这个计划。后端语义，前端文案已说明；是否不保存空计划是产品决定 |
+| 计划的边界 | 空计划不保存；未结束且未满目标时自动补词；当天结束后新词要等 “Study more new words” 或第二天。复习项是计划生成时的快照，学习队列用实时数据 |
 | 词条补全的边界 | 只有再次添加同一个词（或点重试）才会重领丢失的 PENDING/PROCESSING 或 FAILED，没人操作就一直停着；线程池队列满时词条留在 PENDING；每日次数按 UTC 日期；超限会把新词标为 `FAILED`（不是单独的状态）；后端没有定时任务 |
 | 词汇列表缓存 | 查询有30秒 `staleTime`。在界面之外（如 curl）添加词汇后，已缓存的列表30秒内切换标签不会更新；用界面添加会正常刷新 |
 | 跨标签页同步 | `AuthTokenProvider` 监听 `storage` 事件：另一个标签页登出或换账号，本页会跟着变并清空整个查询缓存，不显示“已登出”提示。降级：浏览器拒绝写入 `localStorage` 时，令牌只保存在当前标签页内存里（`tokenStorage.ts`），本页能用，但刷新后要重新登录，标签页之间也无法同步。真实浏览器验证覆盖了登出、登录、换账号和存储抛 `SecurityError`（用同源 iframe 注入脚本模拟）；没有看切换瞬间的画面（只检查了最终状态，单元测试断言缓存被清），没有测 `window.localStorage` 这个属性本身抛异常的浏览器，也没有在存储失败的情况下刷新确认会话丢失 |
