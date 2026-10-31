@@ -35,7 +35,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
         .andExpect(jsonPath("$.model").value("claude-haiku-5-5"))
         .andExpect(jsonPath("$.thinking.type").value("disabled"))
         .andExpect(jsonPath("$.messages[0].role").value("user"))
-        .andExpect(jsonPath("$.messages[0].content").value("resume"))
+        .andExpect(jsonPath("$.messages[0].content").value("<term>resume</term>"))
         .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
         .andExpect(jsonPath("$.output_config.format.schema.required[0]").value("term"))
         .andRespond(withSuccess(reply(entry()), MediaType.APPLICATION_JSON));
