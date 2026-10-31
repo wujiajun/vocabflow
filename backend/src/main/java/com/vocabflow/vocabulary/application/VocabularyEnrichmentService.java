@@ -71,6 +71,9 @@ public class VocabularyEnrichmentService {
       VocabularyItem item = items.findById(itemId).orElseThrow();
       EnrichmentResult result = provider.enrich(item.term());
       items.markCompleted(itemId, result, provider.source(), Instant.now());
+    } catch (EnrichmentRejectedException exception) {
+      log.warn("Enrichment of item {} rejected: {}", itemId, exception.getMessage());
+      items.markFailed(itemId, FAILED_REASON);
     } catch (RuntimeException exception) {
       // The class name only: provider messages can echo request details.
       log.warn("Enrichment of item {} failed: {}", itemId, exception.getClass().getSimpleName());

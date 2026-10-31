@@ -2,6 +2,7 @@ package com.vocabflow.vocabulary.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.time.Duration;
@@ -133,7 +134,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   static EnrichmentResult parse(JsonNode response) {
     String stopReason = text(response, "stop_reason");
     if (!"end_turn".equals(stopReason)) {
-      throw new IllegalStateException("Model stopped with " + stopReason);
+      throw new EnrichmentRejectedException("Model stopped with " + stopReason);
     }
     String reply = null;
     for (JsonNode block : response.path("content")) {
@@ -143,19 +144,19 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       }
     }
     if (reply == null) {
-      throw new IllegalStateException("Model reply had no text");
+      throw new EnrichmentRejectedException("Model reply had no text");
     }
     JsonNode entry;
     try {
       entry = JSON.readTree(reply);
     } catch (Exception exception) {
-      throw new IllegalStateException("Model reply was not JSON");
+      throw new EnrichmentRejectedException("Model reply was not JSON");
     }
     VocabularyType type;
     try {
       type = VocabularyType.valueOf(text(entry, "type"));
     } catch (IllegalArgumentException exception) {
-      throw new IllegalStateException("Model reply had an unknown type");
+      throw new EnrichmentRejectedException("Model reply had an unknown type");
     }
     String phonetic = text(entry, "phonetic");
     return new EnrichmentResult(
@@ -170,7 +171,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static String text(JsonNode node, String field) {
     JsonNode value = node.get(field);
     if (value == null || !value.isTextual()) {
-      throw new IllegalStateException("Model reply is missing " + field);
+      throw new EnrichmentRejectedException("Model reply is missing " + field);
     }
     return value.asText().strip();
   }
@@ -178,14 +179,14 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static String required(JsonNode node, String field) {
     String value = text(node, field);
     if (value.isEmpty()) {
-      throw new IllegalStateException("Model reply has an empty " + field);
+      throw new EnrichmentRejectedException("Model reply has an empty " + field);
     }
     return value;
   }
 
   private static String bounded(String value, String field, int max) {
     if (value.length() > max) {
-      throw new IllegalStateException("Model reply has an overlong " + field);
+      throw new EnrichmentRejectedException("Model reply has an overlong " + field);
     }
     return value;
   }
@@ -193,12 +194,12 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static List<String> strings(JsonNode node, String field, int min, int max, int length) {
     JsonNode array = node.get(field);
     if (array == null || !array.isArray() || array.size() < min || array.size() > max) {
-      throw new IllegalStateException("Model reply has an invalid " + field);
+      throw new EnrichmentRejectedException("Model reply has an invalid " + field);
     }
     List<String> values = new ArrayList<>();
     for (JsonNode element : array) {
       if (!element.isTextual() || element.asText().isBlank()) {
-        throw new IllegalStateException("Model reply has an invalid " + field);
+        throw new EnrichmentRejectedException("Model reply has an invalid " + field);
       }
       values.add(bounded(element.asText().strip(), field, length));
     }
