@@ -162,7 +162,7 @@ npm run dev
 
 **本次实际运行的结果**（2026-10-29 至 10-30，在当前分支代码上）：
 
-- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 112 个测试通过；`./mvnw verify` 通过，包含 23 个 MySQL 8.4 Testcontainers IT。最近一次后端改动是间隔复习（分支 `spaced-repetition-backend`）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
+- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 121 个测试通过；`./mvnw verify` 通过，包含 24 个 MySQL 8.4 Testcontainers IT。最近一次后端改动是间隔复习（分支 `spaced-repetition-backend`）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
 - 前端：`npm run lint`、`typecheck`、`test`（189 个测试）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
@@ -233,6 +233,8 @@ npm run dev
 | GET `/api/v1/auth/me` | Bearer认证，返回 `{id,email,clbLevel,dailyNewVocabularyGoal}`，无密码字段 |
 | POST `/api/v1/auth/logout` | Bearer认证，响应无业务JSON正文 |
 | POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409；创建返回的 `enrichmentStatus` 通常是 `PENDING` |
+| GET `/api/v1/vocabulary?status=&due=` | 可选筛选：`status` 是学习状态；`due=<日期>` 只留当天要学的词（学习中和重学中的，以及到期的复习）；两者可同时用。无效值 400 |
+| PATCH `/api/v1/auth/me` | `{dailyNewVocabularyGoal}`，1–100。调高后没结束的当天立即补词；调低不移除已加入的词 |
 | GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
 | POST `/api/v1/vocabulary/{id}/enrichment/retry` | 重试 `FAILED` 词条的补全；非 FAILED 409；超过每日次数 429；别人的 404 |
 | GET `/api/v1/learning/study-queue` | 下一张卡、各评分结果、各队列数量、`nextDueAt`；`date` 可选 |
