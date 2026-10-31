@@ -14,3 +14,12 @@ body {
   min-width: 320px;
   margin: 0;
 }
+
+/* iOS Safari zooms in on a focused field smaller than 16px, and stays zoomed after leaving it. */
+@layer base {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
