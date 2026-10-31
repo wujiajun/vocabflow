@@ -70,6 +70,76 @@ class StudyConcurrencyIT extends MysqlIntegrationTest {
     assertThat(plan.newItems()).extracting(item -> item.userVocabularyId()).containsExactly(fresh);
   }
 
+  @Test
+  void racingRequestsNeverAddAWordTwiceOrExceedTheGoal() throws Exception {
+    for (int round = 0; round < ROUNDS; round++) {
+      long user = users.saveAndFlush(user("plan-race-" + round + "@example.com")).id;
+      long first = vocabularyService.add(user, "plan race first " + round).id();
+      LocalDate day = DAY.plusDays(round);
+      study.next(user, day);
+      List<Long> added = new ArrayList<>();
+      for (int word = 0; word < 12; word++) {
+        added.add(vocabularyService.add(user, "plan race " + round + " word " + word).id());
+      }
+
+      List<String> outcomes = raceTask(() -> study.next(user, day));
+
+      assertThat(outcomes).as("round %d", round).containsOnly("ok");
+      var plan = dailyLearningPlans.findByUserIdAndLearningDate(user, day).orElseThrow();
+      List<Long> ids = plan.newItems().stream().map(item -> item.userVocabularyId()).toList();
+      assertThat(ids).as("goal of 10, in the order added").hasSize(10).doesNotHaveDuplicates();
+      assertThat(ids.getFirst()).isEqualTo(first);
+      assertThat(ids.subList(1, 10)).containsExactlyElementsOf(added.subList(0, 9));
+    }
+  }
+
+  @Test
+  void racingRequestsForAnotherBatchAddWordsWithoutDuplicates() throws Exception {
+    long user = users.saveAndFlush(user("batch-race@example.com")).id;
+    List<Long> words = new ArrayList<>();
+    for (int word = 0; word < 40; word++) {
+      words.add(vocabularyService.add(user, "batch race word " + word).id());
+    }
+    study.next(user, DAY);
+
+    List<String> outcomes = raceTask(() -> study.more(user, DAY));
+
+    assertThat(outcomes).containsOnly("ok");
+    var plan = dailyLearningPlans.findByUserIdAndLearningDate(user, DAY).orElseThrow();
+    List<Long> ids = plan.newItems().stream().map(item -> item.userVocabularyId()).toList();
+    assertThat(ids).doesNotHaveDuplicates();
+    assertThat(ids).containsExactlyElementsOf(words.subList(0, ids.size()));
+    assertThat(ids.size() % 10).as("whole batches").isZero();
+  }
+
+  private List<String> raceTask(Runnable task) throws Exception {
+    ExecutorService executor = Executors.newFixedThreadPool(RACERS);
+    CyclicBarrier barrier = new CyclicBarrier(RACERS);
+    try {
+      List<Future<String>> futures = new ArrayList<>();
+      for (int i = 0; i < RACERS; i++) {
+        futures.add(
+            executor.submit(
+                () -> {
+                  barrier.await(10, TimeUnit.SECONDS);
+                  try {
+                    task.run();
+                    return "ok";
+                  } catch (Exception other) {
+                    return other.getClass().getSimpleName();
+                  }
+                }));
+      }
+      List<String> results = new ArrayList<>();
+      for (Future<String> future : futures) {
+        results.add(future.get(30, TimeUnit.SECONDS));
+      }
+      return results;
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
   private List<String> race(long user, long id) throws Exception {
     ExecutorService executor = Executors.newFixedThreadPool(RACERS);
     CyclicBarrier barrier = new CyclicBarrier(RACERS);

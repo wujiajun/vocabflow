@@ -29,6 +29,12 @@ public class DailyLearningPlanEntity {
   @Column(name = "created_at", nullable = false)
   public Instant createdAt;
 
+  @Column(name = "extra_new_items", nullable = false)
+  public int extraNewItems;
+
+  @Column(name = "finished_at")
+  public Instant finishedAt;
+
   @OneToMany(
       mappedBy = "plan",
       cascade = CascadeType.ALL,

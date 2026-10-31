@@ -3,7 +3,9 @@ package com.vocabflow.learning.infrastructure;
 import com.vocabflow.learning.application.DailyLearningPlanRepository;
 import com.vocabflow.learning.domain.*;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
@@ -37,6 +39,33 @@ public class JpaDailyLearningPlanRepositoryAdapter implements DailyLearningPlanR
       }
       throw exception;
     }
+  }
+
+  @Override
+  public Optional<DailyLearningPlan> findForUpdate(long userId, LocalDate learningDate) {
+    return plans.findForUpdate(userId, learningDate).map(this::map);
+  }
+
+  @Override
+  public void appendNewItems(
+      long userId, LocalDate learningDate, List<DailyLearningPlanItem> items) {
+    DailyLearningPlanEntity plan =
+        plans.findByUserIdAndLearningDate(userId, learningDate).orElseThrow();
+    int itemOrder = plan.items.stream().mapToInt(item -> item.itemOrder + 1).max().orElse(0);
+    for (DailyLearningPlanItem item : items) {
+      plan.items.add(itemEntity(plan, item, itemOrder++));
+    }
+    plans.saveAndFlush(plan);
+  }
+
+  @Override
+  public void updateProgress(
+      long userId, LocalDate learningDate, int extraNewItems, Instant finishedAt) {
+    DailyLearningPlanEntity plan =
+        plans.findByUserIdAndLearningDate(userId, learningDate).orElseThrow();
+    plan.extraNewItems = extraNewItems;
+    plan.finishedAt = finishedAt;
+    plans.saveAndFlush(plan);
   }
 
   private DailyLearningPlanEntity entity(DailyLearningPlan plan) {
@@ -84,7 +113,9 @@ public class JpaDailyLearningPlanRepositoryAdapter implements DailyLearningPlanR
             .filter(item -> item.itemType.equals(PlanItemType.REVIEW.name()))
             .sorted(java.util.Comparator.comparingInt(item -> item.itemOrder))
             .map(this::mapItem)
-            .toList());
+            .toList(),
+        entity.extraNewItems,
+        entity.finishedAt);
   }
 
   private DailyLearningPlanItem mapItem(DailyLearningPlanItemEntity entity) {

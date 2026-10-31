@@ -1,6 +1,6 @@
 package com.vocabflow.learning.adapter;
 
-import com.vocabflow.learning.application.DailyLearningPlanService;
+import com.vocabflow.learning.application.CurrentDailyPlan;
 import com.vocabflow.learning.domain.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/learning/daily-plan")
 public class DailyLearningPlanController {
-  private final DailyLearningPlanService plans;
+  private final CurrentDailyPlan plans;
 
-  public DailyLearningPlanController(DailyLearningPlanService plans) {
+  public DailyLearningPlanController(CurrentDailyPlan plans) {
     this.plans = plans;
   }
 
@@ -27,7 +27,7 @@ public class DailyLearningPlanController {
       @AuthenticationPrincipal Long userId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
           LocalDate date) {
-    DailyLearningPlan plan = plans.getOrCreate(userId, date);
+    DailyLearningPlan plan = plans.get(userId, date);
     return new PlanResponse(
         plan.learningDate(),
         plan.newVocabularyGoal(),
