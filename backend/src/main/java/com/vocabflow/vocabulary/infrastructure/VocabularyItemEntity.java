@@ -39,4 +39,16 @@ public class VocabularyItemEntity {
 
   @Column(name = "created_at", nullable = false)
   public Instant createdAt;
+
+  @Column(name = "enrichment_started_at")
+  public Instant enrichmentStartedAt;
+
+  @Column(name = "enrichment_attempts", nullable = false)
+  public int enrichmentAttempts;
+
+  @Column(name = "enriched_at")
+  public Instant enrichedAt;
+
+  @Column(name = "enrichment_source")
+  public String enrichmentSource;
 }

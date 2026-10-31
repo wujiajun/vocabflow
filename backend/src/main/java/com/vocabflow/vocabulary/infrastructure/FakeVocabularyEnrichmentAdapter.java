@@ -3,10 +3,21 @@ package com.vocabflow.vocabulary.infrastructure;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.util.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(
+    name = "vocabflow.enrichment.provider",
+    havingValue = "fake",
+    matchIfMissing = true)
 public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProvider {
+  @Override
+  public String source() {
+    return "fake";
+  }
+
+  @Override
   public EnrichmentResult enrich(VocabularyTerm t) {
     String n = t.normalized();
     if (n.equals("overwhelmed"))

@@ -32,6 +32,12 @@ public class ApiExceptionHandler {
     return responses.response(HttpStatus.CONFLICT, "CONFLICT", x.getMessage());
   }
 
+  @ExceptionHandler(TooManyRequestsException.class)
+  ResponseEntity<ApiError> tooMany(TooManyRequestsException x) {
+    return responses.response(
+        HttpStatus.TOO_MANY_REQUESTS, "ENRICHMENT_LIMIT_REACHED", x.getMessage());
+  }
+
   @ExceptionHandler(NotFoundException.class)
   ResponseEntity<ApiError> n(NotFoundException x) {
     return responses.response(HttpStatus.NOT_FOUND, "NOT_FOUND", x.getMessage());

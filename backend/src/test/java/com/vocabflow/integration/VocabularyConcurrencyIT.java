@@ -39,6 +39,10 @@ class VocabularyConcurrencyIT extends MysqlIntegrationTest {
     assertThat(outcomes).as("outcomes across %d rounds", ROUNDS).containsOnlyKeys("success");
     assertThat(vocabularyItems.count()).isEqualTo(ROUNDS);
     assertThat(userVocabularies.count()).isEqualTo(ROUNDS * 2L);
+    assertThat(vocabularyItems.findAll())
+        .allSatisfy(item -> assertThat(item.enrichmentStatus).isEqualTo("COMPLETED"))
+        .allSatisfy(
+            item -> assertThat(item.enrichmentAttempts).as("one claim per item").isEqualTo(1));
   }
 
   @Test

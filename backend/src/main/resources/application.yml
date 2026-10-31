@@ -15,3 +15,13 @@ vocabflow:
   auth:
     secret: "${VOCABFLOW_AUTH_SECRET}"
     token-hours: 24
+  enrichment:
+    # fake (deterministic placeholder content) or claude (real model; needs VOCABFLOW_ANTHROPIC_API_KEY)
+    provider: ${VOCABFLOW_ENRICHMENT_PROVIDER:fake}
+    # Run enrichment on the calling thread instead of the background pool. Tests only.
+    inline: false
+    daily-limit: ${VOCABFLOW_ENRICHMENT_DAILY_LIMIT:50}
+    claude:
+      api-key: ${VOCABFLOW_ANTHROPIC_API_KEY:}
+      model: ${VOCABFLOW_ENRICHMENT_MODEL:claude-haiku-5-5}
+      timeout-seconds: 30

@@ -108,11 +108,17 @@ class VocabularyApiTests {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"overwhelmed\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"))
+            .andExpect(jsonPath("$.enrichmentStatus").value("PENDING"))
             .andReturn()
             .getResponse()
             .getContentAsString();
     long id = json.readTree(body).get("id").asLong();
+    // Enrichment runs in the background (inline under the test profile), so it shows up on reads.
+    mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + a))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"))
+        .andExpect(jsonPath("$.failureReason").isEmpty())
+        .andExpect(jsonPath("$.definition").isNotEmpty());
     mvc.perform(
             post("/api/v1/vocabulary")
                 .header("Authorization", "Bearer " + a)

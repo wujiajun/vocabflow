@@ -29,6 +29,7 @@ public class VocabularyController {
       List<String> examples,
       List<String> collocations,
       String enrichmentStatus,
+      String failureReason,
       String learningStatus,
       Instant createdAt) {}
 
@@ -46,6 +47,7 @@ public class VocabularyController {
         item.examples(),
         item.collocations(),
         item.enrichmentStatus().name(),
+        item.failureReason(),
         userVocabulary.learningStatus().name(),
         userVocabulary.createdAt());
   }
@@ -68,6 +70,11 @@ public class VocabularyController {
         result.size(),
         result.totalElements(),
         result.totalPages());
+  }
+
+  @PostMapping("/{id}/enrichment/retry")
+  public Item retryEnrichment(@AuthenticationPrincipal Long userId, @PathVariable long id) {
+    return map(service.retryEnrichment(userId, id));
   }
 
   @GetMapping("/{id}")

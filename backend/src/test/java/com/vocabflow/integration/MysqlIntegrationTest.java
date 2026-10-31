@@ -45,6 +45,7 @@ public abstract class MysqlIntegrationTest {
 
   @BeforeEach
   void clearDatabase() {
+    jdbcTemplate.update("DELETE FROM enrichment_usage");
     jdbcTemplate.update("DELETE FROM daily_learning_plan_items");
     jdbcTemplate.update("DELETE FROM daily_learning_plans");
     userVocabularies.deleteAll();
