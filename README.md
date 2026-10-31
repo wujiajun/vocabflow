@@ -127,7 +127,7 @@ curl -H "Authorization: Bearer $TOKEN" 'localhost:8080/api/v1/vocabulary?page=0&
 curl -H "Authorization: Bearer $TOKEN" localhost:8080/api/v1/vocabulary/1
 ```
 
-Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `POST/GET /api/v1/vocabulary`, `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry), `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED items only); `GET /api/v1/learning/daily-plan`, `GET /api/v1/learning/study-queue`, `POST /api/v1/learning/cards/{userVocabularyId}/reviews` (`{rating,version,date}`, rating is `AGAIN`, `HARD`, `GOOD` or `EASY`), `POST /api/v1/learning/study-queue/more` (`{date}`, starts another batch of new words).
+Endpoints: `POST /api/v1/auth/register`, `login`, `logout`, `GET /me`; `PATCH /me` (`{dailyNewVocabularyGoal}`); `POST/GET /api/v1/vocabulary` (the list takes optional `status` and `due=<date>` filters), `GET /api/v1/vocabulary/{id}` (the id of the user's own vocabulary entry), `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED items only); `GET /api/v1/learning/daily-plan`, `GET /api/v1/learning/study-queue`, `POST /api/v1/learning/cards/{userVocabularyId}/reviews` (`{rating,version,date}`, rating is `AGAIN`, `HARD`, `GOOD` or `EASY`), `POST /api/v1/learning/study-queue/more` (`{date}`, starts another batch of new words).
 
 Errors always use `{code,message,timestamp}`:
 

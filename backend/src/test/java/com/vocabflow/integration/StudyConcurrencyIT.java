@@ -7,6 +7,7 @@ import com.vocabflow.learning.application.StudyService;
 import com.vocabflow.learning.domain.Rating;
 import com.vocabflow.shared.web.ConflictException;
 import com.vocabflow.vocabulary.application.VocabularyService;
+import com.vocabflow.vocabulary.domain.LearningStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -110,6 +111,26 @@ class StudyConcurrencyIT extends MysqlIntegrationTest {
     assertThat(ids).doesNotHaveDuplicates();
     assertThat(ids).containsExactlyElementsOf(words.subList(0, ids.size()));
     assertThat(ids.size() % 10).as("whole batches").isZero();
+  }
+
+  @Test
+  void theFilteredVocabularyQueryWorksOnMysql() {
+    long user = users.saveAndFlush(user("filter-mysql@example.com")).id;
+    long fresh = vocabularyService.add(user, "filter fresh").id();
+    long reviewed = vocabularyService.add(user, "filter reviewed").id();
+    study.review(user, reviewed, Rating.EASY, 0, DAY);
+
+    assertThat(ids(user, LearningStatus.NEW, null)).containsExactly(fresh);
+    assertThat(ids(user, LearningStatus.FAMILIAR, null)).containsExactly(reviewed);
+    assertThat(ids(user, null, DAY)).isEmpty();
+    assertThat(ids(user, null, DAY.plusDays(4))).containsExactly(reviewed);
+    assertThat(ids(user, LearningStatus.NEW, DAY.plusDays(4))).isEmpty();
+  }
+
+  private List<Long> ids(long user, LearningStatus status, LocalDate due) {
+    return vocabularyService.list(user, 0, 20, status, due).content().stream()
+        .map(entry -> entry.id())
+        .toList();
   }
 
   private List<String> raceTask(Runnable task) throws Exception {

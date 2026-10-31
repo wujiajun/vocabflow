@@ -13,7 +13,7 @@ Repository rules, quality gates, and architecture constraints live in `AGENTS.md
 
 ## Git workflow
 
-`main` is protected by a GitHub ruleset: never commit to it directly. Make a short-lived branch per task, push it, and open a pull request; the `backend` and `frontend` CI checks must pass before it can merge. Do not push, merge, or delete branches unless asked.
+`main` is protected by a GitHub ruleset: never commit to it directly. Make a short-lived branch per task, push it, and open a pull request; the `backend` and `frontend` CI checks must pass before it can merge. Claude may push branches, open PRs with `gh` and handle CI on its own, but must wait for the user to say so before merging. Syncing `main` and deleting merged branches afterwards is fine. Force pushes, history rewrites, ruleset changes and tags still need asking first.
 
 ## Commands
 

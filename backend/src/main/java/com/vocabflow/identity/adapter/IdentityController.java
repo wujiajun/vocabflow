@@ -29,6 +29,12 @@ public class IdentityController {
       @Min(1) @Max(100) Integer dailyNewVocabularyGoal,
       String inviteCode) {}
 
+  record UpdateSettings(
+      @NotNull(message = "Daily goal is required")
+          @Min(value = 1, message = "Daily goal must be between 1 and 100")
+          @Max(value = 100, message = "Daily goal must be between 1 and 100")
+          Integer dailyNewVocabularyGoal) {}
+
   record Login(@Email String email, @NotBlank String password) {}
 
   record UserResponse(long id, String email, String clbLevel, int dailyNewVocabularyGoal) {}
@@ -63,6 +69,12 @@ public class IdentityController {
     tokens.revoke(
         BearerTokenExtractor.extract(authorization)
             .orElseThrow(() -> new UnauthorizedException("Authentication is required")));
+  }
+
+  @PatchMapping("/me")
+  public UserResponse updateSettings(
+      @AuthenticationPrincipal Long id, @RequestBody @jakarta.validation.Valid UpdateSettings r) {
+    return map(service.updateDailyGoal(id, r.dailyNewVocabularyGoal));
   }
 
   @GetMapping("/me")

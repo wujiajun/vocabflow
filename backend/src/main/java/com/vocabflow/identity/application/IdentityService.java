@@ -43,6 +43,19 @@ public class IdentityService {
     return u;
   }
 
+  @Transactional
+  public User updateDailyGoal(long id, int goal) {
+    User user = current(id);
+    return users.save(
+        new User(
+            user.id(),
+            user.email(),
+            user.passwordHash(),
+            user.clbLevel(),
+            new DailyVocabularyGoal(goal),
+            user.createdAt()));
+  }
+
   public User current(long id) {
     return users.findById(id).orElseThrow(() -> new UnauthorizedException("User no longer exists"));
   }

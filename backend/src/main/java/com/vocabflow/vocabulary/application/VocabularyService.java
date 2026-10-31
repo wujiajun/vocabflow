@@ -3,6 +3,7 @@ package com.vocabflow.vocabulary.application;
 import com.vocabflow.shared.web.*;
 import com.vocabflow.vocabulary.domain.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
@@ -12,16 +13,19 @@ public class VocabularyService {
   private final UserVocabularyRepository userItems;
   private final VocabularyEnrichmentService enrichment;
   private final EnrichmentScheduler scheduler;
+  private final DueVocabularyQuery due;
 
   public VocabularyService(
       VocabularyItemRepository items,
       UserVocabularyRepository userItems,
       VocabularyEnrichmentService enrichment,
-      EnrichmentScheduler scheduler) {
+      EnrichmentScheduler scheduler,
+      DueVocabularyQuery due) {
     this.items = items;
     this.userItems = userItems;
     this.enrichment = enrichment;
     this.scheduler = scheduler;
+    this.due = due;
   }
 
   // Deliberately not @Transactional: the adapters catch duplicate-key errors from saveIfAbsent, and
@@ -86,7 +90,19 @@ public class VocabularyService {
   }
 
   public VocabularyPage list(long userId, int page, int size) {
-    return userItems.findByUserId(userId, Math.max(page, 0), Math.min(Math.max(size, 1), 100));
+    return list(userId, page, size, null, null);
+  }
+
+  /** {@code dueOn} keeps only words to study by that day; {@code status} keeps only that status. */
+  public VocabularyPage list(
+      long userId, int page, int size, LearningStatus status, LocalDate dueOn) {
+    int safePage = Math.max(page, 0);
+    int safeSize = Math.min(Math.max(size, 1), 100);
+    if (status == null && dueOn == null) {
+      return userItems.findByUserId(userId, safePage, safeSize);
+    }
+    return userItems.findFiltered(
+        userId, status, dueOn == null ? null : due.findDueIds(userId, dueOn), safePage, safeSize);
   }
 
   public UserVocabulary detail(long userId, long id) {

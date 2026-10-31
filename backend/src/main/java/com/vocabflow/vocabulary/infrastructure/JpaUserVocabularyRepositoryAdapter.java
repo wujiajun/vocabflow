@@ -4,8 +4,11 @@ import com.vocabflow.shared.infrastructure.JsonSupport;
 import com.vocabflow.vocabulary.application.UserVocabularyRepository;
 import com.vocabflow.vocabulary.domain.*;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
@@ -48,6 +51,22 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
   public VocabularyPage findByUserId(long userId, int page, int size) {
     var result =
         userVocabularies.findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size));
+    return page(result);
+  }
+
+  @Override
+  public VocabularyPage findFiltered(
+      long userId, LearningStatus status, Collection<Long> ids, int page, int size) {
+    return page(
+        userVocabularies.findFiltered(
+            userId,
+            status == null ? null : status.name(),
+            ids == null,
+            ids == null ? List.of(0L) : ids,
+            PageRequest.of(page, size)));
+  }
+
+  private VocabularyPage page(Page<UserVocabularyEntity> result) {
     return new VocabularyPage(
         result.getContent().stream().map(this::map).toList(),
         result.getNumber(),

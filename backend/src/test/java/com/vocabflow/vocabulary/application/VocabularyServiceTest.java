@@ -22,7 +22,8 @@ class VocabularyServiceTest {
   private final VocabularyEnrichmentService enrichment = mock(VocabularyEnrichmentService.class);
   private final EnrichmentScheduler scheduler = mock(EnrichmentScheduler.class);
   private final VocabularyService service =
-      new VocabularyService(items, userItems, enrichment, scheduler);
+      new VocabularyService(
+          items, userItems, enrichment, scheduler, mock(DueVocabularyQuery.class));
 
   @Test
   void translatesDuplicatePersistenceResultToConflictThroughRepositoryPort() {

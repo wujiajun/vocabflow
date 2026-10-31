@@ -1,6 +1,7 @@
 package com.vocabflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -116,7 +117,7 @@ class ApiErrorMappingTests {
   void unexpectedExceptionReturnsInternalErrorAndLogsStackTrace(CapturedOutput output)
       throws Exception {
     String token = token("mapping-internal@example.com");
-    when(vocabularyService.list(anyLong(), anyInt(), anyInt()))
+    when(vocabularyService.list(anyLong(), anyInt(), anyInt(), any(), any()))
         .thenThrow(new IllegalStateException("boom-secret-detail"));
 
     String body =

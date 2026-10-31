@@ -41,7 +41,7 @@ There is no root Maven/npm project. Run commands inside the relevant directory.
 - Never hard-code secrets or API keys, and preserve strict user data isolation.
 - Do not log passwords, access tokens, or secrets. Environment examples and handoff notes must not include secret values.
 - Preserve existing user changes, including untracked files. Inspect `git status`/diff before editing; do not use cleanup/reset operations to discard unfinished work.
-- Do not commit, push, reset, rebase, tag, or rewrite Git history unless explicitly requested.
+- Do not commit, push, reset, rebase, tag, or rewrite Git history unless explicitly requested. `CLAUDE.md` lists what the owner has already allowed in its Git workflow section.
 - Do not install system software, use `sudo`, modify global tool configuration, or delete files outside this repository unless explicitly approved.
 - Do not install/upgrade the JDK or Node, persistently modify `JAVA_HOME`/`PATH`, or change global Maven/npm settings unless explicitly approved. Use the existing project toolchain.
 - Inspect existing code before changing it. Do not rewrite unrelated code. Fix failures caused by your changes and summarize validation performed.
