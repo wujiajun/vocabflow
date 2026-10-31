@@ -135,6 +135,7 @@ Errors always use `{code,message,timestamp}`:
 | 400 | `MALFORMED_REQUEST` | The body is missing or is not valid JSON |
 | 400 | `INVALID_PARAMETER` | A query or path value has the wrong type, such as `?date=abc` |
 | 401 | `UNAUTHORIZED` | The token is missing, malformed, revoked or rejected |
+| 403 | `INVALID_INVITE_CODE` | Registering with a missing or wrong invite code, when one is configured |
 | 404 | `NOT_FOUND` | The resource does not exist or belongs to another user |
 | 405 | `METHOD_NOT_ALLOWED` | The HTTP method is not supported (the `Allow` header lists the right ones) |
 | 409 | `CONFLICT` | The email is already registered, or the word is already in the user's list |
@@ -144,6 +145,28 @@ Errors always use `{code,message,timestamp}`:
 
 Unauthenticated requests to a path that does not exist get 401 rather than 404, because authentication is checked first.
 
+## Running with Docker Compose
+
+This runs the whole app with its data kept between restarts. It needs Docker.
+
+```sh
+cp .env.example .env    # then fill in every value
+docker compose up -d --build --wait
+```
+
+Open `http://localhost:8088`, or `http://<this computer's IP>:8088` from another device on the same network. Registering needs the invite code from `.env`. To use this computer only, set `VOCABFLOW_BIND_ADDRESS=127.0.0.1`.
+
+**This is plain HTTP.** Other devices on the network could read passwords and login tokens in transit, so use it only on a network you trust. It is not ready for the internet: it has no HTTPS and no login rate limit.
+
+Data lives in the `mysql-data` Docker volume. `docker compose down` keeps it; `docker compose down -v` deletes it.
+
+```sh
+scripts/backup.sh                                # writes backups/vocabflow-<time>.sql.gz
+scripts/restore.sh backups/<file>.sql.gz         # replaces ALL data; asks you to confirm
+```
+
+Backups stay on this computer, so copy them elsewhere if the data matters.
+
 ## Current limitations and next milestone
 
-The real enrichment provider has been tried by hand against the live API with a small set of words (automated tests use a mocked HTTP server). Enrichment content is shared between users and written for roughly CLB 5 to 7; it does not follow the level the user chose at registration. The web app polls for unfinished words (every 3 seconds, for up to 2 minutes) and offers a retry button on failed ones. There is no user timezone preference. Pronunciation uses the voices built into the user's browser (Web Speech API): it asks for American English, but which voice is used, and whether an American one exists at all, depends on the device. There are no stored recordings. The web app stores the token in `localStorage`; sign-in and sign-out are synced between browser tabs, except when the browser refuses to store the token, in which case the session lasts only for that tab. There is no production deployment setup yet. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: use it for a few weeks and see whether the schedule helps; then deployment.
+The real enrichment provider has been tried by hand against the live API with a small set of words (automated tests use a mocked HTTP server). Enrichment content is shared between users and written for roughly CLB 5 to 7; it does not follow the level the user chose at registration. The web app polls for unfinished words (every 3 seconds, for up to 2 minutes) and offers a retry button on failed ones. There is no user timezone preference. Pronunciation uses the voices built into the user's browser (Web Speech API): it asks for American English, but which voice is used, and whether an American one exists at all, depends on the device. There are no stored recordings. The web app stores the token in `localStorage`; sign-in and sign-out are synced between browser tabs, except when the browser refuses to store the token, in which case the session lasts only for that tab. There is a Docker Compose setup for one computer and its local network, but no internet deployment. [HANDOFF.md](HANDOFF.md) (in Chinese) lists known issues in detail. Next: use it for a few weeks and see whether the schedule helps. Before going on the internet: HTTPS and a login rate limit.

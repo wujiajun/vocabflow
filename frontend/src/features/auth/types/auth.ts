@@ -27,6 +27,7 @@ export interface LoginRequest {
 export interface RegisterRequest extends LoginRequest {
   clbLevel: ClbLevel
   dailyNewVocabularyGoal: number
+  inviteCode?: string
 }
 
 export interface LoginResponse {

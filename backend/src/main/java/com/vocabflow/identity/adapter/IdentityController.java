@@ -14,17 +14,20 @@ import org.springframework.web.bind.annotation.*;
 public class IdentityController {
   final IdentityService service;
   final TokenService tokens;
+  final InviteCodeGate inviteCodes;
 
-  public IdentityController(IdentityService s, TokenService t) {
+  public IdentityController(IdentityService s, TokenService t, InviteCodeGate i) {
     service = s;
     tokens = t;
+    inviteCodes = i;
   }
 
   record Register(
       @Email String email,
       @NotBlank @Size(min = 8) String password,
       String clbLevel,
-      @Min(1) @Max(100) Integer dailyNewVocabularyGoal) {}
+      @Min(1) @Max(100) Integer dailyNewVocabularyGoal,
+      String inviteCode) {}
 
   record Login(@Email String email, @NotBlank String password) {}
 
@@ -39,6 +42,7 @@ public class IdentityController {
 
   @PostMapping("/register")
   public UserResponse register(@RequestBody @jakarta.validation.Valid Register r) {
+    inviteCodes.check(r.inviteCode);
     return map(
         service.register(
             r.email,

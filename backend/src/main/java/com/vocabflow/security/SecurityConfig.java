@@ -42,7 +42,7 @@ public class SecurityConfig {
                     .accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(
             a ->
-                a.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login")
+                a.requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/health")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

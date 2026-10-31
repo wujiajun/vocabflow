@@ -331,3 +331,22 @@ test('does not show a previous user’s cached data after a new login', async ()
   await screen.findByRole('heading', { name: 'Your vocabulary' })
   expect(queryClient.getQueryData(cachedUserDataKey)).toBeUndefined()
 })
+
+test('sends the invite code and explains when it is refused', async () => {
+  clearToken()
+  const fetchMock = stubApi({
+    'POST /api/v1/auth/register': () => errorResponse(403, 'INVALID_INVITE_CODE', 'That invite code is not valid'),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/register')
+  await browserUser.type(screen.getByLabelText('Email'), 'new@example.com')
+  await browserUser.type(screen.getByLabelText('Password'), 'password123')
+  await browserUser.type(screen.getByLabelText('Invite code'), '  wrong-code ')
+  await browserUser.click(screen.getByRole('button', { name: 'Create account' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('That invite code is not valid')
+  expect(screen.getByLabelText('Invite code')).toHaveAccessibleDescription('That invite code is not valid')
+  const [, init] = fetchMock.mock.calls.find(([path]) => path === '/api/v1/auth/register') ?? []
+  expect(JSON.parse(init?.body as string).inviteCode).toBe('wrong-code')
+})
