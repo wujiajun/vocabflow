@@ -71,6 +71,7 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
 | `/app` | Redirects to `/app/vocabulary`; everything under `/app` needs a session |
 | `/app/vocabulary` | Add a word or phrase and browse the paginated list; the page is in the URL as `?page=N` (1-based, anything unusable means page 1) |
+| `/app/study` | Flashcards: reveal the answer, then rate it Again, Hard, Good or Easy; each button shows when the card comes back |
 | `/app/vocabulary/:id` | One vocabulary entry; while it is still being enriched the page polls, and a failed entry offers “Retry details”; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
 | `/app/today` | Today's learning plan |
 

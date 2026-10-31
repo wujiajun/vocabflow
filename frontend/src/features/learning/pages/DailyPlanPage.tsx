@@ -47,12 +47,19 @@ function PlanContent({ plan }: { plan: NonNullable<ReturnType<typeof useDailyPla
         {count} new {count === 1 ? 'word' : 'words'} · daily goal {plan.newVocabularyGoal}
       </p>
 
+      <Link
+        className="mt-4 inline-block rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+        to="/app/study"
+      >
+        Start studying
+      </Link>
+
       <section aria-label="New words" className="mt-6">
         {count === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
             <p>There are no new words in today’s plan.</p>
             <p className="mt-1">
-              Today’s plan is saved once created, so words you add now can only join a later plan.{' '}
+              Words you add now will start today’s plan.{' '}
               <Link className="font-semibold text-indigo-700 underline underline-offset-4" to="/app/vocabulary">
                 Go to your vocabulary
               </Link>

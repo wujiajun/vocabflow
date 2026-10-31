@@ -141,3 +141,39 @@ test('a word that is still being enriched, and one that failed, have no axe viol
   await screen.findByRole('button', { name: 'Retry details' })
   await expectNoAxeViolations()
 })
+
+test('the study page has no axe violations, before and after revealing the answer and when finished', async () => {
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const option = (rating: string, intervalMinutes: number | null, intervalDays: number | null) => ({ rating, intervalMinutes, intervalDays })
+  const nextCard = {
+    userVocabularyId: 7,
+    term: 'overwhelmed',
+    type: 'WORD',
+    phonetic: '/x/',
+    partOfSpeech: 'adjective',
+    definition: 'A definition.',
+    examples: ['An example.'],
+    collocations: ['a collocation'],
+    state: 'NEW',
+    version: 0,
+    options: [option('AGAIN', 1, null), option('HARD', 1, null), option('GOOD', 10, null), option('EASY', null, 4)],
+  }
+  const base = { date: '2026-11-01', learningCount: 0, reviewCount: 0, newCount: 1, unavailableCount: 1, nextDueAt: null }
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/learning/study-queue': () => jsonResponse({ ...base, nextCard }),
+    'POST /api/v1/learning/cards/7/reviews': () => jsonResponse({ ...base, newCount: 0, nextCard: null }),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await screen.findByRole('button', { name: 'Show answer' })
+  await expectNoAxeViolations()
+
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  await expectNoAxeViolations()
+
+  await browserUser.click(screen.getByRole('button', { name: /^Good/ }))
+  await screen.findByRole('heading', { name: 'You’re done for now' })
+  await expectNoAxeViolations()
+})
