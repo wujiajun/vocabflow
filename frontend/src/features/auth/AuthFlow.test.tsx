@@ -350,3 +350,20 @@ test('sends the invite code and explains when it is refused', async () => {
   const [, init] = fetchMock.mock.calls.find(([path]) => path === '/api/v1/auth/register') ?? []
   expect(JSON.parse(init?.body as string).inviteCode).toBe('wrong-code')
 })
+
+test('the registration goal can be emptied and an empty goal is refused', async () => {
+  clearToken()
+  const fetchMock = stubApi({})
+  const browserUser = userEvent.setup()
+
+  renderApp('/register')
+  await browserUser.type(screen.getByLabelText('Email'), 'new@example.com')
+  await browserUser.type(screen.getByLabelText('Password'), 'password123')
+  const goal = screen.getByLabelText('Daily new vocabulary goal')
+  await browserUser.clear(goal)
+  expect(goal).toHaveValue(null)
+  await browserUser.click(screen.getByRole('button', { name: 'Create account' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Daily vocabulary goal must be between 1 and 100.')
+  expect(fetchMock.mock.calls.some(([path]) => path === '/api/v1/auth/register')).toBe(false)
+})

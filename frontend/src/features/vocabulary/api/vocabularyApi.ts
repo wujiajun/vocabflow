@@ -10,8 +10,8 @@ export function createVocabulary(request: CreateVocabularyRequest) {
   })
 }
 
-export function listVocabulary(page: number, size: number) {
-  return apiClient<VocabularyPage>(`${vocabularyPath}?page=${page}&size=${size}`)
+export function listVocabulary(page: number, size: number, filter = '') {
+  return apiClient<VocabularyPage>(`${vocabularyPath}?page=${page}&size=${size}${filter}`)
 }
 
 export function retryEnrichment(id: number) {

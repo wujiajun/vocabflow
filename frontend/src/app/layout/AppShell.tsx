@@ -57,6 +57,9 @@ export function AppShell() {
           <NavLink className={navLinkClass} to="/app/vocabulary">
             Vocabulary
           </NavLink>
+          <NavLink className={navLinkClass} to="/app/settings">
+            Settings
+          </NavLink>
         </nav>
       </header>
       <main

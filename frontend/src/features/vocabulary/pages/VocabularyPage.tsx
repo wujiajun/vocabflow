@@ -1,10 +1,13 @@
 import { useRef } from 'react'
 import { useSearchParams } from 'react-router'
 import { usePageTitle } from '../../../shared/usePageTitle'
+import { useToday } from '../../../shared/useToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { AddVocabularyForm } from '../components/AddVocabularyForm'
+import { ListFilters } from '../components/ListFilters'
 import { Pagination } from '../components/Pagination'
 import { VocabularyListItem } from '../components/VocabularyListItem'
+import { filterFromParam, filterQuery } from '../hooks/listFilter'
 import { pageFromParam, paramFromPage } from '../hooks/pageParam'
 import { useVocabularyList } from '../hooks/useVocabulary'
 
@@ -13,11 +16,15 @@ export function VocabularyPage() {
   const resultsRef = useRef<HTMLElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const page = pageFromParam(searchParams.get('page'))
-  const list = useVocabularyList(page)
+  const filter = filterFromParam(searchParams.get('show'))
+  const list = useVocabularyList(page, filterQuery(filter, useToday()))
 
   function goToPage(nextPage: number) {
     const param = paramFromPage(nextPage)
-    setSearchParams(param === undefined ? {} : { page: param })
+    setSearchParams({
+      ...(filter === 'all' ? {} : { show: filter }),
+      ...(param === undefined ? {} : { page: param }),
+    })
   }
 
   // The button that was used is disabled while the next page loads, or for good on the last page,
@@ -34,9 +41,11 @@ export function VocabularyPage() {
         Save words and phrases as you meet them. Newest first.
       </p>
       <div className="mt-6">
-        <AddVocabularyForm onAdded={() => goToPage(0)} />
+        {/* Back to the unfiltered first page, where the new word is sure to be visible. */}
+        <AddVocabularyForm onAdded={() => setSearchParams({})} />
       </div>
       <section aria-label="Saved vocabulary" className="mt-8 outline-none" ref={resultsRef} tabIndex={-1}>
+        <ListFilters current={filter} />
         {list.isPending ? (
           <p className="text-sm text-slate-600" role="status">
             Loading your vocabulary…
@@ -66,7 +75,7 @@ export function VocabularyPage() {
           </div>
         ) : list.data.content.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-600">
-            No words yet. Add your first word or phrase above.
+            {filter === 'all' ? 'No words yet. Add your first word or phrase above.' : 'No words in this list.'}
           </p>
         ) : (
           <>
