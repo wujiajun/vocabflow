@@ -13,8 +13,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+@ExtendWith(OutputCaptureExtension.class)
 class VocabularyEnrichmentServiceTest {
   private static final EnrichmentResult RESULT =
       new EnrichmentResult(
@@ -76,6 +80,17 @@ class VocabularyEnrichmentServiceTest {
     service.enrich(1L, 2L);
 
     verify(items).markFailed(1L, "Enrichment could not be completed");
+  }
+
+  @Test
+  void logsWhyAReplyWasRejectedButNotOtherProviderMessages(CapturedOutput output) {
+    when(provider.enrich(any())).thenThrow(new EnrichmentRejectedException("Model reply is bad"));
+    service.enrich(1L, 2L);
+    doThrow(new IllegalStateException("secret-looking detail")).when(provider).enrich(any());
+    service.enrich(1L, 2L);
+
+    assertThat(output).contains("Model reply is bad").doesNotContain("secret-looking detail");
+    verify(items, times(2)).markFailed(1L, "Enrichment could not be completed");
   }
 
   @Test

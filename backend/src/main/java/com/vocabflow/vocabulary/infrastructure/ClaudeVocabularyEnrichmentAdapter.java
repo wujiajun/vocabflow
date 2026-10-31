@@ -2,6 +2,7 @@ package com.vocabflow.vocabulary.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.time.Duration;
@@ -36,7 +37,8 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
       - phonetic: IPA in slashes using North American pronunciation, or an empty string for a \
       multi-word item where it is not meaningful.
-      - partOfSpeech: for example noun, verb, adjective, phrasal verb.
+      - partOfSpeech: for example noun, verb, adjective, phrasal verb. For an idiom or fixed \
+      expression use the closest label, such as idiom or expression.
       - definition: one clear sentence in plain English a learner can understand.
       - examples: 2 or 3 natural example sentences in everyday Canadian contexts.
       - collocations: 3 to 6 common word combinations.
@@ -133,7 +135,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   static EnrichmentResult parse(JsonNode response) {
     String stopReason = text(response, "stop_reason");
     if (!"end_turn".equals(stopReason)) {
-      throw new IllegalStateException("Model stopped with " + stopReason);
+      throw new EnrichmentRejectedException("Model stopped with " + stopReason);
     }
     String reply = null;
     for (JsonNode block : response.path("content")) {
@@ -143,25 +145,26 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       }
     }
     if (reply == null) {
-      throw new IllegalStateException("Model reply had no text");
+      throw new EnrichmentRejectedException("Model reply had no text");
     }
     JsonNode entry;
     try {
       entry = JSON.readTree(reply);
     } catch (Exception exception) {
-      throw new IllegalStateException("Model reply was not JSON");
+      throw new EnrichmentRejectedException("Model reply was not JSON");
     }
     VocabularyType type;
     try {
       type = VocabularyType.valueOf(text(entry, "type"));
     } catch (IllegalArgumentException exception) {
-      throw new IllegalStateException("Model reply had an unknown type");
+      throw new EnrichmentRejectedException("Model reply had an unknown type");
     }
     String phonetic = text(entry, "phonetic");
+    String partOfSpeech = text(entry, "partOfSpeech");
     return new EnrichmentResult(
         type,
         phonetic.isBlank() ? null : bounded(phonetic, "phonetic", 255),
-        bounded(required(entry, "partOfSpeech"), "partOfSpeech", 255),
+        partOfSpeech.isBlank() ? null : bounded(partOfSpeech, "partOfSpeech", 255),
         bounded(required(entry, "definition"), "definition", 1000),
         strings(entry, "examples", 1, 5, 300),
         strings(entry, "collocations", 0, 8, 100));
@@ -170,7 +173,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static String text(JsonNode node, String field) {
     JsonNode value = node.get(field);
     if (value == null || !value.isTextual()) {
-      throw new IllegalStateException("Model reply is missing " + field);
+      throw new EnrichmentRejectedException("Model reply is missing " + field);
     }
     return value.asText().strip();
   }
@@ -178,14 +181,14 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static String required(JsonNode node, String field) {
     String value = text(node, field);
     if (value.isEmpty()) {
-      throw new IllegalStateException("Model reply has an empty " + field);
+      throw new EnrichmentRejectedException("Model reply has an empty " + field);
     }
     return value;
   }
 
   private static String bounded(String value, String field, int max) {
     if (value.length() > max) {
-      throw new IllegalStateException("Model reply has an overlong " + field);
+      throw new EnrichmentRejectedException("Model reply has an overlong " + field);
     }
     return value;
   }
@@ -193,12 +196,12 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   private static List<String> strings(JsonNode node, String field, int min, int max, int length) {
     JsonNode array = node.get(field);
     if (array == null || !array.isArray() || array.size() < min || array.size() > max) {
-      throw new IllegalStateException("Model reply has an invalid " + field);
+      throw new EnrichmentRejectedException("Model reply has an invalid " + field);
     }
     List<String> values = new ArrayList<>();
     for (JsonNode element : array) {
       if (!element.isTextual() || element.asText().isBlank()) {
-        throw new IllegalStateException("Model reply has an invalid " + field);
+        throw new EnrichmentRejectedException("Model reply has an invalid " + field);
       }
       values.add(bounded(element.asText().strip(), field, length));
     }

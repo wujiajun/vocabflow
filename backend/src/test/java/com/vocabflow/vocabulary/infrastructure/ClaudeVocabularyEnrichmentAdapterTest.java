@@ -57,6 +57,14 @@ class ClaudeVocabularyEnrichmentAdapterTest {
   }
 
   @Test
+  void anEmptyPartOfSpeechBecomesNullBecauseSomeExpressionsHaveNone() {
+    Map<String, Object> entry = validEntry();
+    entry.put("partOfSpeech", " ");
+
+    assertThat(parse(entry).partOfSpeech()).isNull();
+  }
+
+  @Test
   void rejectsAnUnknownType() {
     Map<String, Object> entry = validEntry();
     entry.put("type", "SLANG");
