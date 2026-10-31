@@ -1,7 +1,7 @@
 import { act, cleanup, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, getToken, setToken, TOKEN_STORAGE_KEY } from '../../shared/api/tokenStorage'
-import { expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
 const emptyVocabularyPage = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
 const cachedUserDataKey = ['test', 'cached-user-data'] as const
@@ -28,8 +28,15 @@ function otherTabChangesStorage(change: () => void, key: string | null = TOKEN_S
 
 function signedInApi() {
   return stubApi({
-    'GET /api/v1/auth/me': ({ init }) =>
-      jsonResponse(new Headers(init.headers).get('Authorization') === 'Bearer second-token' ? otherUser : user),
+    // Like the real server, refuse a request without a token. Rarely, a query that was just mounting
+    // when the session ended still fires one; answering it with a user would refill the cache.
+    'GET /api/v1/auth/me': ({ init }) => {
+      const authorization = new Headers(init.headers).get('Authorization')
+      if (authorization === null) {
+        return errorResponse(401, 'UNAUTHORIZED', 'Authentication is required')
+      }
+      return jsonResponse(authorization === 'Bearer second-token' ? otherUser : user)
+    },
     'GET /api/v1/vocabulary': () => jsonResponse(emptyVocabularyPage),
   })
 }
