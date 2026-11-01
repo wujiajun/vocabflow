@@ -11,10 +11,10 @@ import { formatInterval } from './formatInterval'
 const ratingLabels: Record<Rating, string> = { AGAIN: 'Again', HARD: 'Hard', GOOD: 'Good', EASY: 'Easy' }
 
 const ratingStyles: Record<Rating, string> = {
-  AGAIN: 'border-rose-300 text-rose-800 hover:bg-rose-50',
-  HARD: 'border-amber-300 text-amber-900 hover:bg-amber-50',
-  GOOD: 'border-emerald-300 text-emerald-800 hover:bg-emerald-50',
-  EASY: 'border-indigo-300 text-indigo-800 hover:bg-indigo-50',
+  AGAIN: 'border-rose-300 text-rose-800 hover:bg-rose-50 active:bg-rose-100',
+  HARD: 'border-amber-300 text-amber-900 hover:bg-amber-50 active:bg-amber-100',
+  GOOD: 'border-emerald-300 text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100',
+  EASY: 'border-indigo-300 text-indigo-800 hover:bg-indigo-50 active:bg-indigo-100',
 }
 
 // Remounted for every card and version, so a returning card starts hidden again. Focus follows the
@@ -100,7 +100,7 @@ export function StudyCardView({
         </>
       ) : (
         <button
-          className="mt-6 w-full rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+          className="mt-6 w-full rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 active:bg-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
           onClick={() => setRevealed(true)}
           type="button"
         >
