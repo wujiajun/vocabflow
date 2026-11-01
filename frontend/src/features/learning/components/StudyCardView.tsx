@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getSpeakOnAnswer } from '../../../shared/speech/autoSpeak'
+import { getSpeakOnAnswer, getSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -57,7 +57,18 @@ export function StudyCardView({
     }
   }, [revealed])
 
-  // Speech is only allowed to start from a press, and showing the answer is one.
+  // Browsers let speech start only once the page has been pressed, and the learner has by the time a
+  // card is up (a link or a rating got them here). A page opened straight on this card may stay silent
+  // until the first press; the button beside the word says it again.
+  useEffect(() => {
+    if (isSpeechSupported() && getSpeakOnCard()) {
+      speakText(card.term, { onStart: () => {}, onEnd: () => {} })
+    }
+    // Only on mount: a card kept after a failed save must not be read again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Showing the answer is a press, which is where speech is always allowed to start.
   function showAnswer() {
     setRevealed(true)
     if (isSpeechSupported() && getSpeakOnAnswer()) {

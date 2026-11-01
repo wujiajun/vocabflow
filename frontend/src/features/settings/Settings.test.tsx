@@ -202,29 +202,35 @@ test('changing the level and the goal together saves both', async () => {
   expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 })
 })
 
-test('the switch for reading the word aloud on Show answer is kept in this browser, and absent without speech', async () => {
+test('when the word is read aloud is kept in this browser, and absent without speech', async () => {
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
 
   renderApp('/app/settings')
   await screen.findByLabelText('CLB level')
-  expect(screen.queryByLabelText('Read the word aloud when I show the answer')).not.toBeInTheDocument()
+  expect(screen.queryByRole('checkbox', { name: 'When a card appears' })).not.toBeInTheDocument()
   cleanup()
 
   installSpeechSynthesis([voice('Samantha', 'en-US')])
   const browserUser = userEvent.setup()
   renderApp('/app/settings')
-  const box = await screen.findByLabelText('Read the word aloud when I show the answer')
-  expect(box).toBeChecked()
+  const onCard = await screen.findByRole('checkbox', { name: 'When a card appears' })
+  const onAnswer = screen.getByRole('checkbox', { name: 'When I show the answer' })
+  expect(onCard).not.toBeChecked()
+  expect(onAnswer).toBeChecked()
 
-  await browserUser.click(box)
-  expect(box).not.toBeChecked()
+  await browserUser.click(onCard)
+  await browserUser.click(onAnswer)
+  expect(window.localStorage.getItem('vocabflow.speakOnCard')).toBe('on')
   expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('off')
 
   cleanup()
   renderApp('/app/settings')
-  expect(await screen.findByLabelText('Read the word aloud when I show the answer')).not.toBeChecked()
+  expect(await screen.findByRole('checkbox', { name: 'When a card appears' })).toBeChecked()
+  expect(screen.getByRole('checkbox', { name: 'When I show the answer' })).not.toBeChecked()
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
 })
 
 test('explains when saving fails and does not claim it saved', async () => {

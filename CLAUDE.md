@@ -103,7 +103,7 @@ New features go under `src/features/<name>/{api,hooks,components,pages,types}`, 
 
 Other frontend facts worth knowing:
 
-- Speech is the browser's Web Speech API only, and starts only from a press: pronunciation buttons, the word read in the same click as "Show answer" (switch in Settings, `localStorage`), and `useReadAloud` for passages (sentence by sentence; Pause cancels and Resume restarts the sentence).
+- Speech is the browser's Web Speech API only, and starts only from a press: pronunciation buttons, the word read when a card appears or in the same click as "Show answer" (two separate switches in Settings, `localStorage`; the first card of a page opened straight on it may stay silent until a press), and `useReadAloud` for passages (sentence by sentence; Pause cancels and Resume restarts the sentence).
 - `NewVersionNotice` compares the hashed script named by the server's `/` with the loaded one when the app returns to view and offers Reload; it relies on `index.html` being served `no-cache` (`frontend/Caddyfile`).
 - The navigation is crowded on a phone: "Add a word" shows as "+ Add" there. The study-complete page folds the studied list so the buttons stay on the first screen.
 
