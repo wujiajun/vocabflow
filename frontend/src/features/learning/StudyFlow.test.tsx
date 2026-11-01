@@ -2,7 +2,7 @@ import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
-import { toLocalDateString } from '../../shared/date'
+import { todayIn, toLocalDateString } from '../../shared/date'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, wholeText } from '../../test/utils'
 import { formatInterval } from './components/formatInterval'
@@ -58,6 +58,23 @@ test('showing the answer reads the word aloud once, unless that is turned off', 
   await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
   expect(speech.spoken).toHaveLength(1)
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+})
+
+test('the study day is the one in the learner’s chosen time zone', async () => {
+  const asked: (string | null)[] = []
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse({ ...user, timeZone: 'Pacific/Kiritimati' }),
+    'GET /api/v1/learning/study-queue': ({ url }) => {
+      asked.push(url.searchParams.get('date'))
+      return jsonResponse(queue({ finished: true }))
+    },
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+  })
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'Today’s study is complete' })
+
+  expect(asked[asked.length - 1]).toBe(todayIn('Pacific/Kiritimati'))
 })
 
 test('hides the answer until asked, then shows it with what each rating would do', async () => {

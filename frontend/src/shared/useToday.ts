@@ -1,32 +1,31 @@
 import { useEffect, useState } from 'react'
-import { toLocalDateString } from './date'
+import { msUntilMidnightIn, todayIn } from './date'
 
 // Give the timer a moment past midnight so the new day is certain to have started.
 const midnightMarginMs = 1000
 
-function msUntilNextMidnight(now: Date) {
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime()
-}
-
-// Today's local calendar date. It moves on to the next day by itself when midnight passes, so a
-// page left open overnight does not keep showing yesterday.
-export function useToday() {
-  const [today, setToday] = useState(() => toLocalDateString(new Date()))
+// Today's calendar date, in the given time zone or the device's own. It moves on to the next day by
+// itself when midnight passes, so a page left open overnight does not keep showing yesterday. On a
+// night when the clocks change, the timer may fire early; it then simply sets itself again.
+export function useToday(timeZone?: string | null) {
+  const [today, setToday] = useState(() => todayIn(timeZone))
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>
 
     function refresh() {
-      setToday(toLocalDateString(new Date()))
+      setToday(todayIn(timeZone))
     }
 
     function scheduleNextMidnight() {
       timer = setTimeout(() => {
         refresh()
         scheduleNextMidnight()
-      }, msUntilNextMidnight(new Date()) + midnightMarginMs)
+      }, msUntilMidnightIn(timeZone) + midnightMarginMs)
     }
 
+    // A change of zone changes the date at once.
+    refresh()
     scheduleNextMidnight()
     // Timers are delayed while a laptop sleeps or a tab is hidden, so check again on return.
     document.addEventListener('visibilitychange', refresh)
@@ -37,7 +36,7 @@ export function useToday() {
       document.removeEventListener('visibilitychange', refresh)
       window.removeEventListener('focus', refresh)
     }
-  }, [])
+  }, [timeZone])
 
   return today
 }

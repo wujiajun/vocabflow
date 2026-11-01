@@ -1,6 +1,8 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, memo, useState } from 'react'
 import { getSpeakOnAnswer, setSpeakOnAnswer } from '../../../shared/speech/autoSpeak'
+import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
+import { canadianTimeZones, deviceTimeZone, otherTimeZones } from '../../../shared/timeZones'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { clbLabel, clbLevels } from '../../auth/clbLevels'
@@ -14,6 +16,8 @@ export function SettingsPage() {
   // Kept as typed, so the field can be emptied: turning it into a number would show 0 instead.
   const [goal, setGoal] = useState(String(auth.user?.dailyNewVocabularyGoal ?? 10))
   const [clbLevel, setClbLevel] = useState<ClbLevel>(auth.user?.clbLevel ?? 'CLB_4')
+  // An empty text is the device's own zone.
+  const [timeZone, setTimeZone] = useState(auth.user?.timeZone ?? '')
   const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
   const [validationError, setValidationError] = useState<string>()
   const [saved, setSaved] = useState('')
@@ -31,13 +35,18 @@ export function SettingsPage() {
 
     setValidationError(undefined)
     // Only what changed is sent. With nothing changed the goal goes, so that saving still answers.
-    const clbChanged = clbLevel !== auth.user?.clbLevel
     const settings: UpdateSettingsRequest = {}
-    if (parsedGoal !== auth.user?.dailyNewVocabularyGoal || !clbChanged) {
+    if (parsedGoal !== auth.user?.dailyNewVocabularyGoal) {
       settings.dailyNewVocabularyGoal = parsedGoal
     }
-    if (clbChanged) {
+    if (clbLevel !== auth.user?.clbLevel) {
       settings.clbLevel = clbLevel
+    }
+    if (timeZone !== (auth.user?.timeZone ?? '')) {
+      settings.timeZone = timeZone
+    }
+    if (Object.keys(settings).length === 0) {
+      settings.dailyNewVocabularyGoal = parsedGoal
     }
     update.mutate(settings, {
       onSuccess: () => {
@@ -73,6 +82,25 @@ export function SettingsPage() {
         <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-clb-hint">
           Your Canadian Language Benchmarks level. Reading passages are written one level below it, so that they read
           easily and the words you studied stand out.
+        </p>
+        <label className="mt-6 block text-sm font-medium text-slate-800" htmlFor="settings-time-zone">
+          Time zone
+          <select
+            aria-describedby="settings-time-zone-hint"
+            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            id="settings-time-zone"
+            onChange={(event) => {
+              setTimeZone(event.target.value)
+              setSaved('')
+            }}
+            value={timeZone}
+          >
+            <TimeZoneOptions current={timeZone} />
+          </select>
+        </label>
+        <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-time-zone-hint">
+          Your study day starts and ends at midnight in this zone, on every device. Right now it is {todayIn(timeZone || null)} for
+          you.
         </p>
         <label className="mt-6 block text-sm font-medium text-slate-800" htmlFor="settings-daily-goal">
           Daily new vocabulary goal
@@ -139,3 +167,34 @@ export function SettingsPage() {
     </div>
   )
 }
+
+// Hundreds of options: kept apart and remembered, so that typing in another field does not draw them
+// all again.
+const TimeZoneOptions = memo(function TimeZoneOptions({ current }: { current: string }) {
+  const others = otherTimeZones()
+
+  return (
+    <>
+      <option value="">{deviceTimeZone() ? `Automatic (this device: ${deviceTimeZone()})` : 'Automatic (this device)'}</option>
+      {current !== '' && !canadianTimeZones.includes(current) && !others.includes(current) ? (
+        <option value={current}>{current}</option>
+      ) : null}
+      <optgroup label="Canada">
+        {canadianTimeZones.map((zone) => (
+          <option key={zone} value={zone}>
+            {zone}
+          </option>
+        ))}
+      </optgroup>
+      {others.length > 0 ? (
+        <optgroup label="Everywhere else">
+          {others.map((zone) => (
+            <option key={zone} value={zone}>
+              {zone}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+    </>
+  )
+})

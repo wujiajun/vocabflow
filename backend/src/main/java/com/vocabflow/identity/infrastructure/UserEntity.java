@@ -24,4 +24,7 @@ public class UserEntity {
 
   @Column(name = "created_at", nullable = false)
   public Instant createdAt;
+
+  @Column(name = "time_zone")
+  public String timeZone;
 }

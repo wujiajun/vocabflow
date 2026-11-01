@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useSearchParams } from 'react-router'
 import { usePageTitle } from '../../../shared/usePageTitle'
-import { useToday } from '../../../shared/useToday'
+import { useUserToday } from '../../auth/hooks/useUserToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { AddVocabularyForm } from '../components/AddVocabularyForm'
 import { ListFilters } from '../components/ListFilters'
@@ -17,7 +17,7 @@ export function VocabularyPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = pageFromParam(searchParams.get('page'))
   const filter = filterFromParam(searchParams.get('show'))
-  const list = useVocabularyList(page, filterQuery(filter, useToday()))
+  const list = useVocabularyList(page, filterQuery(filter, useUserToday()))
 
   function goToPage(nextPage: number) {
     const param = paramFromPage(nextPage)

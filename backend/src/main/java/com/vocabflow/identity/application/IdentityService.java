@@ -3,6 +3,7 @@ package com.vocabflow.identity.application;
 import com.vocabflow.identity.domain.*;
 import com.vocabflow.shared.web.*;
 import java.time.Instant;
+import java.time.ZoneId;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +44,12 @@ public class IdentityService {
     return u;
   }
 
-  /** Changes what is given; a null leaves that setting as it is. */
+  /**
+   * Changes what is given; a null leaves that setting as it is. For the time zone an empty text
+   * means "use the device's".
+   */
   @Transactional
-  public User updateSettings(long id, Integer goal, String clbLevel) {
+  public User updateSettings(long id, Integer goal, String clbLevel, String timeZone) {
     User user = current(id);
     return users.save(
         new User(
@@ -54,7 +58,19 @@ public class IdentityService {
             user.passwordHash(),
             clbLevel == null ? user.clbLevel() : ClbLevel.from(clbLevel),
             goal == null ? user.dailyVocabularyGoal() : new DailyVocabularyGoal(goal),
-            user.createdAt()));
+            user.createdAt(),
+            timeZone == null ? user.timeZone() : parseTimeZone(timeZone)));
+  }
+
+  private static ZoneId parseTimeZone(String value) {
+    if (value.isBlank()) {
+      return null;
+    }
+    // Names such as America/Toronto only: an offset like +05:00 does not follow daylight saving.
+    if (!ZoneId.getAvailableZoneIds().contains(value.strip()) || !value.contains("/")) {
+      throw new IllegalArgumentException("Time zone must be a name such as America/Toronto");
+    }
+    return ZoneId.of(value.strip());
   }
 
   public User current(long id) {

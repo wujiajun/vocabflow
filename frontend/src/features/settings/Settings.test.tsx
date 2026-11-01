@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -151,6 +151,36 @@ test('shows the current CLB level and saves a change to it on its own', async ()
   const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
   expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_7' })
   expect(select).toHaveValue('CLB_7')
+})
+
+test('the time zone defaults to the device, can be chosen and can be put back', async () => {
+  let current: typeof user & { timeZone: string | null } = { ...user }
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(current),
+    'PATCH /api/v1/auth/me': ({ init }) => {
+      const body = JSON.parse(String(init.body))
+      current = { ...current, timeZone: body.timeZone === '' ? null : body.timeZone }
+      return jsonResponse(current)
+    },
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/settings')
+  const select = await screen.findByLabelText('Time zone')
+  expect(select).toHaveValue('')
+  expect(select).toHaveAccessibleDescription(/starts and ends at midnight in this zone/)
+
+  await browserUser.selectOptions(select, 'America/Vancouver')
+  await browserUser.click(screen.getByRole('button', { name: 'Save' }))
+  await screen.findByText('Saved.')
+  const bodies = () => fetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH').map(([, init]) => JSON.parse(init?.body as string))
+  expect(bodies()).toEqual([{ timeZone: 'America/Vancouver' }])
+  expect(select).toHaveValue('America/Vancouver')
+
+  await browserUser.selectOptions(select, '')
+  await browserUser.click(screen.getByRole('button', { name: 'Save' }))
+  await waitFor(() => expect(bodies()).toHaveLength(2))
+  expect(bodies()[1]).toEqual({ timeZone: '' })
 })
 
 test('changing the level and the goal together saves both', async () => {
