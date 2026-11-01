@@ -92,6 +92,20 @@ class ClaudeVocabularyEnrichmentAdapterTest {
   }
 
   @Test
+  void usesTheCapitalsTheModelGaveAndStillRefusesAnyOtherLetters() {
+    Map<String, Object> entry = entry();
+    entry.put("term", "resume");
+    assertThat(parseRaw("end_turn", asJson(entry)).term()).isEqualTo("resume");
+
+    entry.put("term", "  Resume ");
+    assertThat(parseRaw("end_turn", asJson(entry)).term()).isEqualTo("Resume");
+
+    entry.put("term", "resumed");
+    assertThatThrownBy(() -> parseRaw("end_turn", asJson(entry)))
+        .isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
   void keepsTheBaseFormTheModelNamedForAnInflectedWord() {
     Map<String, Object> entry = entry();
     entry.put("term", "resumes");
@@ -208,6 +222,14 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> entry = entry();
     entry.put("senses", List.of(sense));
     assertThatThrownBy(() -> parse(entry)).isInstanceOf(RuntimeException.class);
+  }
+
+  private static String asJson(Map<String, Object> entry) {
+    try {
+      return JSON.writeValueAsString(entry);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException(exception);
+    }
   }
 
   private EnrichmentResult parse(Map<String, Object> entry) {

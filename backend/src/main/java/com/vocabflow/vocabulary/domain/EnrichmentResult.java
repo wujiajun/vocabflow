@@ -5,7 +5,8 @@ import java.util.List;
 /**
  * The single-value fields hold the first sense, so a list can show one summary line per word.
  * {@code baseForm} is the word this one is an inflected form of ({@code leases} of {@code lease}),
- * or null when the text is itself the word to learn.
+ * or null when the text is itself the word to learn. {@code term} is the text with the capitals a
+ * dictionary uses, or null to leave the stored one as it is.
  */
 public record EnrichmentResult(
     VocabularyType type,
@@ -15,7 +16,8 @@ public record EnrichmentResult(
     List<String> examples,
     List<String> collocations,
     List<VocabularySense> senses,
-    String baseForm) {
+    String baseForm,
+    String term) {
   public EnrichmentResult(
       VocabularyType type,
       String phonetic,
@@ -24,7 +26,7 @@ public record EnrichmentResult(
       List<String> examples,
       List<String> collocations,
       List<VocabularySense> senses) {
-    this(type, phonetic, partOfSpeech, definition, examples, collocations, senses, null);
+    this(type, phonetic, partOfSpeech, definition, examples, collocations, senses, null, null);
   }
 
   public EnrichmentResult(
@@ -47,7 +49,12 @@ public record EnrichmentResult(
 
   public EnrichmentResult withBaseForm(String baseForm) {
     return new EnrichmentResult(
-        type, phonetic, partOfSpeech, definition, examples, collocations, senses, baseForm);
+        type, phonetic, partOfSpeech, definition, examples, collocations, senses, baseForm, term);
+  }
+
+  public EnrichmentResult withTerm(String term) {
+    return new EnrichmentResult(
+        type, phonetic, partOfSpeech, definition, examples, collocations, senses, baseForm, term);
   }
 
   public static EnrichmentResult ofSenses(VocabularyType type, List<VocabularySense> senses) {

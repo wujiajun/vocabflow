@@ -48,7 +48,10 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       they are common there.
 
       Return:
-      - term: the text inside the tags, exactly as given. Describe that text and nothing else.
+      - term: the text inside the tags with the capital letters a dictionary uses: all lowercase \
+      for ordinary words and phrases, capitals only for proper nouns and acronyms, such as \
+      "Toronto" or "NASA", and for brand names written that way, such as "iPhone". Keep every letter \
+      and space as given and change only capitals. Describe that text and nothing else.
       - baseForm: if the text is an inflected form of a word, that word: the singular of a plural \
       noun, the base verb for a past tense, -ing or third-person form, the plain form of a \
       comparative or superlative. Then write the senses for the base word, because that is what the \
@@ -218,7 +221,9 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     for (JsonNode sense : senses) {
       parsed.add(sense(sense));
     }
-    return EnrichmentResult.ofSenses(type, parsed).withBaseForm(baseForm(entry, term));
+    return EnrichmentResult.ofSenses(type, parsed)
+        .withBaseForm(baseForm(entry, term))
+        .withTerm(new VocabularyTerm(text(entry, "term")).value());
   }
 
   // Null when the model found nothing to reduce, or named the text itself.

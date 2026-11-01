@@ -46,7 +46,8 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
               "A contract to rent a property for a set time.",
               List.of("We signed a lease for the apartment."),
               List.of("sign a lease"))
-          .withBaseForm("lease");
+          .withBaseForm("lease")
+          .withTerm("leases");
     if (n.equals("overwhelmed"))
       return new EnrichmentResult(
           VocabularyType.WORD,
