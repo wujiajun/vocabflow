@@ -18,8 +18,14 @@ export function deviceTimeZone() {
   }
 }
 
+let others: string[] | undefined
+
+// Every zone this browser knows apart from the Canadian ones; about four hundred, so worked out once.
 export function otherTimeZones(): string[] {
-  const known = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf
-  const all = known ? known('timeZone') : []
-  return all.filter((zone) => zone.includes('/') && !canadianTimeZones.includes(zone))
+  if (others === undefined) {
+    const known = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf
+    const all = known ? known('timeZone') : []
+    others = all.filter((zone) => zone.includes('/') && !canadianTimeZones.includes(zone))
+  }
+  return others
 }

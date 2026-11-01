@@ -185,6 +185,7 @@ test('the study page has no axe violations, before and after revealing the answe
   await expectNoAxeViolations()
 })
 
+// Two full scans of a page with a few hundred time zone options: slow on a small CI machine.
 test('the settings page has no axe violations, including with an error shown', async () => {
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   const browserUser = userEvent.setup()
@@ -198,4 +199,4 @@ test('the settings page has no axe violations, including with an error shown', a
   await browserUser.click(screen.getByRole('button', { name: 'Save' }))
   await screen.findByRole('alert')
   await expectNoAxeViolations()
-})
+}, 20_000)
