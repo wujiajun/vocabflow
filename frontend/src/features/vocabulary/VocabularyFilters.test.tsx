@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -105,7 +105,8 @@ test('adding a word while filtered returns to All, where the new word shows', as
 
   await screen.findByText('Added “added word”.')
   expect(await screen.findByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'true')
-  expect(urls(fetchMock).at(-1)).toBe('/api/v1/vocabulary?page=0&size=20')
+  // The link changes as soon as the URL does; the request for the unfiltered list follows a moment later.
+  await waitFor(() => expect(urls(fetchMock).at(-1)).toBe('/api/v1/vocabulary?page=0&size=20'))
 })
 
 test('an entry opened from a filtered list comes back to that list', async () => {
