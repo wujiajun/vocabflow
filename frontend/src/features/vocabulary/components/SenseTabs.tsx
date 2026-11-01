@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import type { VocabularySense } from '../types/vocabulary'
+import { TappableText } from './TappableText'
 
 // Shows a word's meanings, one at a time when it has several. Follows the ARIA tabs pattern: Tab
 // reaches the selected tab, and the arrow keys, Home and End move between tabs.
@@ -70,14 +71,26 @@ function SenseContent({ sense, headingLevel }: { sense: VocabularySense; heading
   return (
     <div>
       {sense.phonetic ? <p className="text-sm text-slate-600">{sense.phonetic}</p> : null}
-      <p className="mt-2 leading-7 text-slate-800">{sense.definition}</p>
-      <SenseList headingLevel={headingLevel} items={sense.examples} title="Examples" />
+      <p className="mt-2 leading-7 text-slate-800">
+        <TappableText text={sense.definition} />
+      </p>
+      <SenseList headingLevel={headingLevel} items={sense.examples} tappable title="Examples" />
       <SenseList headingLevel={headingLevel} items={sense.collocations} title="Collocations" />
     </div>
   )
 }
 
-function SenseList({ title, items, headingLevel: Heading }: { title: string; items: string[] | null; headingLevel: 'h2' | 'h3' }) {
+function SenseList({
+  title,
+  items,
+  tappable = false,
+  headingLevel: Heading,
+}: {
+  title: string
+  items: string[] | null
+  tappable?: boolean
+  headingLevel: 'h2' | 'h3'
+}) {
   if (!items || items.length === 0) {
     return null
   }
@@ -87,7 +100,7 @@ function SenseList({ title, items, headingLevel: Heading }: { title: string; ite
       <Heading className="text-sm font-semibold tracking-wide text-slate-600 uppercase">{title}</Heading>
       <ul className="mt-2 list-disc space-y-1.5 pl-5 text-slate-800">
         {items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>{tappable ? <TappableText text={item} /> : item}</li>
         ))}
       </ul>
     </section>

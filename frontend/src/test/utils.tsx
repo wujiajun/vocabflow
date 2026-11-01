@@ -86,3 +86,10 @@ export function renderApp(initialPath: string, prepare?: (queryClient: QueryClie
     ),
   }
 }
+
+// The words of a definition or an example are separate elements, so that each can be tapped. This
+// matches the one element that holds the whole text.
+export function wholeText(text: string) {
+  return (_content: string, element: Element | null) =>
+    element !== null && element.textContent === text && !Array.from(element.children).some((child) => child.textContent === text)
+}
