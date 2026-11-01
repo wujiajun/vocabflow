@@ -4,22 +4,8 @@ import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../components/AuthError'
 import { AuthPageLayout, FormError } from './LoginPage'
 import { useRegisterMutation } from '../hooks/useAuth'
+import { clbLabel, clbLevels } from '../clbLevels'
 import type { ClbLevel } from '../types/auth'
-
-const clbLevels: ClbLevel[] = [
-  'CLB_1',
-  'CLB_2',
-  'CLB_3',
-  'CLB_4',
-  'CLB_5',
-  'CLB_6',
-  'CLB_7',
-  'CLB_8',
-  'CLB_9',
-  'CLB_10',
-  'CLB_11',
-  'CLB_12',
-]
 
 export function RegisterPage() {
   usePageTitle('Create account')
@@ -107,7 +93,7 @@ export function RegisterPage() {
           >
             {clbLevels.map((level) => (
               <option key={level} value={level}>
-                {level.replace('_', ' ')}
+                {clbLabel(level)}
               </option>
             ))}
           </select>

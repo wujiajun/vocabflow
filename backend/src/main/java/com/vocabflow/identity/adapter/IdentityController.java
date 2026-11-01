@@ -4,6 +4,7 @@ import com.vocabflow.identity.application.*;
 import com.vocabflow.identity.domain.User;
 import com.vocabflow.security.BearerTokenExtractor;
 import com.vocabflow.security.TokenService;
+import com.vocabflow.shared.web.BadRequestException;
 import com.vocabflow.shared.web.UnauthorizedException;
 import jakarta.validation.constraints.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,11 +30,12 @@ public class IdentityController {
       @Min(1) @Max(100) Integer dailyNewVocabularyGoal,
       String inviteCode) {}
 
+  /** Either field may be given; whatever is left out stays as it is. */
   record UpdateSettings(
-      @NotNull(message = "Daily goal is required")
-          @Min(value = 1, message = "Daily goal must be between 1 and 100")
+      @Min(value = 1, message = "Daily goal must be between 1 and 100")
           @Max(value = 100, message = "Daily goal must be between 1 and 100")
-          Integer dailyNewVocabularyGoal) {}
+          Integer dailyNewVocabularyGoal,
+      String clbLevel) {}
 
   record Login(@Email String email, @NotBlank String password) {}
 
@@ -74,7 +76,10 @@ public class IdentityController {
   @PatchMapping("/me")
   public UserResponse updateSettings(
       @AuthenticationPrincipal Long id, @RequestBody @jakarta.validation.Valid UpdateSettings r) {
-    return map(service.updateDailyGoal(id, r.dailyNewVocabularyGoal));
+    if (r.dailyNewVocabularyGoal == null && r.clbLevel == null) {
+      throw new BadRequestException("Give a daily goal or a CLB level");
+    }
+    return map(service.updateSettings(id, r.dailyNewVocabularyGoal, r.clbLevel));
   }
 
   @GetMapping("/me")

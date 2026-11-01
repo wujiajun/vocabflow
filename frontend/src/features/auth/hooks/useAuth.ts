@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { ApiClientError } from '../../../shared/api/apiClient'
-import { getCurrentUser, login, logout, register, updateDailyGoal } from '../api/authApi'
-import type { LoginRequest, RegisterRequest } from '../types/auth'
+import { getCurrentUser, login, logout, register, updateSettings } from '../api/authApi'
+import type { LoginRequest, RegisterRequest, UpdateSettingsRequest } from '../types/auth'
 import { useAuthToken } from './authTokenContext'
 import { clearSessionCache } from './sessionCache'
 
@@ -71,11 +71,11 @@ export function useLoginMutation() {
   })
 }
 
-export function useUpdateDailyGoal() {
+export function useUpdateSettings() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (goal: number) => updateDailyGoal(goal),
+    mutationFn: (settings: UpdateSettingsRequest) => updateSettings(settings),
     onSuccess: (user) => queryClient.setQueryData(currentUserQueryKey, user),
   })
 }

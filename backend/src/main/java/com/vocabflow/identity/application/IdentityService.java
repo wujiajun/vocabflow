@@ -43,16 +43,17 @@ public class IdentityService {
     return u;
   }
 
+  /** Changes what is given; a null leaves that setting as it is. */
   @Transactional
-  public User updateDailyGoal(long id, int goal) {
+  public User updateSettings(long id, Integer goal, String clbLevel) {
     User user = current(id);
     return users.save(
         new User(
             user.id(),
             user.email(),
             user.passwordHash(),
-            user.clbLevel(),
-            new DailyVocabularyGoal(goal),
+            clbLevel == null ? user.clbLevel() : ClbLevel.from(clbLevel),
+            goal == null ? user.dailyVocabularyGoal() : new DailyVocabularyGoal(goal),
             user.createdAt()));
   }
 

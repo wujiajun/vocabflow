@@ -1,5 +1,5 @@
 import { apiClient } from '../../../shared/api/apiClient'
-import type { AuthUser, LoginRequest, LoginResponse, RegisterRequest } from '../types/auth'
+import type { AuthUser, LoginRequest, LoginResponse, RegisterRequest, UpdateSettingsRequest } from '../types/auth'
 
 const authPath = '/api/v1/auth'
 
@@ -22,8 +22,8 @@ export function logout() {
   return apiClient<void>(`${authPath}/logout`, { method: 'POST', notifyOnUnauthorized: false })
 }
 
-export function updateDailyGoal(dailyNewVocabularyGoal: number) {
-  return apiClient<AuthUser>(`${authPath}/me`, { method: 'PATCH', body: { dailyNewVocabularyGoal } })
+export function updateSettings(settings: UpdateSettingsRequest) {
+  return apiClient<AuthUser>(`${authPath}/me`, { method: 'PATCH', body: settings })
 }
 
 export function getCurrentUser() {

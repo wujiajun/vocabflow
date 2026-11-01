@@ -1,17 +1,20 @@
 import { type FormEvent, useState } from 'react'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
-import { useAuth, useUpdateDailyGoal } from '../../auth/hooks/useAuth'
+import { clbLabel, clbLevels } from '../../auth/clbLevels'
+import { useAuth, useUpdateSettings } from '../../auth/hooks/useAuth'
+import type { ClbLevel, UpdateSettingsRequest } from '../../auth/types/auth'
 
 export function SettingsPage() {
   usePageTitle('Settings')
   const auth = useAuth()
-  const update = useUpdateDailyGoal()
+  const update = useUpdateSettings()
   // Kept as typed, so the field can be emptied: turning it into a number would show 0 instead.
   const [goal, setGoal] = useState(String(auth.user?.dailyNewVocabularyGoal ?? 10))
+  const [clbLevel, setClbLevel] = useState<ClbLevel>(auth.user?.clbLevel ?? 'CLB_4')
   const [validationError, setValidationError] = useState<string>()
   const [saved, setSaved] = useState('')
-  const error = validationError || (update.isError ? authErrorMessage(update.error, 'Unable to save your goal.') : undefined)
+  const error = validationError || (update.isError ? authErrorMessage(update.error, 'Unable to save your settings.') : undefined)
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -24,7 +27,16 @@ export function SettingsPage() {
     }
 
     setValidationError(undefined)
-    update.mutate(parsedGoal, {
+    // Only what changed is sent. With nothing changed the goal goes, so that saving still answers.
+    const clbChanged = clbLevel !== auth.user?.clbLevel
+    const settings: UpdateSettingsRequest = {}
+    if (parsedGoal !== auth.user?.dailyNewVocabularyGoal || !clbChanged) {
+      settings.dailyNewVocabularyGoal = parsedGoal
+    }
+    if (clbChanged) {
+      settings.clbLevel = clbLevel
+    }
+    update.mutate(settings, {
       onSuccess: () => {
         setGoal(String(parsedGoal))
         setSaved('Saved.')
@@ -36,7 +48,30 @@ export function SettingsPage() {
     <div>
       <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
       <form className="mt-6 max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" noValidate onSubmit={submit}>
-        <label className="block text-sm font-medium text-slate-800" htmlFor="settings-daily-goal">
+        <label className="block text-sm font-medium text-slate-800" htmlFor="settings-clb-level">
+          CLB level
+          <select
+            aria-describedby="settings-clb-hint"
+            className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+            id="settings-clb-level"
+            onChange={(event) => {
+              setClbLevel(event.target.value as ClbLevel)
+              setSaved('')
+            }}
+            value={clbLevel}
+          >
+            {clbLevels.map((level) => (
+              <option key={level} value={level}>
+                {clbLabel(level)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-clb-hint">
+          Your Canadian Language Benchmarks level. Reading passages are written one level below it, so that they read
+          easily and the words you studied stand out.
+        </p>
+        <label className="mt-6 block text-sm font-medium text-slate-800" htmlFor="settings-daily-goal">
           Daily new vocabulary goal
           <input
             aria-describedby={error ? 'settings-error settings-goal-hint' : 'settings-goal-hint'}
