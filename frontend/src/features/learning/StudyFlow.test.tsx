@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { toLocalDateString } from '../../shared/date'
+import { installSpeechSynthesis, voice } from '../../test/speech'
 import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, wholeText } from '../../test/utils'
 import { formatInterval } from './components/formatInterval'
 import type { StudyCard, StudyQueue } from './types/study'
@@ -32,6 +33,31 @@ test('tapping a word on the answer offers to add it and leaves the card as it wa
   await browserUser.click(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+})
+
+test('showing the answer reads the word aloud once, unless that is turned off', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
+  })
+  const browserUser = userEvent.setup()
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+  expect(speech.spoken).toHaveLength(0)
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+
+  expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed'])
+  expect(speech.lastUtterance()).toMatchObject({ lang: 'en-US' })
+
+  cleanup()
+  window.localStorage.setItem('vocabflow.speakOnAnswer', 'off')
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+  expect(speech.spoken).toHaveLength(1)
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
 
 test('hides the answer until asked, then shows it with what each rating would do', async () => {

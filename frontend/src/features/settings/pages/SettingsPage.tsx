@@ -1,4 +1,6 @@
 import { type FormEvent, useState } from 'react'
+import { getSpeakOnAnswer, setSpeakOnAnswer } from '../../../shared/speech/autoSpeak'
+import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { clbLabel, clbLevels } from '../../auth/clbLevels'
@@ -12,6 +14,7 @@ export function SettingsPage() {
   // Kept as typed, so the field can be emptied: turning it into a number would show 0 instead.
   const [goal, setGoal] = useState(String(auth.user?.dailyNewVocabularyGoal ?? 10))
   const [clbLevel, setClbLevel] = useState<ClbLevel>(auth.user?.clbLevel ?? 'CLB_4')
+  const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
   const [validationError, setValidationError] = useState<string>()
   const [saved, setSaved] = useState('')
   const error = validationError || (update.isError ? authErrorMessage(update.error, 'Unable to save your settings.') : undefined)
@@ -110,6 +113,29 @@ export function SettingsPage() {
           </p>
         </div>
       </form>
+
+      {isSpeechSupported() ? (
+        <section aria-label="On this device" className="mt-6 max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
+          <label className="mt-3 flex items-start gap-3 text-sm font-medium text-slate-800" htmlFor="settings-speak-on-answer">
+            <input
+              aria-describedby="settings-speak-hint"
+              checked={speakOnAnswer}
+              className="mt-0.5 size-5 shrink-0 accent-indigo-700"
+              id="settings-speak-on-answer"
+              onChange={(event) => {
+                setSpeakOnAnswerState(event.target.checked)
+                setSpeakOnAnswer(event.target.checked)
+              }}
+              type="checkbox"
+            />
+            Read the word aloud when I show the answer
+          </label>
+          <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-speak-hint">
+            Uses this device’s voice. The choice is kept in this browser only.
+          </p>
+        </section>
+      ) : null}
     </div>
   )
 }

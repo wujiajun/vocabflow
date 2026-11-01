@@ -2,6 +2,7 @@ import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
+import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
 let fetchedUser: Omit<typeof user, 'dailyNewVocabularyGoal'> & { dailyNewVocabularyGoal: number } = user
@@ -169,6 +170,31 @@ test('changing the level and the goal together saves both', async () => {
   await screen.findByText('Saved.')
   const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
   expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 })
+})
+
+test('the switch for reading the word aloud on Show answer is kept in this browser, and absent without speech', async () => {
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
+
+  renderApp('/app/settings')
+  await screen.findByLabelText('CLB level')
+  expect(screen.queryByLabelText('Read the word aloud when I show the answer')).not.toBeInTheDocument()
+  cleanup()
+
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const browserUser = userEvent.setup()
+  renderApp('/app/settings')
+  const box = await screen.findByLabelText('Read the word aloud when I show the answer')
+  expect(box).toBeChecked()
+
+  await browserUser.click(box)
+  expect(box).not.toBeChecked()
+  expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('off')
+
+  cleanup()
+  renderApp('/app/settings')
+  expect(await screen.findByLabelText('Read the word aloud when I show the answer')).not.toBeChecked()
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
 
 test('explains when saving fails and does not claim it saved', async () => {
