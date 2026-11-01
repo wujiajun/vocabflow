@@ -33,7 +33,7 @@ test('a finished day offers a passage, which is written on request and opened', 
   const browserUser = userEvent.setup()
 
   renderApp('/app/study')
-  const write = await screen.findByRole('button', { name: 'Write a reading passage' })
+  const write = await screen.findByRole('button', { name: '✎ Write a reading passage' })
   await expectNoAxeViolations()
   await browserUser.click(write)
 
@@ -59,7 +59,7 @@ test('while it is being written the button says so and a second press does nothi
   const browserUser = userEvent.setup()
 
   renderApp('/app/study')
-  await browserUser.click(await screen.findByRole('button', { name: 'Write a reading passage' }))
+  await browserUser.click(await screen.findByRole('button', { name: '✎ Write a reading passage' }))
   const writing = await screen.findByRole('button', { name: 'Writing your passage…' })
   await browserUser.click(writing)
 
@@ -79,9 +79,12 @@ test('a day that already has a passage offers to open it, not to write another',
 
   renderApp('/app/study')
 
-  const link = await screen.findByRole('link', { name: 'Open today’s passage' })
+  const link = await screen.findByRole('link', { name: 'Open today’s passage →' })
   expect(link).toHaveAttribute('href', '/app/reading/11')
-  expect(screen.queryByRole('button', { name: 'Write a reading passage' })).not.toBeInTheDocument()
+  // Written and not yet written are told apart by their heading as well as by their colour.
+  expect(screen.getByRole('heading', { name: '✓ Today’s passage is ready' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Reinforce today’s words' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '✎ Write a reading passage' })).not.toBeInTheDocument()
 })
 
 test('too few words is explained and leaves the button ready for another try', async () => {
@@ -95,10 +98,10 @@ test('too few words is explained and leaves the button ready for another try', a
   const browserUser = userEvent.setup()
 
   renderApp('/app/study')
-  await browserUser.click(await screen.findByRole('button', { name: 'Write a reading passage' }))
+  await browserUser.click(await screen.findByRole('button', { name: '✎ Write a reading passage' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('You studied 3 words or phrases today. A passage needs at least 10.')
-  expect(screen.getByRole('button', { name: 'Write a reading passage' })).not.toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getByRole('button', { name: '✎ Write a reading passage' })).not.toHaveAttribute('aria-disabled', 'true')
 })
 
 test('nothing about reading is offered before the day’s study is complete', async () => {
@@ -110,7 +113,7 @@ test('nothing about reading is offered before the day’s study is complete', as
   renderApp('/app/study')
 
   await screen.findByRole('heading', { name: 'Nothing is due right now' })
-  expect(screen.queryByRole('button', { name: 'Write a reading passage' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '✎ Write a reading passage' })).not.toBeInTheDocument()
 })
 
 test('a passage highlights the studied words, lets any other word be added and can be marked read and unread', async () => {
