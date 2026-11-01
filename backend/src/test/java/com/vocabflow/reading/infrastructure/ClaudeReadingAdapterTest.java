@@ -62,6 +62,12 @@ class ClaudeReadingAdapterTest {
   }
 
   @Test
+  void turnsThinkingOffTheWayTheModelAccepts() {
+    assertThat(ClaudeReadingAdapter.thinkingOff("claude-haiku-5-5")).isEqualTo("disabled");
+    assertThat(ClaudeReadingAdapter.thinkingOff("claude-sonnet-5-5")).isEqualTo("between_tools");
+  }
+
+  @Test
   void escapesTagsInWordsAndMeaningsSoTheyStayData() {
     String message =
         ClaudeReadingAdapter.userMessage(

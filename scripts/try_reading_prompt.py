@@ -108,7 +108,8 @@ def request_body(level, words):
     return {
         "model": MODEL,
         "max_tokens": 4096,
-        "thinking": {"type": "disabled"},
+        # Claude Sonnet 5.5 answers "disabled" with a 400; between_tools is its lowest setting.
+        "thinking": {"type": "between_tools" if MODEL.startswith("claude-sonnet-5-5") else "disabled"},
         "system": system_prompt(),
         "messages": [{"role": "user", "content": user_message(level, words)}],
         "output_config": {"format": {"type": "json_schema", "schema": SCHEMA}},
@@ -210,12 +211,8 @@ def main():
         show(words, reply)
         print(f"\nModel {MODEL}: {reply['usage']['input_tokens']} input tokens, {reply['usage']['output_tokens']} output tokens.")
     except urllib.error.HTTPError as error:
-        # The API's own error type and message: this run is yours, with your own prompt.
-        try:
-            detail = json.load(error)["error"]
-            print(f"failed with HTTP {error.code}: {detail.get('type')}: {str(detail.get('message'))[:300]}")
-        except (ValueError, KeyError, TypeError):
-            print(f"failed with HTTP {error.code}")
+        # The API's own reply: this run is yours, with your own prompt.
+        print(f"failed with HTTP {error.code}: {error.read().decode('utf-8', 'replace')[:500]}")
         return 1
     except (urllib.error.URLError, TimeoutError, ValueError, KeyError, StopIteration) as error:
         print(f"failed ({type(error).__name__})")

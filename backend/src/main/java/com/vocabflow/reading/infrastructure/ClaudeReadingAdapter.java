@@ -133,7 +133,7 @@ public class ClaudeReadingAdapter implements ReadingProvider {
             "max_tokens",
             4096,
             "thinking",
-            Map.of("type", "disabled"),
+            Map.of("type", thinkingOff(model)),
             "system",
             SYSTEM_PROMPT,
             "messages",
@@ -143,6 +143,11 @@ public class ClaudeReadingAdapter implements ReadingProvider {
     JsonNode response =
         client.post().uri("/v1/messages").body(request).retrieve().body(JsonNode.class);
     return parse(response, words);
+  }
+
+  // Claude Sonnet 5.5 answers {"type": "disabled"} with a 400; between_tools is its lowest setting.
+  static String thinkingOff(String model) {
+    return model.startsWith("claude-sonnet-5-5") ? "between_tools" : "disabled";
   }
 
   static String userMessage(int clbLevel, List<TargetWord> words) {
