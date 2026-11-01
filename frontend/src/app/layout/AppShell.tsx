@@ -53,12 +53,15 @@ export function AppShell() {
               {logout.isPending ? 'Signing out…' : 'Sign out'}
             </button>
           </div>
-          <nav aria-label="Main" className="mx-auto flex max-w-5xl gap-5 px-5 sm:px-8">
+          <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap gap-x-4 px-5 sm:gap-x-5 sm:px-8">
             <NavLink className={navLinkClass} to="/app/study">
               Study
             </NavLink>
             <NavLink className={navLinkClass} to="/app/vocabulary">
               Vocabulary
+            </NavLink>
+            <NavLink className={navLinkClass} to="/app/reading">
+              Reading
             </NavLink>
             <NavLink className={navLinkClass} to="/app/settings">
               Settings
@@ -80,7 +83,7 @@ export function AppShell() {
 }
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `border-b-2 pb-2.5 text-sm font-semibold ${
+  return `border-b-2 pb-2.5 text-sm font-semibold whitespace-nowrap ${
     isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
   }`
 }

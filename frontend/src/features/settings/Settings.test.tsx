@@ -31,6 +31,7 @@ test('is reachable from the navigation and shows the current goal', async () => 
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
   })
   const browserUser = userEvent.setup()
 
@@ -50,6 +51,7 @@ test('saves the goal, confirms it, keeps it, and drops the confirmation on the n
       return jsonResponse(fetchedUser)
     },
     'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
   })
   const browserUser = userEvent.setup()
 
@@ -74,6 +76,7 @@ test('shows the new goal straight away, without waiting to read the user again',
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'PATCH /api/v1/auth/me': () => jsonResponse({ ...user, dailyNewVocabularyGoal: 25 }),
     'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
   })
   const browserUser = userEvent.setup()
 
@@ -141,6 +144,7 @@ test('the finished study page links to the goal', async () => {
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...emptyStudyQueue, finished: true }),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
   })
 
   renderApp('/app/study')
