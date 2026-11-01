@@ -10,6 +10,7 @@ export const user = {
   email: 'learner@example.com',
   clbLevel: 'CLB_4',
   dailyNewVocabularyGoal: 10,
+  timeZone: null,
 } as const
 
 export const emptyStudyQueue = {

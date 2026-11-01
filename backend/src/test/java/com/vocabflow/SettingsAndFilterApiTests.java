@@ -92,6 +92,61 @@ class SettingsAndFilterApiTests {
   }
 
   @Test
+  void theTimeZoneIsKeptShownAndCanBeClearedBackToTheDevicesOwn() throws Exception {
+    String token = token("settings-zone@example.com", 7);
+    mvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.timeZone").isEmpty());
+
+    mvc.perform(patchBody(token, "{\"timeZone\":\"America/Toronto\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.timeZone").value("America/Toronto"))
+        .andExpect(jsonPath("$.clbLevel").value("CLB_5"));
+    mvc.perform(patchBody(token, "{\"dailyNewVocabularyGoal\":9}"))
+        .andExpect(jsonPath("$.timeZone").value("America/Toronto"));
+    mvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.timeZone").value("America/Toronto"));
+
+    mvc.perform(patchBody(token, "{\"timeZone\":\"\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.timeZone").isEmpty());
+  }
+
+  @Test
+  void refusesATimeZoneThatIsNotAName() throws Exception {
+    String token = token("settings-zone-bad@example.com", 7);
+
+    for (String zone : List.of("Mars/Olympus", "+05:00", "Toronto", "UTC+3")) {
+      mvc.perform(patchBody(token, "{\"timeZone\":\"" + zone + "\"}"))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value("Time zone must be a name such as America/Toronto"));
+    }
+  }
+
+  @Test
+  void withoutADateTheDailyPlanIsForTheUsersOwnDay() throws Exception {
+    String token = token("settings-zone-plan@example.com", 5);
+    // Whatever the hour on the server, these two zones are never on the same calendar date.
+    mvc.perform(patchBody(token, "{\"timeZone\":\"Pacific/Kiritimati\"}"))
+        .andExpect(status().isOk());
+    String east =
+        mvc.perform(get("/api/v1/learning/daily-plan").header("Authorization", "Bearer " + token))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    mvc.perform(patchBody(token, "{\"timeZone\":\"Pacific/Pago_Pago\"}"))
+        .andExpect(status().isOk());
+    String west =
+        mvc.perform(get("/api/v1/learning/daily-plan").header("Authorization", "Bearer " + token))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    org.assertj.core.api.Assertions.assertThat(json.readTree(east).path("date").asText())
+        .isNotEqualTo(json.readTree(west).path("date").asText());
+  }
+
+  @Test
   void refusesAnUnknownClbLevelAndAnEmptyChange() throws Exception {
     String token = token("settings-clb-bad@example.com", 7);
 
@@ -100,7 +155,7 @@ class SettingsAndFilterApiTests {
         .andExpect(jsonPath("$.message").value("CLB level must be CLB_1 through CLB_12"));
     mvc.perform(patchBody(token, "{}"))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").value("Give a daily goal or a CLB level"));
+        .andExpect(jsonPath("$.message").value("Give a daily goal, a CLB level or a time zone"));
     mvc.perform(patchBody(token, "{\"dailyNewVocabularyGoal\":0}"))
         .andExpect(status().isBadRequest());
     mvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))

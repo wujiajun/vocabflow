@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { usePageTitle } from '../../../shared/usePageTitle'
-import { useToday } from '../../../shared/useToday'
+import { useUserToday } from '../../auth/hooks/useUserToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { StudyCardView } from '../components/StudyCardView'
 import { StudyComplete } from '../components/StudyComplete'
@@ -9,7 +9,7 @@ import { useStudyQueue } from '../hooks/useStudy'
 
 export function StudyPage() {
   usePageTitle('Study')
-  const date = useToday()
+  const date = useUserToday()
   const queue = useStudyQueue(date)
   const [reviewedAny, setReviewedAny] = useState(false)
 

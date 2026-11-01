@@ -35,17 +35,23 @@ public class IdentityController {
       @Min(value = 1, message = "Daily goal must be between 1 and 100")
           @Max(value = 100, message = "Daily goal must be between 1 and 100")
           Integer dailyNewVocabularyGoal,
-      String clbLevel) {}
+      String clbLevel,
+      String timeZone) {}
 
   record Login(@Email String email, @NotBlank String password) {}
 
-  record UserResponse(long id, String email, String clbLevel, int dailyNewVocabularyGoal) {}
+  record UserResponse(
+      long id, String email, String clbLevel, int dailyNewVocabularyGoal, String timeZone) {}
 
   record LoginResponse(String accessToken, UserResponse user) {}
 
   private UserResponse map(User u) {
     return new UserResponse(
-        u.id(), u.email().value(), u.clbLevel().name(), u.dailyVocabularyGoal().value());
+        u.id(),
+        u.email().value(),
+        u.clbLevel().name(),
+        u.dailyVocabularyGoal().value(),
+        u.timeZone() == null ? null : u.timeZone().getId());
   }
 
   @PostMapping("/register")
@@ -76,10 +82,10 @@ public class IdentityController {
   @PatchMapping("/me")
   public UserResponse updateSettings(
       @AuthenticationPrincipal Long id, @RequestBody @jakarta.validation.Valid UpdateSettings r) {
-    if (r.dailyNewVocabularyGoal == null && r.clbLevel == null) {
-      throw new BadRequestException("Give a daily goal or a CLB level");
+    if (r.dailyNewVocabularyGoal == null && r.clbLevel == null && r.timeZone == null) {
+      throw new BadRequestException("Give a daily goal, a CLB level or a time zone");
     }
-    return map(service.updateSettings(id, r.dailyNewVocabularyGoal, r.clbLevel));
+    return map(service.updateSettings(id, r.dailyNewVocabularyGoal, r.clbLevel, r.timeZone));
   }
 
   @GetMapping("/me")

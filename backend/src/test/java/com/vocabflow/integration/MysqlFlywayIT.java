@@ -14,7 +14,7 @@ class MysqlFlywayIT extends MysqlIntegrationTest {
   @Test
   void appliesAllMigrationsAndCreatesExpectedMysqlSchema() {
     assertThat(flyway.info().all())
-        .hasSize(11)
+        .hasSize(12)
         .allSatisfy(migration -> assertThat(migration.getState().isApplied()).isTrue());
     assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class)).isZero();
     assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vocabulary_items", Integer.class))

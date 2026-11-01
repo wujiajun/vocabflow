@@ -17,12 +17,16 @@ export interface AuthUser {
   email: string
   clbLevel: ClbLevel
   dailyNewVocabularyGoal: number
+  // Where the learner's day starts and ends; null means the device's own.
+  timeZone: string | null
 }
 
 // Either may be given; what is left out stays as it is.
 export interface UpdateSettingsRequest {
   dailyNewVocabularyGoal?: number
   clbLevel?: ClbLevel
+  // An empty text goes back to the device's own.
+  timeZone?: string
 }
 
 export interface LoginRequest {

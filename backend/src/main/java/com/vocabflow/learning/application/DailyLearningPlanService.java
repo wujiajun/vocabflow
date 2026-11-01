@@ -6,6 +6,7 @@ import com.vocabflow.shared.web.UnauthorizedException;
 import com.vocabflow.vocabulary.application.LearningVocabularyQuery;
 import java.time.*;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,10 +36,17 @@ public class DailyLearningPlanService {
 
   @Transactional(readOnly = true)
   public DailyLearningPlan getOrCreate(long userId, LocalDate requestedDate) {
-    LocalDate learningDate = requestedDate == null ? LocalDate.now(clock) : requestedDate;
+    LocalDate learningDate = requestedDate == null ? userToday(userId) : requestedDate;
     return plans
         .findByUserIdAndLearningDate(userId, learningDate)
         .orElseGet(() -> createOrLoadExisting(userId, learningDate));
+  }
+
+  // Clients send the date; without one, today is the user's own day, not the server's.
+  private LocalDate userToday(long userId) {
+    ZoneId zone =
+        users.findById(userId).map(user -> user.timeZone()).filter(Objects::nonNull).orElse(null);
+    return LocalDate.now(zone == null ? clock : clock.withZone(zone));
   }
 
   private DailyLearningPlan createOrLoadExisting(long userId, LocalDate learningDate) {

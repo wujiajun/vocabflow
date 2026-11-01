@@ -2,6 +2,7 @@ package com.vocabflow.identity.infrastructure;
 
 import com.vocabflow.identity.application.UserRepository;
 import com.vocabflow.identity.domain.*;
+import java.time.ZoneId;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
@@ -27,6 +28,7 @@ public class JpaUserRepositoryAdapter implements UserRepository {
     entity.clbLevel = user.clbLevel().name();
     entity.dailyGoal = user.dailyVocabularyGoal().value();
     entity.createdAt = user.createdAt();
+    entity.timeZone = user.timeZone() == null ? null : user.timeZone().getId();
     return toDomain(users.save(entity));
   }
 
@@ -52,6 +54,7 @@ public class JpaUserRepositoryAdapter implements UserRepository {
         entity.passwordHash,
         ClbLevel.from(entity.clbLevel),
         new DailyVocabularyGoal(entity.dailyGoal),
-        entity.createdAt);
+        entity.createdAt,
+        entity.timeZone == null ? null : ZoneId.of(entity.timeZone));
   }
 }

@@ -76,3 +76,24 @@ test('leaves no timer or listener behind once unmounted', () => {
 test('leaves no hook from an earlier test mounted', () => {
   expect(document.body).toBeEmptyDOMElement()
 })
+
+test('follows a chosen time zone instead of the device, and rolls over at that zone’s midnight', () => {
+  // Midnight in Toronto (UTC-4 that night) is 04:00 UTC.
+  vi.setSystemTime(new Date('2026-10-29T03:59:30Z'))
+  const { result } = renderHook(() => useToday('America/Toronto'))
+
+  expect(result.current).toBe('2026-10-28')
+  act(() => vi.advanceTimersByTime(29_000))
+  expect(result.current).toBe('2026-10-28')
+  act(() => vi.advanceTimersByTime(3_000))
+  expect(result.current).toBe('2026-10-29')
+})
+
+test('changing the zone changes the date at once', () => {
+  vi.setSystemTime(new Date('2026-10-29T03:30:00Z'))
+  const { result, rerender } = renderHook(({ zone }) => useToday(zone), { initialProps: { zone: 'America/Toronto' as string | null } })
+  expect(result.current).toBe('2026-10-28')
+
+  rerender({ zone: 'Asia/Tokyo' })
+  expect(result.current).toBe('2026-10-29')
+})
