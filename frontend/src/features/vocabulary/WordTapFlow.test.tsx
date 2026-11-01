@@ -21,6 +21,7 @@ const lease: VocabularyEntry = {
   id: 7,
   term: 'lease',
   baseForm: null,
+  spellingSuggestion: null,
   type: 'WORD',
   phonetic: null,
   partOfSpeech: null,

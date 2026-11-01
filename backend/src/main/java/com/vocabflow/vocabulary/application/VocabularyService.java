@@ -83,6 +83,9 @@ public class VocabularyService {
     if (owned.item().enrichmentStatus() != EnrichmentStatus.FAILED) {
       throw new ConflictException("Only failed enrichment can be retried");
     }
+    if (owned.item().spellingSuggestion() != null) {
+      throw new ConflictException("This word looks misspelled; add the correct spelling instead");
+    }
     if (!enrichment.hasQuota(userId)) {
       throw new TooManyRequestsException("Daily enrichment limit reached");
     }

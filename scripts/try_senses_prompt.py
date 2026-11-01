@@ -42,6 +42,7 @@ List the meanings this person really needs, most common first, the way a good tr
 Return:
 - term: the text inside the tags with the capital letters a dictionary uses: all lowercase  for ordinary words and phrases, capitals only for proper nouns and acronyms, such as  "Toronto" or "NASA", and for brand names written that way, such as "iPhone". Keep every letter  and space as given and change only capitals. Describe that text and nothing else.
 - baseForm: if the text is an inflected form of a word, that word: the singular of a plural  noun, the base verb for a past tense, -ing or third-person form, the plain form of a  comparative or superlative. Then write the senses for the base word, because that is what the  learner needs to learn. Use an empty string when the text is already a base form or a  phrase, or when the inflected form has a meaning of its own that the base word lacks or is  the form a dictionary lists as a word in its own right, such as "glasses" for spectacles,  "customs" at the border, or "tired" as an adjective. Then describe the text as given.
+- misspelled: true only if the text is clearly a misspelling or typing slip of a different  word. Then baseForm is the correctly spelled word and the senses describe that word. Use  false for a real word, a name, a technical term, an informal word, and a spelling that is  correct in Canadian or American English.
 - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
 - senses, each with:
 - partOfSpeech: for example noun, verb, adjective, phrasal verb, idiom.
@@ -57,6 +58,7 @@ SCHEMA = {
     "properties": {
         "term": {"type": "string"},
         "baseForm": {"type": "string"},
+        "misspelled": {"type": "boolean"},
         "type": {"type": "string", "enum": ["WORD", "PHRASE", "PHRASAL_VERB", "IDIOM", "EXPRESSION"]},
         "senses": {
             "type": "array",
@@ -75,7 +77,7 @@ SCHEMA = {
             },
         },
     },
-    "required": ["term", "baseForm", "type", "senses"],
+    "required": ["term", "baseForm", "misspelled", "type", "senses"],
     "additionalProperties": False,
 }
 
@@ -124,6 +126,9 @@ def show(word, reply):
         print(f"\n## {word}: WRONG TERM, the reply describes {entry['term']!r}, and the app would refuse it")
         return
     base = f", base form: {entry['baseForm']}" if entry["baseForm"].strip() else ""
+    if entry["misspelled"]:
+        print(f"\n## {word}: MISSPELLED, the app would show 'Did you mean {entry['baseForm']!r}?' and store no entry")
+        return
     shown = f" -> shown as {entry['term']!r}" if entry["term"] != word else ""
     print(f"\n## {word}{shown} ({entry['type']}, {len(entry['senses'])} senses{base})")
     for number, sense in enumerate(entry["senses"], 1):

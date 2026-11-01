@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createVocabulary, getVocabulary, listVocabulary, removeVocabulary, retryEnrichment } from '../api/vocabularyApi'
-import type { CreateVocabularyRequest } from '../types/vocabulary'
+import { ApiClientError } from '../../../shared/api/apiClient'
+import type { CreateVocabularyRequest, VocabularyEntry } from '../types/vocabulary'
 import { entryIsUnfinished, pageHasUnfinished, useEnrichmentRefetchInterval } from './enrichmentPolling'
 
 export const vocabularyPageSize = 20
@@ -76,5 +77,35 @@ export function useRemoveVocabulary() {
     },
     // Already gone, or finished in the meantime: show where it really stands.
     onError: (_error, id) => queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(id) }),
+  })
+}
+
+// Adds the correct spelling and then removes the misspelled word. A word already in the list is
+// not an obstacle: the misspelled one goes either way.
+export function useCorrectSpelling() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, suggestion }: { id: number; suggestion: string }) => {
+      let added: VocabularyEntry | undefined
+      try {
+        added = await createVocabulary({ term: suggestion })
+      } catch (error) {
+        if (!(error instanceof ApiClientError && error.status === 409)) {
+          throw error
+        }
+      }
+      await removeVocabulary(id)
+      return added
+    },
+    onSuccess: (added, { id }) => {
+      if (added) {
+        queryClient.setQueryData(vocabularyKeys.detail(added.id), added)
+      }
+      queryClient.removeQueries({ queryKey: vocabularyKeys.detail(id) })
+      void queryClient.invalidateQueries({ queryKey: ['learning'] })
+      return queryClient.invalidateQueries({ queryKey: vocabularyKeys.lists() })
+    },
+    onError: (_error, { id }) => queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(id) }),
   })
 }

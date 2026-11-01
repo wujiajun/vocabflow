@@ -48,6 +48,18 @@ class VocabularyEnrichmentServiceTest {
   }
 
   @Test
+  void aMisspelledTermFailsWithTheSpellingItShouldHaveAndStoresNoContent() {
+    claimWins(true);
+    when(provider.enrich(any())).thenThrow(new MisspelledTermException("receive"));
+
+    service.claimAndEnrich(1L, 2L, Set.of(EnrichmentStatus.PENDING));
+
+    verify(items).markMisspelled(1L, "receive", "Looks misspelled");
+    verify(items, never()).markCompleted(anyLong(), any(), any(), any());
+    verify(items, never()).markFailed(anyLong(), any());
+  }
+
+  @Test
   void doesNotCallTheProviderOrChargeTheUserWhenAnotherRequestWonTheClaim() {
     claimWins(false);
 

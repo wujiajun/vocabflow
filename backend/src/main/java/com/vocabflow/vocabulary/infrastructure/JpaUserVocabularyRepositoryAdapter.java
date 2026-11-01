@@ -121,7 +121,8 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
             item.failureReason,
             item.createdAt,
             VocabularySenseJson.read(item.senses),
-            item.baseForm),
+            item.baseForm,
+            item.spellingSuggestion),
         LearningStatus.valueOf(entity.learningStatus),
         entity.createdAt);
   }

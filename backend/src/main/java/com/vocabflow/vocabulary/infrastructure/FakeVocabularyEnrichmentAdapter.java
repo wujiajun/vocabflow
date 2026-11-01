@@ -1,5 +1,6 @@
 package com.vocabflow.vocabulary.infrastructure;
 
+import com.vocabflow.vocabulary.application.MisspelledTermException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.util.*;
@@ -38,6 +39,7 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   "To begin again after stopping.",
                   List.of("The meeting will resume after lunch."),
                   List.of("resume work"))));
+    if (n.equals("recieve")) throw new MisspelledTermException("receive");
     if (n.equals("leases"))
       return new EnrichmentResult(
               VocabularyType.WORD,

@@ -24,6 +24,8 @@ export interface VocabularyEntry {
   collocations: string[] | null
   senses: VocabularySense[]
   baseForm: string | null
+  // For a failed word that is a misspelling: the word it should have been.
+  spellingSuggestion: string | null
   enrichmentStatus: EnrichmentStatus
   failureReason: string | null
   learningStatus: LearningStatus

@@ -171,6 +171,74 @@ test('a failed word can be removed, which returns to the list', async () => {
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
+function misspelled() {
+  return entry({ term: 'recieve', enrichmentStatus: 'FAILED', failureReason: 'Looks misspelled', spellingSuggestion: 'receive' })
+}
+
+test('a misspelled word offers the right spelling, and “Yes” adds it and removes the misspelled one', async () => {
+  const calls: string[] = []
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary/7': () => jsonResponse(misspelled()),
+    'POST /api/v1/vocabulary': ({ init }) => {
+      calls.push(`add ${String(init.body)}`)
+      return jsonResponse(entry({ id: 8, term: 'receive', enrichmentStatus: 'PENDING' }), 201)
+    },
+    'DELETE /api/v1/vocabulary/7': () => {
+      calls.push('remove')
+      return new Response(null, { status: 204 })
+    },
+    'GET /api/v1/vocabulary/8': () => jsonResponse(entry({ id: 8, term: 'receive', enrichmentStatus: 'COMPLETED', definition: 'A definition.' })),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([])),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary/7')
+  const alert = await screen.findByRole('alert')
+  expect(alert).toHaveTextContent('Looks misspelled. Did you mean “receive”?')
+  expect(screen.queryByRole('button', { name: 'Retry details' })).not.toBeInTheDocument()
+  await browserUser.click(within(alert).getByRole('button', { name: 'Yes, add “receive”' }))
+
+  expect(await screen.findByRole('heading', { name: 'receive' })).toBeInTheDocument()
+  expect(calls).toEqual(['add {"term":"receive"}', 'remove'])
+})
+
+test('“Yes” still removes the misspelled word when the right one is already in the list', async () => {
+  let removed = false
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary/7': () => jsonResponse(misspelled()),
+    'POST /api/v1/vocabulary': () => errorResponse(409, 'CONFLICT', 'This vocabulary is already in your list'),
+    'DELETE /api/v1/vocabulary/7': () => {
+      removed = true
+      return new Response(null, { status: 204 })
+    },
+    'GET /api/v1/vocabulary': () => jsonResponse(page([])),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByRole('button', { name: 'Yes, add “receive”' }))
+
+  expect(await screen.findByText('No words yet. Add your first word or phrase above.')).toBeInTheDocument()
+  expect(removed).toBe(true)
+})
+
+test('if the right spelling cannot be added the misspelled word is kept', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary/7': () => jsonResponse(misspelled()),
+    'POST /api/v1/vocabulary': () => errorResponse(500, 'INTERNAL_ERROR', 'boom'),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByRole('button', { name: 'Yes, add “receive”' }))
+
+  expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Yes, add “receive”' })).not.toHaveAttribute('aria-disabled', 'true')
+})
+
 test('a refused removal says why and leaves the word where it is', async () => {
   stubApi({
     ...signedIn(),
@@ -252,6 +320,7 @@ function entry(overrides: Partial<VocabularyEntry> = {}): VocabularyEntry {
     id: 7,
     term: 'overwhelmed',
     baseForm: null,
+    spellingSuggestion: null,
     type: null,
     phonetic: null,
     partOfSpeech: null,

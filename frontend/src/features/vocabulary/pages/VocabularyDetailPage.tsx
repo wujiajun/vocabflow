@@ -78,7 +78,7 @@ export function VocabularyDetailPage() {
         <EnrichmentPanel
           entry={entry}
           onCheckAgain={() => void detail.refetch()}
-          onRemoved={() => navigate(back.path, { replace: true })}
+          onRemoved={(next) => navigate(next ? `/app/vocabulary/${next.id}` : back.path, { replace: true })}
         />
         <p className="mt-2 text-sm text-slate-500">
           {[kind, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}

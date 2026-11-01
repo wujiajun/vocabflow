@@ -37,6 +37,9 @@ public class VocabularyItemEntity {
   @Column(name = "base_form")
   public String baseForm;
 
+  @Column(name = "spelling_suggestion")
+  public String spellingSuggestion;
+
   @Column(name = "enrichment_status", nullable = false)
   public String enrichmentStatus;
 

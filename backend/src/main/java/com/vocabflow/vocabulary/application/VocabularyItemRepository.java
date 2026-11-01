@@ -29,6 +29,9 @@ public interface VocabularyItemRepository {
 
   void markFailed(long id, String reason);
 
+  /** Fails the item because the text is a misspelling of {@code suggestion}. */
+  void markMisspelled(long id, String suggestion, String reason);
+
   List<Long> findCompletedIdsWithoutSenses();
 
   /** Removes the shared item unless some user's entry still refers to it. */
