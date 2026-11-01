@@ -5,6 +5,7 @@ import { RegisterPage } from '../../features/auth/pages/RegisterPage'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import { ReadingListPage } from '../../features/reading/pages/ReadingListPage'
 import { ReadingPassagePage } from '../../features/reading/pages/ReadingPassagePage'
+import { ReadingWritingPage } from '../../features/reading/pages/ReadingWritingPage'
 import { StudyPage } from '../../features/learning/pages/StudyPage'
 import { SettingsPage } from '../../features/settings/pages/SettingsPage'
 import { VocabularyDetailPage } from '../../features/vocabulary/pages/VocabularyDetailPage'
@@ -43,6 +44,7 @@ export function AppRouter() {
         <Route path="vocabulary" element={<VocabularyPage />} />
         <Route path="vocabulary/:id" element={<VocabularyDetailPage />} />
         <Route path="reading" element={<ReadingListPage />} />
+        <Route path="reading/writing" element={<ReadingWritingPage />} />
         <Route path="reading/:id" element={<ReadingPassagePage />} />
         <Route path="study" element={<StudyPage />} />
         <Route path="settings" element={<SettingsPage />} />

@@ -41,7 +41,7 @@ test('a finished day offers a passage, which is written on request and opened', 
   expect(requests).toEqual([{ date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }])
 })
 
-test('while it is being written the button says so and a second press does nothing', async () => {
+test('the wait is spent on the writing page, which asks once and opens the passage when it is done', async () => {
   let writes = 0
   let finish: (response: Response) => void = () => {}
   stubApi({
@@ -60,14 +60,36 @@ test('while it is being written the button says so and a second press does nothi
 
   renderApp('/app/study')
   await browserUser.click(await screen.findByRole('button', { name: '✎ Write a reading passage' }))
-  const writing = await screen.findByRole('button', { name: 'Writing your passage…' })
-  await browserUser.click(writing)
 
-  expect(writing).toHaveAttribute('aria-disabled', 'true')
+  expect(await screen.findByRole('heading', { name: 'Writing your passage…' })).toBeInTheDocument()
   expect(screen.getByText(/This takes about 15 seconds/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '← Back to study' })).toBeInTheDocument()
   expect(writes).toBe(1)
+  await expectNoAxeViolations()
+
   finish(jsonResponse(passage()))
   expect(await screen.findByRole('heading', { name: 'Signing the lease' })).toBeInTheDocument()
+  expect(writes).toBe(1)
+})
+
+test('the writing page can be reloaded from its address, and an address without a day goes back to study', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ finished: true })),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+    'POST /api/v1/reading/passages': ({ init }) => {
+      expect(JSON.parse(String(init.body))).toEqual({ date: '2026-11-01' })
+      return jsonResponse(passage())
+    },
+    'GET /api/v1/reading/passages/11': () => jsonResponse(passage()),
+  })
+
+  renderApp('/app/reading/writing?date=2026-11-01')
+  expect(await screen.findByRole('heading', { name: 'Signing the lease' })).toBeInTheDocument()
+  cleanup()
+
+  renderApp('/app/reading/writing')
+  expect(await screen.findByRole('heading', { name: 'Study' })).toBeInTheDocument()
 })
 
 test('a day that already has a passage offers to open it, not to write another', async () => {
@@ -87,13 +109,19 @@ test('a day that already has a passage offers to open it, not to write another',
   expect(screen.queryByRole('button', { name: '✎ Write a reading passage' })).not.toBeInTheDocument()
 })
 
-test('too few words is explained and leaves the button ready for another try', async () => {
+test('too few words is explained on the writing page, which can try again or go back to study', async () => {
+  let writes = 0
   stubApi({
     ...signedIn(),
     'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ finished: true })),
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
-    'POST /api/v1/reading/passages': () =>
-      errorResponse(409, 'CONFLICT', 'You studied 3 words or phrases today. A passage needs at least 10.'),
+    'POST /api/v1/reading/passages': () => {
+      writes += 1
+      return writes === 1
+        ? errorResponse(409, 'CONFLICT', 'You studied 3 words or phrases today. A passage needs at least 10.')
+        : jsonResponse(passage())
+    },
+    'GET /api/v1/reading/passages/11': () => jsonResponse(passage()),
   })
   const browserUser = userEvent.setup()
 
@@ -101,7 +129,13 @@ test('too few words is explained and leaves the button ready for another try', a
   await browserUser.click(await screen.findByRole('button', { name: '✎ Write a reading passage' }))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('You studied 3 words or phrases today. A passage needs at least 10.')
-  expect(screen.getByRole('button', { name: '✎ Write a reading passage' })).not.toHaveAttribute('aria-disabled', 'true')
+  expect(screen.getByRole('heading', { name: 'We couldn’t write your passage' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Back to study' })).toHaveAttribute('href', '/app/study')
+  await expectNoAxeViolations()
+
+  await browserUser.click(screen.getByRole('button', { name: 'Try again' }))
+  expect(await screen.findByRole('heading', { name: 'Signing the lease' })).toBeInTheDocument()
+  expect(writes).toBe(2)
 })
 
 test('nothing about reading is offered before the day’s study is complete', async () => {
