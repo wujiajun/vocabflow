@@ -27,3 +27,8 @@ vocabflow:
       api-key: ${VOCABFLOW_ANTHROPIC_API_KEY:}
       model: ${VOCABFLOW_ENRICHMENT_MODEL:claude-haiku-5-5}
       timeout-seconds: 60
+  reading:
+    claude:
+      # A passage is one call a day, and the small model often used a word in the wrong sense.
+      model: ${VOCABFLOW_READING_MODEL:claude-sonnet-5-5}
+      timeout-seconds: 90

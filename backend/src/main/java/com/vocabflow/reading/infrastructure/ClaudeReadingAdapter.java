@@ -105,8 +105,8 @@ public class ClaudeReadingAdapter implements ReadingProvider {
   @Autowired
   public ClaudeReadingAdapter(
       @Value("${vocabflow.enrichment.claude.api-key:}") String apiKey,
-      @Value("${vocabflow.reading.claude.model:${vocabflow.enrichment.claude.model}}") String model,
-      @Value("${vocabflow.reading.claude.timeout-seconds:60}") int timeoutSeconds) {
+      @Value("${vocabflow.reading.claude.model:claude-sonnet-5-5}") String model,
+      @Value("${vocabflow.reading.claude.timeout-seconds:90}") int timeoutSeconds) {
     this(ClaudeClient.create(apiKey, timeoutSeconds), model);
     if (apiKey.isBlank()) {
       throw new IllegalStateException(

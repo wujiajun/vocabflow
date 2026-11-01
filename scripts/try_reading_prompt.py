@@ -23,7 +23,7 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ADAPTER = ROOT / "backend/src/main/java/com/vocabflow/reading/infrastructure/ClaudeReadingAdapter.java"
-MODEL = os.environ.get("VOCABFLOW_READING_MODEL", os.environ.get("VOCABFLOW_ENRICHMENT_MODEL", "claude-haiku-5-5"))
+MODEL = os.environ.get("VOCABFLOW_READING_MODEL", "claude-sonnet-5-5")
 
 DEFAULT_WORDS = {
     "orthogonal": "adjective: Meeting at right angles, or independent of each other.",
