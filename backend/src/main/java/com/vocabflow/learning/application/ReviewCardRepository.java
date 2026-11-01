@@ -23,6 +23,9 @@ public interface ReviewCardRepository {
 
   void log(ReviewLogEntry entry);
 
+  /** The words rated Again or Hard on {@code date}. */
+  List<Long> findStruggledOn(long userId, LocalDate date);
+
   /** The words rated on {@code date}, in the order they were first rated. */
   List<Long> findStudiedOn(long userId, LocalDate date);
 }

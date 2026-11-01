@@ -43,6 +43,12 @@ public class ApiExceptionHandler {
         HttpStatus.TOO_MANY_REQUESTS, "ENRICHMENT_LIMIT_REACHED", x.getMessage());
   }
 
+  @ExceptionHandler(ServiceUnavailableException.class)
+  ResponseEntity<ApiError> unavailable(ServiceUnavailableException x) {
+    return responses.response(
+        HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", x.getMessage());
+  }
+
   @ExceptionHandler(NotFoundException.class)
   ResponseEntity<ApiError> n(NotFoundException x) {
     return responses.response(HttpStatus.NOT_FOUND, "NOT_FOUND", x.getMessage());
