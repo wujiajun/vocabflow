@@ -2,14 +2,7 @@ import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
-import {
-  errorResponse,
-  expectNoUnexpectedRequests,
-  jsonResponse,
-  renderApp,
-  stubApi,
-  user,
-} from '../../test/utils'
+import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, wholeText } from '../../test/utils'
 import type { VocabularyEntry } from './types/vocabulary'
 
 const overwhelmed = entry({
@@ -248,8 +241,8 @@ test('opens an entry from the list and shows its full details', async () => {
 
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   expect(screen.getByText(/\/ˌoʊvərˈwelmd\//)).toBeInTheDocument()
-  expect(screen.getByText('Feeling unable to deal with a situation because there is too much to do.')).toBeInTheDocument()
-  expect(screen.getByText('I felt overwhelmed during my first week at work.')).toBeInTheDocument()
+  expect(screen.getByText(wholeText('Feeling unable to deal with a situation because there is too much to do.'))).toBeInTheDocument()
+  expect(screen.getByText(wholeText('I felt overwhelmed during my first week at work.'))).toBeInTheDocument()
   expect(screen.getByText('feel overwhelmed')).toBeInTheDocument()
   expect(screen.getByText(/Status: New/)).toBeInTheDocument()
 

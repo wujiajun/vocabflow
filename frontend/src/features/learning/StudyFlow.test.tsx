@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { toLocalDateString } from '../../shared/date'
-import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, wholeText } from '../../test/utils'
 import { formatInterval } from './components/formatInterval'
 import type { StudyCard, StudyQueue } from './types/study'
 
@@ -19,6 +19,21 @@ afterEach(() => {
   expectNoUnexpectedRequests()
 })
 
+test('tapping a word on the answer offers to add it and leaves the card as it was', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+
+  await browserUser.click(screen.getByText('cope'))
+
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('cope')
+  expect(screen.getByRole('group', { name: /remember/ })).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Close' }))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+})
+
 test('hides the answer until asked, then shows it with what each rating would do', async () => {
   stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
   const browserUser = userEvent.setup()
@@ -28,17 +43,17 @@ test('hides the answer until asked, then shows it with what each rating would do
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   expect(document.title).toBe('Study · VocabFlow')
   expect(screen.getByRole('img', { name: '0 studied, 0 learning, 1 not started, 1 in total' })).toBeInTheDocument()
-  expect(screen.queryByText('Feeling unable to cope.')).not.toBeInTheDocument()
+  expect(screen.queryByText(wholeText('Feeling unable to cope.'))).not.toBeInTheDocument()
   expect(screen.queryByText(/\/ˌoʊ/)).not.toBeInTheDocument()
   expect(screen.queryByRole('group', { name: /remember/ })).not.toBeInTheDocument()
 
   await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
 
-  expect(screen.getByText('Feeling unable to cope.')).toBeInTheDocument()
+  expect(screen.getByText(wholeText('Feeling unable to cope.'))).toBeInTheDocument()
   expect(screen.getByText(/\/ˌoʊvərˈwelmd\//)).toBeInTheDocument()
-  expect(screen.getByText('I felt overwhelmed.')).toBeInTheDocument()
+  expect(screen.getByText(wholeText('I felt overwhelmed.'))).toBeInTheDocument()
   expect(screen.getByText('feel overwhelmed')).toBeInTheDocument()
-  expect(screen.getByText('Feeling unable to cope.').closest('[tabindex="-1"]')).toHaveFocus()
+  expect(screen.getByText(wholeText('Feeling unable to cope.')).closest('[tabindex="-1"]')).toHaveFocus()
   const ratings = within(screen.getByRole('group', { name: /remember/ })).getAllByRole('button')
   expect(ratings.map((button) => button.textContent)).toEqual(['Again1 min', 'Hard1 min', 'Good10 min', 'Easy4 days'])
 })
@@ -59,11 +74,11 @@ test('a card with several meanings offers them as tabs, says how many, and start
 
   expect(screen.getByText('2 meanings')).toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'noun · document' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.getByText('A work history.')).toBeInTheDocument()
+  expect(screen.getByText(wholeText('A work history.'))).toBeInTheDocument()
   await browserUser.click(screen.getByRole('tab', { name: 'verb · start again' }))
-  expect(screen.getByText('To begin again.')).toBeInTheDocument()
+  expect(screen.getByText(wholeText('To begin again.'))).toBeInTheDocument()
   expect(screen.getByText('/rɪˈzuːm/')).toBeInTheDocument()
-  expect(screen.queryByText('A work history.')).not.toBeInTheDocument()
+  expect(screen.queryByText(wholeText('A work history.'))).not.toBeInTheDocument()
 })
 
 test('sends the rating with the card’s version and today’s date, then moves on to the next card', async () => {
@@ -99,7 +114,7 @@ test('hides the answer again when the same card comes back', async () => {
   await browserUser.click(screen.getByRole('button', { name: /^Again/ }))
 
   expect(await screen.findByRole('button', { name: 'Show answer' })).toBeInTheDocument()
-  expect(screen.queryByText('Feeling unable to cope.')).not.toBeInTheDocument()
+  expect(screen.queryByText(wholeText('Feeling unable to cope.'))).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'overwhelmed' })).toHaveFocus()
 })
 

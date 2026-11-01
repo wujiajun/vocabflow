@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
-import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user, wholeText } from '../../test/utils'
 import type { VocabularyEntry } from './types/vocabulary'
 
 const polling = vi.hoisted(() => ({ intervalMs: 20 }))
@@ -96,7 +96,7 @@ test('the detail page announces progress and reveals the details when they are r
   renderApp('/app/vocabulary/7')
 
   expect(await screen.findByText(/Filling in the details/)).toBeInTheDocument()
-  expect(await screen.findByText('A definition.')).toBeInTheDocument()
+  expect(await screen.findByText(wholeText('A definition.'))).toBeInTheDocument()
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Details are ready.'))
   expect(screen.queryByText('Definition not available yet.')).not.toBeInTheDocument()
 })
@@ -147,7 +147,7 @@ test('a failed word explains why and can be retried, which resumes the progress 
   expect(await screen.findByText(/Filling in the details/)).toBeInTheDocument()
   expect(screen.getByRole('status')).toHaveFocus()
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-  expect(await screen.findByText('A definition.')).toBeInTheDocument()
+  expect(await screen.findByText(wholeText('A definition.'))).toBeInTheDocument()
 })
 
 test('shows the daily limit message when a retry is refused', async () => {
@@ -188,7 +188,7 @@ test('a word that is already enriched shows no progress or retry controls', asyn
   stubApi({ ...signedIn(), 'GET /api/v1/vocabulary/7': () => jsonResponse(done()) })
 
   renderApp('/app/vocabulary/7')
-  await screen.findByText('A definition.')
+  await screen.findByText(wholeText('A definition.'))
 
   expect(screen.getByRole('status')).toBeEmptyDOMElement()
   expect(screen.queryByRole('button', { name: /Retry|Check now/ })).not.toBeInTheDocument()
