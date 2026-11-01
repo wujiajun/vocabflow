@@ -10,6 +10,7 @@ import com.vocabflow.identity.application.UserRepository;
 import com.vocabflow.identity.domain.*;
 import com.vocabflow.reading.domain.*;
 import com.vocabflow.shared.web.*;
+import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -106,6 +107,30 @@ class ReadingServiceTest {
     assertThatThrownBy(() -> service.generate(2L, DAY))
         .isInstanceOf(TooManyRequestsException.class);
     verifyNoInteractions(provider);
+  }
+
+  @Test
+  void aRejectedReplyIsAskedForOnceMoreAndTheSecondOneIsUsed() {
+    when(studied.studiedOn(2L, DAY)).thenReturn(words(10));
+    when(provider.write(anyInt(), any()))
+        .thenThrow(new EnrichmentRejectedException("Model reply leaves out a target word"))
+        .thenReturn(new ReadingContent("Second", "text", List.of("w0")));
+
+    assertThat(service.generate(2L, DAY).title()).isEqualTo("Second");
+    verify(provider, times(2)).write(anyInt(), any());
+    verify(quota, times(1)).tryConsume(2L);
+  }
+
+  @Test
+  void twoRejectedRepliesInARowFailWithoutStoringAnything() {
+    when(studied.studiedOn(2L, DAY)).thenReturn(words(10));
+    when(provider.write(anyInt(), any()))
+        .thenThrow(new EnrichmentRejectedException("Model reply leaves out a target word"));
+
+    assertThatThrownBy(() -> service.generate(2L, DAY))
+        .isInstanceOf(ServiceUnavailableException.class);
+    verify(provider, times(2)).write(anyInt(), any());
+    verify(passages, never()).saveIfAbsent(any());
   }
 
   @Test

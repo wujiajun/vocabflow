@@ -210,8 +210,12 @@ def main():
         show(words, reply)
         print(f"\nModel {MODEL}: {reply['usage']['input_tokens']} input tokens, {reply['usage']['output_tokens']} output tokens.")
     except urllib.error.HTTPError as error:
-        # The status only: an error body is not needed here and could echo the request.
-        print(f"failed with HTTP {error.code}")
+        # The API's own error type and message: this run is yours, with your own prompt.
+        try:
+            detail = json.load(error)["error"]
+            print(f"failed with HTTP {error.code}: {detail.get('type')}: {str(detail.get('message'))[:300]}")
+        except (ValueError, KeyError, TypeError):
+            print(f"failed with HTTP {error.code}")
         return 1
     except (urllib.error.URLError, TimeoutError, ValueError, KeyError, StopIteration) as error:
         print(f"failed ({type(error).__name__})")

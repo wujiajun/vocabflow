@@ -4,6 +4,7 @@ import com.vocabflow.identity.application.UserRepository;
 import com.vocabflow.identity.domain.User;
 import com.vocabflow.reading.domain.*;
 import com.vocabflow.shared.web.*;
+import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -91,11 +92,18 @@ public class ReadingService {
         .orElseGet(() -> passages.findByUserIdAndStudyDate(userId, date).orElseThrow());
   }
 
+  // A reply that cannot be used, such as one naming a word it did not write, is asked for again
+  // once; the user's allowance was used for the passage, not for each try.
   private ReadingContent write(int level, List<StudiedWord> picked) {
+    List<TargetWord> targets =
+        picked.stream().map(word -> new TargetWord(word.term(), word.meanings())).toList();
     try {
-      return provider.write(
-          level,
-          picked.stream().map(word -> new TargetWord(word.term(), word.meanings())).toList());
+      try {
+        return provider.write(level, targets);
+      } catch (EnrichmentRejectedException rejected) {
+        log.warn("A passage was rejected, trying once more: {}", rejected.getMessage());
+        return provider.write(level, targets);
+      }
     } catch (RuntimeException exception) {
       // The class name only: provider messages can echo request details.
       log.warn("Writing a passage failed: {}", exception.getClass().getSimpleName());
