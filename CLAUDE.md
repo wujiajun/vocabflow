@@ -48,7 +48,7 @@ npm run dev         # Vite on :5173, proxies /api -> localhost:8080
 
 ## Backend architecture
 
-Package root `com.vocabflow`. Modules `identity`, `vocabulary`, and `learning` each split into:
+Package root `com.vocabflow`. Modules `identity`, `vocabulary`, `learning` and `reading` each split into:
 
 - `domain/`: plain Java with invariants (`Email`, `ClbLevel`, `VocabularyTerm`, `DailyLearningPlan`, …). No Spring/JPA.
 - `application/`: services plus **ports**, which are interfaces such as `UserRepository`, `VocabularyEnrichmentProvider`, `LearningVocabularyQuery`, and `DueReviewProvider`. Services may use `@Transactional` but never JPA entities or Spring Data repositories.
@@ -65,8 +65,9 @@ Key cross-module rules:
 - `learning` reads vocabulary only through the `LearningVocabularyQuery` port (implemented in `vocabulary/infrastructure/JpaLearningVocabularyQuery`).
 - `VocabularyItem` is shared content. `UserVocabulary` is the per-user relationship, unique on `(user_id, vocabulary_item_id)`. `/api/v1/vocabulary/{id}` takes the `UserVocabulary` id.
 - `VocabularyTerm` keeps display casing. Matching uses `normalized()` (trimmed/collapsed whitespace, `Locale.ROOT` lowercase), and both values are stored as `term` and `normalized_term`.
-- Enrichment is asynchronous. `VocabularyService.add` saves the item PENDING and hands `VocabularyEnrichmentService` to an `EnrichmentScheduler` (a small in-process thread pool; `vocabflow.enrichment.inline=true` runs it on the caller's thread and is set only in the test profile). Only the caller that wins `VocabularyItemRepository.claimForEnrichment` (one conditional UPDATE to PROCESSING; a PROCESSING item older than 5 minutes counts as lost) may call the provider, and each call is charged to the acting user's per-day count in `enrichment_usage` (UTC day). Nothing in that path may run inside a shared transaction. Retry is `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED only; 429 `ENRICHMENT_LIMIT_REACHED` when over the limit).
+- Enrichment is asynchronous. `VocabularyService.add` saves the item PENDING and hands `VocabularyEnrichmentService` to an `EnrichmentScheduler` (a small in-process thread pool; `vocabflow.enrichment.inline=true` runs it on the caller's thread and is set only in the test profile). Only the caller that wins `VocabularyItemRepository.claimForEnrichment` (one conditional UPDATE to PROCESSING; a PROCESSING item older than 5 minutes counts as lost) may call the provider, and each call is charged to the acting user's per-day count in `enrichment_usage` (UTC day). Nothing in that path may run inside a shared transaction. Retry is `POST /api/v1/vocabulary/{id}/enrichment/retry` (FAILED only; 429 `ENRICHMENT_LIMIT_REACHED` when over the limit). The reply also carries `baseForm` (stored in `base_form`, shown as "Form of …"; the entry keeps the word the user added), `term` with dictionary capitals (it replaces the stored display `term` on completion; `normalized_term` never changes and the echo check only tolerates capitals), and `misspelled` (the adapter throws `MisspelledTermException`; the item becomes FAILED `Looks misspelled` with `spelling_suggestion`, no content, no retry). A FAILED word that was never rated can be removed with `DELETE /api/v1/vocabulary/{id}`: in one transaction `VocabularyService.remove` takes it out of stored daily plans through the `StudyRecords` port (a deliberate, narrow exception to "plan items never change"), then deletes the entry and the shared item if nothing else refers to it.
 - Studying uses SM-2 as Anki applies it. `learning/domain/SpacedRepetitionScheduler` is pure and deterministic. A word has a `learning_cards` row from its first rating; every rating adds a `review_logs` row. `StudyService` must stay non-transactional (`createIfAbsent` catches a duplicate key and the plan path manages its own transactions); the writes for one rating happen together in `ReviewTransaction`, a separate bean. A stale `version` gives 409. `learning_status` is derived from the card (`ReviewCard.learningStatus()`). An empty daily plan is returned but not stored. A stored plan grows through `DailyPlanGrowth` (its own transactions, holding the plan row lock): it tops up to the goal until the day is finished, a finished day takes new words only through `POST /learning/study-queue/more`, and existing items never change. The day is finished when a rating leaves nothing due and no learning step to come.
+- `reading`: `ReadingService.generate` is non-transactional (a model call takes seconds, and `saveIfAbsent` catches a duplicate key). One passage per user and study day (unique key); it needs the day's plan finished (`finished_at`) and at least 10 words rated that day, picks up to 15 (`ReadingWordPicker`), writes at the user's CLB level minus one, draws one call from the shared `ModelQuota`, and retries an unusable reply once. It reaches learning data only through the `StudiedWords` port. The model names the form it used for each word and the adapter (`ClaudeReadingAdapter.mark`) wraps the uses in `[[ ]]` itself. Passages use `VOCABFLOW_READING_MODEL` (Sonnet 5.5, which needs `thinking: between_tools`, not `disabled`), separate from `VOCABFLOW_ENRICHMENT_MODEL`.
 - The daily plan get-or-create path spans three transactions and must stay that way:
   1. `DailyLearningPlanService` runs a read-only transaction.
   2. `DailyLearningPlanInsertTransaction` writes with `REQUIRES_NEW`. Its duplicate-key exception is caught by the adapter after that transaction ends.
@@ -77,7 +78,7 @@ Key cross-module rules:
 
 Persistence notes:
 
-- Migrations live in `src/main/resources/db/migration`, and V1–V8 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(8)`).
+- Migrations live in `src/main/resources/db/migration`, and V1–V12 are frozen. A new migration must also bump the migration-count assertion in `integration/MysqlFlywayIT` (currently `hasSize(12)`).
 - Open-in-View is disabled. Mapping happens inside transactions.
 - MySQL ITs extend `integration/MysqlIntegrationTest`, which supplies the container datasource.
 - `pom.xml` configures `maven-compiler-plugin` with `--enable-preview`. It does not break `test` or `verify`, but nobody has confirmed why it is there, so don't remove it or spread it to other places.
@@ -98,6 +99,12 @@ Auth pieces:
 - `AuthRoute` guards public-only routes (`/login`, `/register`) and protected ones (everything under `/app`, rendered inside `app/layout/AppShell.tsx`).
 - A `/me` failure that is not a 401 shows a retry screen; it must never leave the guard on the loading state.
 
-New features go under `src/features/<name>/{api,hooks,components,pages,types}`, mirroring `features/auth`. Frontend types are API-shaped, not copies of backend domain/JPA models. The daily plan sends the browser's local date built from local date parts (`shared/date.ts`), never `toISOString()`, which is UTC.
+New features go under `src/features/<name>/{api,hooks,components,pages,types}`, mirroring `features/auth`. Frontend types are API-shaped, not copies of backend domain/JPA models. The study day is the calendar date in the learner's time zone (`users.time_zone`, an IANA name; null means the device's): `useUserToday` passes it to `useToday`, and dates are built with `todayIn` or from local date parts (`shared/date.ts`), never `toISOString()`, which is UTC. The server uses the zone only when a daily plan is asked for without a date.
+
+Other frontend facts worth knowing:
+
+- Speech is the browser's Web Speech API only, and starts only from a press: pronunciation buttons, the word read in the same click as "Show answer" (switch in Settings, `localStorage`), and `useReadAloud` for passages (sentence by sentence; Pause cancels and Resume restarts the sentence).
+- `NewVersionNotice` compares the hashed script named by the server's `/` with the loaded one when the app returns to view and offers Reload; it relies on `index.html` being served `no-cache` (`frontend/Caddyfile`).
+- The navigation is crowded on a phone: "Add a word" shows as "+ Add" there. The study-complete page folds the studied list so the buttons stay on the first screen.
 
 Frontend tests stub `fetch` with `stubApi` from `src/test/utils.tsx` (routes keyed `"METHOD /path"`; an unrouted request fails the test). With fake timers, fake only `Date`.

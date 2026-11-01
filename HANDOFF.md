@@ -1,6 +1,6 @@
 # VocabFlow 开发交接
 
-核对日期：2026-10-30。本文依据当前工作区代码、配置和近期会话中**实际运行**的检查整理，供 Claude Code 等后续开发助手使用。接手时先读根目录、`backend/`、`frontend/` 中适用的 `AGENTS.md`，不要假定工具会自动加载这些规则。
+核对日期：2026-11-01（2026-10-31 至 11-01 做了一大批改动：多个意思、点词添加、原形、词典大小写、拼错检测、删除失败的词、阅读短文和朗读、CLB 和时区设置、新版本提示等，第 4 节里这些条目最新；第 3 节的验证记录已更新到这一天）。本文依据当前工作区代码、配置和近期会话中**实际运行**的检查整理，供 Claude Code 等后续开发助手使用。接手时先读根目录、`backend/`、`frontend/` 中适用的 `AGENTS.md`，不要假定工具会自动加载这些规则。
 
 本文区分“已有实现”“本次实际验证过的结果”“历史记录”和“待确认”。第 3 节末尾写明了每项检查实际跑过什么、没跑什么；之后再改代码，不能把这里的结果当作新的验证。
 
@@ -39,10 +39,11 @@ vocabflow/
 │       ├── main/java/com/vocabflow/
 │       │   ├── identity/      用户注册、密码验证、当前用户、用户仓储端口
 │       │   ├── vocabulary/    共享词条、个人词库、补全内容、学习候选查询
-│       │   ├── learning/      每日计划、计划持久化、并发恢复
+│       │   ├── learning/      每日计划、计划持久化、并发恢复、间隔复习、学习队列
+│       │   ├── reading/       阅读短文：每天一篇、选词、模型适配器、已读/未读
 │       │   ├── security/      Bearer校验、签名/撤销、Security JSON错误
 │       │   └── shared/        公共Web错误响应（ApiExceptionHandler）与JSON支持
-│       ├── main/resources/   application配置与db/migration/V1…V6
+│       ├── main/resources/   application配置与db/migration/V1…V12
 │       └── test/java/        快速测试与integration/*IT
 ├── frontend/
 │   ├── AGENTS.md              前端工程约定
@@ -54,15 +55,18 @@ vocabflow/
 │   ├── public/favicon.svg     站点图标
 │   └── src/
 │       ├── main.tsx          StrictMode、BrowserRouter入口
-│       ├── app/              App、根Providers、路由(AppRouter)、布局(AppShell)
+│       ├── app/              App、NewVersionNotice（新版本提示条）、根Providers、路由(AppRouter)、布局(AppShell)
 │       ├── features/auth/    登录/注册、当前用户、路由守卫、会话失败恢复
 │       ├── features/vocabulary/ 添加表单、分页列表、详情页
-│       ├── features/learning/   学习页（首页）和当天进度
+│       ├── features/learning/   学习页（首页）、闪卡、当天进度和完成页
+│       ├── features/reading/    阅读短文：生成等待页、列表、阅读页、朗读
+│       ├── features/settings/   设置页：CLB、时区、每日目标、本设备开关
 │       ├── shared/api/       fetch客户端、token存储、会话事件(sessionEvents)
-│       ├── shared/date.ts    本地日历日期工具；useToday.ts：跨过午夜自动更新的“今天”；navigation.ts：详情页“返回”目标
+│       ├── shared/date.ts    日历日期工具（含指定时区的“今天”）；useToday.ts：跨过午夜自动更新的“今天”；timeZones.ts：时区选项；appVersion.ts / useNewVersion.ts：发现新版本；navigation.ts：详情页“返回”目标
 │       ├── shared/speech/    发音：播放按钮、选声音、朗读状态（Web Speech API）
 │       ├── index.css         Tailwind导入与基础样式
 │       └── test/             Vitest初始化与共享测试工具(utils.tsx)
+├── scripts/                   backup.sh、restore.sh；try_senses_prompt.py、try_reading_prompt.py（手动试两个模型提示词，每次调用花真钱）
 └── docs/                     ROADMAP.md（建议的后续里程碑，不是已承诺需求）；暂无独立的长期设计文档
 ```
 
@@ -162,14 +166,15 @@ npm run dev
 
 **本次实际运行的结果**（2026-10-29 至 10-30，在当前分支代码上）：
 
-- 后端：`./mvnw spotless:check` 通过；`./mvnw test` 133 个测试通过；`./mvnw verify` 通过，包含 25 个 MySQL 8.4 Testcontainers IT。最近一次后端改动是间隔复习（分支 `spaced-repetition-backend`）。最近一次后端改动是 M5 的后端部分（分支 `real-enrichment-backend`：异步补全、领取标记、Claude 适配器、重试接口、每日次数上限，V5 迁移）。**真实的 Claude 适配器只用 Mock HTTP 服务器测过，没有用真实密钥调用过线上 API**；前端还没有轮询和重试按钮。
+- 后端（2026-11-01，时区设置那次，在 `main` 加上该改动的代码上）：`./mvnw spotless:check` 通过；`./mvnw test` 186 个测试通过；`./mvnw verify` 通过，另含 27 个 MySQL 8.4 Testcontainers IT（迁移 V1–V12）。Claude 适配器自动测试仍只用 Mock HTTP 服务器；真实密钥的调用由用户手动试过（词条补全、阅读短文）并在用户的 Docker 环境里用真实模型运行过。
 - **`pom.xml` 里的 `--enable-preview` 没有造成任何编译、测试或集成测试失败**（`test` 与 `verify` 日志里没有出现 preview 相关输出）。它的目的仍然不明，所以仍然不要删除，也不要扩散到别处。
-- 前端：`npm run lint`、`typecheck`、`test`（223 个测试）、`build` 全部通过。
+- 前端（同一天）：`npm run lint`、`typecheck`、`test`（283 个测试，含新页面的 axe 扫描）、`build` 全部通过。
 - **真实浏览器验证**（内置浏览器，H2 后端 + Vite，由独立的验证会话执行，只验证不改代码），已覆盖：注册、登录、刷新保持登录、登出；添加词汇、重复添加的 409 提示、空白输入；词汇详情与 404；分页（25 条、翻页、添加后回到第 1 页）；今日计划页（空计划、目标 3 取最早 3 个词、少于目标的说明、点击进入详情）；换用户后缓存隔离；375px 手机宽度下无横向滚动（含超长无空格词条）；后端停止后的错误界面与重试；后端重启使用户消失后被登出并看到提示；密码输错和主动登出不出现提示。
 - **CI 工作流（`.github/workflows/ci.yml`）**：先在一个**干净的本地克隆**里（没有 `node_modules`、没有 `.mvn/`，`mvnw` 从零下载 Maven）逐条执行了同一批命令，全部通过。随后在 GitHub 上用 PR #3 **真正运行了两次（2026-10-30），两次 `backend` 和 `frontend` 都成功**，已合并（`930a3e9`）。第一次（`@v4` 的 Action）后端约 1.5 分钟、前端约 7.5 分钟，并带有警告：三个 Action 的 `@v4` 用 Node 20（已弃用，被强制用 Node 24 运行），`setup-java@v4` 已停止更新。把三个都升到 `@v5`（经核对其 `action.yml` 声明 `node24`）后第二次运行：后端约 1 分钟，前端约 1 分 40 秒，**这些警告消失了**，只剩一条通知：`ubuntu-latest` 标签从 2026-10-19 起迁移到 Ubuntu 26，目前没有受影响，未固定系统版本。runner 上的 Docker 和 Testcontainers 正常（后端 `verify` 含集成测试，成功）。前端第一次那么慢，第二次快得多，很可能是那天 GitHub Actions 的故障造成的，但这只是推断：没有读到每一步的耗时和日志。没有装 `actionlint`。**分支保护已开启**（2026-10-30，GitHub Rulesets 里的 `Protect main`，对默认分支 `main` 生效）：必须走 PR（必需审批数为 0，因为是一个人开发，GitHub 不允许批准自己的 PR）、必须通过 `backend` 和 `frontend` 两个检查、禁止删除和强制推送；仓库管理员只能在 PR 页面上绕过，留给紧急情况；没有要求线性历史（我们用 merge commit），也没有要求分支必须是最新的。已用公开接口核对这些规则确实在 `main` 上生效。
 - **发音功能的浏览器验证**（Claude 桌面应用内置浏览器，Chromium 152，macOS）：该浏览器约 180 个声音，声音列表在首次 `getVoices()` 约 1.5 秒后才加载（应用没有因此出错）；设备默认的 `en-US` 声音是 Samantha，监听 `speak` 调用确认实际选中它，语速 0.9；点击后 `speaking` 为真、`aria-pressed` 随开始和结束切换；再点一次会停止；连续点两个词只有最后一个在读；离开页面立即停止；列表、详情页、今日计划的按钮都在链接之外，点击不跳转；Tab 顺序和 Enter/Space 在键盘上可用，有焦点环；375px 下无横向滚动、按钮 40×40、不与文字重叠（详情页超长标题会让按钮换到下一行）；控制台无异常。
 - **前端小修的浏览器验证**（同一内置浏览器，45 个词、3 页）：页码在 URL 里，翻页、刷新保持、浏览器前进后退都正确，请求用 0 起算的页码；`?page=abc`、`0`、`-1`、`1.5` 都按第 1 页处理，且 URL 保持用户输入的样子，不会被改写；`?page=999` 显示“没有第 999 页”和回到第 1 页的按钮，点击后 URL 清掉 `page`；从第 3 页进入详情，用返回链接或浏览器后退都回到第 3 页；在第 3 页添加词后回到第 1 页，新词排在最前；从今日计划进入详情，返回链接是 “Back to today’s plan” 并回到今日计划，直接输入详情地址则回到词汇列表；带无效 token 打开 `/register` 并注册后，登录页没有“已登出”提示，而带无效 token 打开 `/app` 时登录页仍有提示；375px 下无横向滚动；无 JS 异常。**午夜换日没有在真实浏览器里验证**（无法伪造时钟），只有单元测试。
 - **没有验证**：发音的口音是否为美式（听不到；用户在自己的浏览器里试听后评价“真实感不错”，但没有说明用的是哪个浏览器，也没有确认口音，所以不能据此断定是美式）、Safari 和 Firefox（Safari/iOS 上“先 `cancel()` 再 `speak()`”有不稳定的已知报告，未在那里验证）、“设备没有美式声音”时提示和详情页提示条的真实表现（那台设备有 en-US，只有单元测试覆盖）、浏览器不支持朗读时不显示按钮的真实表现（单元测试覆盖）；键盘与读屏（读屏器未测）、暗色模式、375px 以外的宽度、前端对 MySQL 后端的联调（浏览器验证只用了 H2）、真实 AI/字典、晚上本地日期与 UTC 日期不同时的真实页面表现（验证时本地与 UTC 同一天，只有单元测试覆盖）、生产部署。
+- **最近这批功能的验证（2026-10-31 至 11-01）**：用内置浏览器在手机宽度（375×812）和临时 H2 后端（假数据）上看过学习完成页（折叠、写短文、已写好）、等待页、阅读页（高亮、点词添加、已读/未读、朗读的开始/暂停/停止）、阅读列表和筛选、设置页；在 Docker 栈里真实验证了新版本提示条（A 版打开，服务器换成 B 版，切回页面出现提示，点 Reload 后跑 B 版）和首页的缓存头。提示词用 `scripts/try_*_prompt.py` 在真实模型上试过多轮（短文：小模型每轮都有 1–2 个词用错意思，Sonnet 三轮全对）。**没有验证**：真机（按下反馈、显示答案读单词、朗读的音质、新版本提示条在主屏幕图标里“切回”是否触发检查）、真实模型写的短文在应用里的样子（只在脚本里看过）。
 - 后端的并发正确性是在真实 MySQL 容器里用多线程测试验证的，没有做整个应用的压测。
 
 **历史记录**（不是本次运行）：更早的会话记录过 3A 实现的 HTTP 级联调通过，该联调不等于真实浏览器验收。
@@ -182,7 +187,7 @@ npm run dev
 - 用户CLB等级、每日新词目标。
 - 单词/短语创建、个人词库分页、详情、跨用户访问隔离。
 - `VocabularyItem`（共享内容）与 `UserVocabulary`（用户学习关系）分离；词条规范化及重复关系约束。
-- 可替换的词汇补全端口、确定性 fake 实现（默认）、Claude 实现（`VOCABFLOW_ENRICHMENT_PROVIDER=claude`，未用真实密钥验证过）、补全状态。
+- 可替换的词汇补全端口、确定性 fake 实现（默认）、Claude 实现（`VOCABFLOW_ENRICHMENT_PROVIDER=claude`，已由用户用真实密钥试过，见第 6 节）、补全状态。
 - API DTO/领域对象/JPA分离，仓储端口与持久化适配器；统一API错误模型/工厂。
 - Flyway、MySQL、H2快速测试、MySQL Testcontainers兼容性测试、Spotless。
 
@@ -191,9 +196,9 @@ npm run dev
 - 每个用户/日期只有一个持久化 DailyLearningPlan，重复请求返回既有计划。**空计划也会被保存。**
 - 从个人 `NEW` 词汇按 `createdAt ASC, id ASC` 选取至每日目标；不足时取全部。目标数是创建计划时的快照。
 - 计划项区分 NEW/REVIEW，存储快照及显式 `item_order`，重载后顺序保持稳定。
-- `DueReviewProvider` 已有边界，当前实现返回空列表。
+- `DueReviewProvider` 是边界；间隔复习做完后由 `CardDueReviewProvider` 提供到期复习（见下面间隔复习一条）。
 - 显式应用层只读事务、独立写事务和独立冲突重读事务；聚合保存失败回滚。
-- `GET /api/v1/learning/daily-plan` 及可选日期参数；缺省日期按UTC计算。
+- `GET /api/v1/learning/daily-plan` 及可选日期参数；缺省日期按用户设置的时区计算（没设置则 UTC）；前端总是自己传日期。
 - **间隔复习（后端）**：`SpacedRepetitionScheduler` 是纯函数，实现 Anki 式 SM-2 的默认参数：学习步骤 1 和 10 分钟，毕业 1 天，Easy 4 天，初始难度系数 2.5，最低 1.3，遗忘后重学 10 分钟，之后间隔回到 1 天；没有随机抖动。过期复习按 Anki 的方式计入延迟（Hard 1/4、Good 1/2、Easy 全部）。词在第一次评分时建 `learning_cards`，每次评分写 `review_logs`。`learning_status` 由卡片决定：学习或重学中是 `LEARNING`，间隔不足 21 天是 `FAMILIAR`，21 天及以上是 `MASTERED`。
 - **本机部署（M8）**：`docker-compose.yml` 含 MySQL 8.4、后端、Caddy（托管前端、转发 `/api`、CSP 和安全响应头）。只开放 Web 端口（默认 8088，默认绑定 0.0.0.0，局域网可访问），MySQL 和后端不对外。**只有 HTTP，局域网内密码和 token 是明文**，不能直接上公网；上公网前必须加 HTTPS 和登录频率限制。邀请码在邀请码错误时先于其他校验拒绝，不泄露邮箱是否已注册。`GET /api/v1/health` 公开，只返回状态。**缓存**：`Caddyfile` 里 `index.html`（以及其他不带哈希的文件）发 `Cache-Control: no-cache`，浏览器每次先向服务器确认，所以重建后页面会自动换成新版；`/assets/` 下带哈希、确实存在的文件缓存一年（`immutable`）；`/api` 不受影响。备份恢复已实测（备份、改坏、恢复后数据和复习记录都回来，多余的表被清除）。没有从另一台设备实际访问过（只从本机通过局域网 IP 访问），macOS 防火墙可能需要放行。
 - **iPhone 主屏幕图标**：iOS 不用 SVG favicon，所以有 `public/apple-touch-icon.png`（180×180，由 favicon 去掉圆角生成）和固定的应用名。`public/manifest.webmanifest` 把整个网站（`scope: "/"`）归入主屏幕 App，避免跳到范围外时 iOS 显示带关闭按钮的栏。不支持离线，没有 service worker。
@@ -211,15 +216,18 @@ npm run dev
 - **词汇并发创建**：多个请求同时添加同一个新词，输掉的请求以前会因共享事务里的 Hibernate 会话被污染而抛 `AssertionFailure`，变成 500。现在已修复，并有真实 MySQL 的并发 IT 覆盖（见第 7 节）。
 - **异步补全与领取标记（M5 后端）**：`POST /api/v1/vocabulary` 只保存词条为 `PENDING` 并立刻返回（返回的是保存时的快照，补全结果要通过 GET 读到）；补全由进程内小线程池（2 个线程，队列 200，队列满则词条留在 PENDING，下次添加同一个词会再调度）在后台执行。只有 `claimForEnrichment` 条件更新成功的调用者才能调用 provider：状态在允许集合内，或已是 `PROCESSING` 但开始时间早于 5 分钟前（认为 worker 丢了）。添加路径只允许领取 `PENDING`；重试路径只允许领取 `FAILED`。所以并发添加同一个词只花一次模型调用，进程崩溃留下的 PENDING/PROCESSING 会在下次有人添加该词时被重领（包括该用户已拥有它的情况）。
 - **重试**：`POST /api/v1/vocabulary/{id}/enrichment/retry`（id 是 `UserVocabulary` id，只能重试自己词库里状态为 `FAILED` 的词；其他状态 409；超出每日次数 429 `ENRICHMENT_LIMIT_REACHED`；别人的 404）。请求内同步领取，再交给后台执行，响应里是领取后的当前状态。没有无限自动重试。
-- **阅读短文（后端，前端还没做）**：新模块 `reading`（domain/application/adapter/infrastructure）。`POST /api/v1/reading/passages {date}` 为这一天生成一篇短文，每个用户每个学习日最多一篇（`reading_passages`，V11，`(user_id, study_date)` 唯一）；已有就原样返回。只有当天计划已结束（`finished_at` 不为空）才允许，否则 409；当天评过分的词少于 10 个也是 409，消息里写明学了几个，不调用模型、不占当天的名额；失败不存任何东西，可以再点。从当天评过分的词里挑最多 15 个：评了 Again/Hard 的优先，其次还在学习步骤里的，再按学习顺序（`ReadingWordPicker`）。难度是用户 CLB 减一（最低 1）。占用和词条补全同一个每天的模型调用次数（`ModelQuota` 端口，由 `ReadingModelQuota` 实现）。`reading` 通过 `StudiedWords` 端口（`LearningStudiedWords` 实现）读学习数据。接口还有 `GET /today?date=`（`{passageId}`）、`GET /passages?read=true|false&page&size`（按生成时间倒序，摘要含 `studyDate`、`wordCount`、`read`）、`GET /passages/{id}`、`PUT /passages/{id}/read {read}`（可改回未读）。正文里目标词的每次出现用 `[[...]]` 标记：由服务器标，不是模型。模型只给每个目标词在文中实际用的形式（`used: [{term, form}]`），适配器在正文里按整词、不分大小写找出这个形式的每一处并包上标记（重叠时长的优先）；形式不在正文里、漏了某个目标词、或正文自己带方括号都拒绝。（第一版让模型自己标，试下来 12 个词只标了 5 个。）`ClaudeReadingAdapter` 的提示词是 `scripts/try_reading_prompt.py` 直接从 Java 源码里读的，不会漂移。假数据模式下每个词一句固定的话。阅读用的模型和词条补全分开配置：`VOCABFLOW_READING_MODEL`，默认 `claude-sonnet-5-5`（小模型试了几次，每次都有一两个词用错意思；Sonnet 三次都全对，一篇约 1500 输入 + 800 输出 token，成本可以忽略）。Sonnet 5.5 不接受 `thinking: disabled`，适配器改发 `between_tools`。模型回复被拒绝时服务端自动再要一次。模型出错返回 503 `SERVICE_UNAVAILABLE`。
+- **阅读短文（后端）**：新模块 `reading`（domain/application/adapter/infrastructure）。`POST /api/v1/reading/passages {date}` 为这一天生成一篇短文，每个用户每个学习日最多一篇（`reading_passages`，V11，`(user_id, study_date)` 唯一）；已有就原样返回。只有当天计划已结束（`finished_at` 不为空）才允许，否则 409；当天评过分的词少于 10 个也是 409，消息里写明学了几个，不调用模型、不占当天的名额；失败不存任何东西，可以再点。从当天评过分的词里挑最多 15 个：评了 Again/Hard 的优先，其次还在学习步骤里的，再按学习顺序（`ReadingWordPicker`）。难度是用户 CLB 减一（最低 1）。占用和词条补全同一个每天的模型调用次数（`ModelQuota` 端口，由 `ReadingModelQuota` 实现）。`reading` 通过 `StudiedWords` 端口（`LearningStudiedWords` 实现）读学习数据。接口还有 `GET /today?date=`（`{passageId}`）、`GET /passages?read=true|false&page&size`（按生成时间倒序，摘要含 `studyDate`、`wordCount`、`read`）、`GET /passages/{id}`、`PUT /passages/{id}/read {read}`（可改回未读）。正文里目标词的每次出现用 `[[...]]` 标记：由服务器标，不是模型。模型只给每个目标词在文中实际用的形式（`used: [{term, form}]`），适配器在正文里按整词、不分大小写找出这个形式的每一处并包上标记（重叠时长的优先）；形式不在正文里、漏了某个目标词、或正文自己带方括号都拒绝。（第一版让模型自己标，试下来 12 个词只标了 5 个。）`ClaudeReadingAdapter` 的提示词是 `scripts/try_reading_prompt.py` 直接从 Java 源码里读的，不会漂移。假数据模式下每个词一句固定的话。阅读用的模型和词条补全分开配置：`VOCABFLOW_READING_MODEL`，默认 `claude-sonnet-5-5`（小模型试了几次，每次都有一两个词用错意思；Sonnet 三次都全对，一篇约 1500 输入 + 800 输出 token，成本可以忽略）。Sonnet 5.5 不接受 `thinking: disabled`，适配器改发 `between_tools`。模型回复被拒绝时服务端自动再要一次。模型出错返回 503 `SERVICE_UNAVAILABLE`。
 - **阅读短文（前端）**：`features/reading`。学习完成页（只有 `queue.finished` 时）多一块 “Reinforce today’s words”：先查 `GET /reading/today`，已有就显示 “Open today’s passage” 链接，没有就显示 “Write a reading passage” 按钮（点后立刻进入 `/app/reading/writing?date=YYYY-MM-DD`（`ReadingWritingPage`）：页面在挂载时发一次 `POST /reading/passages`（用 ref 防止开发模式下 effect 跑两次），显示 “Writing your passage…” 并提示约 15 秒，成功后 `replace` 到短文页；离开页面也会照常生成并出现在 Reading 里；刷新这个页面会再请求一次，服务器每天只写一篇所以安全；日期缺失或格式不对回到学习页；词不够等 409 的消息在这个页面里原样显示，并有 “Try again” 和 “Back to study”）。导航栏新增 “Reading”（`/app/reading` 列表，`?show=unread|read` 筛选、`?page=`，按生成时间倒序；未读有左侧色条和实心 “Unread” 标记，已读是灰色 “Read ✓”）；`/app/reading/:id` 是阅读页：`[[...]]` 里的学习词用 `<mark>` 高亮且不可点，其余词用 `TappableText`（点词添加）；底部 “Mark as read / Mark as unread”。手机宽度下导航放不下，所以 “Add a word” 在窄屏显示为 “+ Add”（`aria-label` 仍是 “Add a word”），导航项不换行。学习完成页的 “Studied today · N” 默认折叠（`aria-expanded`，点 Show/Hide 展开），免得词多时把按钮挤出第一屏；“写短文”和“已写好”两种状态用不同颜色和标题区分：蓝色 “Reinforce today’s words” + “✎ Write a reading passage”，绿色 “✓ Today’s passage is ready” + “Open today’s passage →”。在本地临时后端（假数据）+ 375px 视口里看过学习完成页、生成、阅读页、点词、已读/未读、列表和筛选；没在真机上看过。
 - **朗读短文**：阅读页（`PassageReader`）在浏览器支持语音时显示一个按钮在 “Listen / Pause / Resume” 间切换，另有 “Stop” 和 “Normal / Slow” 语速（0.9 / 0.7，记在 localStorage）。`useReadAloud` 按句子逐句朗读（整段一次交给浏览器，有的浏览器读到一半会停）；暂停是取消当前这句，继续时从这句开头重新读（浏览器自己的 pause 不可靠）；每次停止或重开都递增 `run` 令牌，忽略被取消那句的事件。句子用 `Intl.Segmenter` 切（没有就用正则），`Mr.`、`p.m.` 这类缩写后不断句；`splitIntoSentences` 同时保留 `[[...]]` 标记，所以正在读的那句有淡色底（`data-reading`）、并滚到可见，学习词的高亮不变。读的是去掉标记的纯文本；离开页面会停止；没有美式声音时提示。浏览器自带语音，没有新服务。在内置浏览器（180 个声音）里验证过读、暂停、停止；音质取决于设备。
 - **显示答案时读单词**：学习卡片点 “Show answer” 时（`StudyCardView.showAnswer`）用浏览器语音读一遍 `card.term`；必须在按键的同一次点击里调用，否则 iOS 等浏览器不允许。默认开，设置页 “On this device” 里有 “Read the word aloud when I show the answer” 开关（只在浏览器支持语音时显示），存在 localStorage（`vocabflow.speakOnAnswer`，`shared/speech/autoSpeak.ts`），不进后端。
 - **新版本提示**：`app/NewVersionNotice` 挂在 `App` 最上面。页面回到前台（`visibilitychange`，至少隔 30 秒）以及打开期间每 15 分钟，会用 `fetch('/', {cache:'no-store'})` 读服务器现在的首页，取出里面带哈希的脚本名（`/assets/index-xxx.js`）和当前页面加载的比较，不同就显示顶部 “A new version is available.” 和 “Reload” 按钮，点了才 `location.reload()`，绝不自动刷新。开发模式（脚本没有哈希）不检查；读取失败什么都不显示。这个请求是读页面本身，不走 API 客户端。靠首页的 `Cache-Control: no-cache`（Caddyfile）才能拿到新首页。已在 Docker 里验证：打开 A 版，服务器换成 B 版，切回页面出现提示，点 Reload 后跑的是 B 版且提示消失。
+- **时区设置**：`users.time_zone`（V12，IANA 名，如 `America/Toronto`，空表示用设备的）。`PATCH /me` 的 `timeZone`：空字符串清除；只接受带 `/` 的区域名（偏移量如 `+05:00` 不跟夏令时），不认的 400。服务器只在“没带日期取每日计划”时用它（`DailyLearningPlanService.userToday`）；其余日期都由前端传，前端用 `useUserToday` → `useToday(zone)` 在该时区算今天并在该时区午夜翻页（夏令时切换夜里定时器可能提前触发，会自己重新排）。设置页的 “Time zone” 下拉先列加拿大时区，再列浏览器支持的所有时区，下面一行写“此刻对你来说是哪一天”。中途改时区会改变“今天”，已经建好的计划不动。每天模型调用次数仍按 UTC 日（用户看不到）。
+- **CLB 设置**：`PATCH /me` 可只改 `clbLevel`、`dailyNewVocabularyGoal`、`timeZone` 中的一项或几项，没给的不变，一个都没给 400。目前 CLB 只影响阅读短文的难度（用户 CLB 减一）。
+- **词条补全的新增判断**：模型回复有必填的 `baseForm`、`misspelled`，`term` 按词典大小写给；见 README 和 CLAUDE.md。拼错：词标 `FAILED`、原因 `Looks misspelled`、`spelling_suggestion`（V10）存正确拼法、不存内容、不能重试；详情页提示 “Did you mean …?” 和 “Yes, add …”（先添加正确的词再删拼错的）。原形：`base_form`（V9），列表/详情/学习卡片显示 “Form of …”，词条仍是用户添加的词；用户觉得别扭但决定先不改（备选：直接变成原形，或只改显示）。大小写：`markCompleted` 用模型给的 `term` 更新显示用的 `term`，`normalized_term` 不变。
 - **按下反馈**：触屏没有 hover，而 Tailwind 的预设又关掉了 iOS 自带的点按闪烁，所以以前按钮按下去没有任何变化。`index.css` 里给未禁用的 `button` 加了 `:active`（缩到 97% 并略微变暗），`a[href]` 按下变淡；评分按钮和 “Show answer” 另有 `active:` 底色；`main.tsx` 里加了一个空的 `touchstart` 监听，否则 iOS Safari 不应用 `:active`。没有在真机上看过。
 - **拼错的词**：模型回复多一个必填布尔字段 `misspelled`（只有明确是另一个词的拼写错误才为 true；人名、术语、口语词、加拿大/美式拼写不算），为 true 时 `baseForm` 是正确拼法。适配器抛 `MisspelledTermException`，`VocabularyEnrichmentService` 调 `markMisspelled`：词标 `FAILED`，`failure_reason` 为 `Looks misspelled`，正确拼法存在 `spelling_suggestion`（V10），API 的 `spellingSuggestion` 返回它；不存任何释义。拼错的词不能重试（409）。前端详情页显示 “Looks misspelled. Did you mean “receive”?”，“Yes, add …” 先添加正确的词再删掉拼错的（已在列表里 409 也照样删），成功后进入正确词的详情页；添加失败则保留拼错的词。模型可能误判（把拼对的冷僻词当拼错），目前没有“保留原样”的出口，只能删除后再试。FakeProvider 里 `recieve` 固定判为 `receive` 的拼错。
 - **删除失败的词**：`DELETE /api/v1/vocabulary/{id}`（204）。只能删自己词库里状态为 `FAILED` 且从没评过分的词（否则 409；别人的 404）。同一事务里依次：学习模块（`StudyRecords` 端口，由 `JpaStudyRecords` 实现）把这个词从所有已存的每日计划里删掉（其余条目的 `item_order` 不变，这是对“已存计划条目不变”的有意例外，只对失败且没学过的词）、删用户词条、没人再引用时删共享的 `vocabulary_items`（这样再次添加同一文本会重新开始）。若同一时刻有计划正在把这个词加进去，外键冲突会让整个删除回滚并返回 409“try again”。前端：详情页失败提示里的 “Remove word”，成功后回到列表并刷新学习队列。
-- **每日次数上限**：`enrichment_usage(user_id, usage_date, request_count)`，按 UTC 日期，每次调用 provider 前原子加一（默认 50，`VOCABFLOW_ENRICHMENT_DAILY_LIMIT`）。次数记在触发补全的那个用户名下（添加者或重试者）。超限时新词仍会保存，但词条被标为 `FAILED`，`failureReason` 是 `Daily enrichment limit reached`，重试接口则直接 429。
+- **每日次数上限**：`enrichment_usage(user_id, usage_date, request_count)`，按 UTC 日期，每次调用 provider 前原子加一（阅读短文也占一次，`ModelQuota`）（默认 50，`VOCABFLOW_ENRICHMENT_DAILY_LIMIT`）。次数记在触发补全的那个用户名下（添加者或重试者）。超限时新词仍会保存，但词条被标为 `FAILED`，`failureReason` 是 `Daily enrichment limit reached`，重试接口则直接 429。
 - **来源记录**：补全成功时写入 `enrichment_source`（`claude:<模型名>` 或 `fake`）、`enriched_at`；`enrichment_attempts` 记录领取次数；`failureReason` 现在也出现在词汇 API 的响应里。
 - **Claude 适配器**：Spring `RestClient` 直连 Messages API，不引入 SDK；`thinking: disabled`、`output_config.format` 要求 JSON Schema，服务端再次严格校验（类型枚举、非空、长度、例句 1–5 条、搭配 0–8 条），不合格或 `stop_reason` 不是 `end_turn` 都算失败。超时 30 秒（`vocabflow.enrichment.claude.timeout-seconds`）。日志只记异常类名，不记密钥、请求或响应内容。配置 `claude` 但没有密钥时应用启动失败。
 
@@ -262,7 +270,7 @@ npm run dev
 
 ## 5. 进行中与工作区状态
 
-没有未完成的开发任务。分支、合并和 PR 的状态以 `git status`、`git log` 和 GitHub 为准，本文不记录，因为这类信息很快就会过时。不要使用 reset/clean 覆盖工作区，也不要自动提交或推送。
+没有未完成的开发任务，也没有未合并的 PR（以 GitHub 为准）。分支、合并和 PR 的状态以 `git status`、`git log` 和 GitHub 为准，本文不记录，因为这类信息很快就会过时。不要使用 reset/clean 覆盖工作区，也不要自动提交或推送。
 
 `backend/pom.xml` 里的 `maven-compiler-plugin`（Java 21 source/target 及 `--enable-preview`）来源和用途仍为**待确认**；本次验证了它不影响编译和测试，但没有证明项目需要它。
 
@@ -270,9 +278,12 @@ npm run dev
 
 按里程碑组织的完整路线图（M4 加固到 M8 上线准备，以及各自需要用户决定的事项）见 `docs/ROADMAP.md`；下面是最近的具体待办。
 
-1. **P1：用户时区。** 后端缺省日期是 UTC，前端目前靠“传浏览器本地日期”绕开；是否把时区作为用户设置存进后端待产品确认。
+1. **已完成：用户时区**（2026-11-01，见第 4 节“时区设置”）。
 2. **P1：补全体验（前后端都已做）。** 后端的异步补全、领取标记、重试、次数上限，前端的轮询、重试按钮、失败和超限文案都已完成，并在真实浏览器里对着真实后端（H2、假 provider、每日上限设为 1）验证过：添加、自动补全、超限变 FAILED、详情页失败说明、重试被 429 拒绝。真实 Claude 适配器已由用户用自己的密钥手动试过（单词、短语动词、习语、名词短语，没有报错，用户评价效果可以；自动测试仍只用 Mock）。首次试用发现模型可能返回空词性，现在存为 `null`；校验拒绝的原因会写进日志（只含字段名或停止原因）。**内容和用户选择的 CLB 级别无关**：词条是共享的，提示词固定写 CLB 5–7。**没有验证的**：补全需要超过 2 分钟的情况（轮询停止后只能点 “Check now” 或刷新）；卡死的 PENDING/PROCESSING 在详情页没有办法修复，只有再次添加同一个词才会重领。
-3. **后续：** 练习、评估、掌握度、间隔复习（现在复习项永远为空）、音频、生产认证/部署加固；具体顺序和规则均待确认。
+3. **后续：** 评估和更细的掌握度（“练习”现在只有阅读短文）、生产认证/部署加固；具体顺序和规则均待确认。
+4. **用户说过先不做或下次再说的**：给后端镜像加 Maven 缓存挂载加速构建；原形的显示方式（见上）；读屏软件的进一步优化（等上公网）；暗色模式（已决定不做）。
+5. **已知的小缺口**：拼错判断可能误判，没有“保持原样”的出口（只能删除再添加）；乱敲的输入模型仍会编一个条目；阅读短文不能删除、重新生成或指定主题，一天一篇；旧词不会因为提示词改进而重新分析（原形、大小写、多个意思只对新词生效）；模型偶尔给错音标或偏英式的词。
+6. **没在真机上验证过的**：见第 3 节最后一条。
 
 ## 7. 重要设计决定与约定
 
@@ -287,7 +298,7 @@ npm run dev
 
 - 共享词条与个人关系分离，避免重复维护内容并保证用户隔离。`VocabularyTerm` 保留清理空白后的显示大小写，`normalized()` 用 `Locale.ROOT` 转小写匹配；数据库分别保存 `term` 和 `normalized_term`。不要把规范化值当显示文本，也不要顺手改变重复规则。
 - 计划是当日持久化快照；已有计划不重选。创建计划不会推进词汇学习状态，因此不同日期目前可能再次选到相同NEW词；不是已实现的复习算法。
-- UTC `Instant` / `DATETIME(6)`，学习日期 `LocalDate`；后端缺省的“今天”是UTC日期，不是用户本地日期。前端用浏览器本地日期（用本地年月日拼 `YYYY-MM-DD`，不要用 `toISOString()`）。
+- UTC `Instant` / `DATETIME(6)`，学习日期 `LocalDate`；后端缺省的“今天”（没带日期取每日计划时）按用户时区，没设置才是 UTC。前端用用户设置的时区的日期，没设置就用设备本地日期（用 `todayIn` 或本地年月日拼 `YYYY-MM-DD`，不要用 `toISOString()`）。
 - `getOrCreate` 为应用层 `readOnly`事务；插入/flush通过独立Spring bean的 `REQUIRES_NEW`写事务完成；重复异常在该事务结束后被adapter捕获；winner reload通过另一bean的 `REQUIRES_NEW + readOnly`执行。
 - 这是显式编排多个事务，不是整个use case只有一个可统一回滚的数据库事务。计划和全部项由同一写事务保存；不能把异常捕获移到仍会rollback-only的共享事务，也不能通过同类self-invocation让传播注解失效。
 - **`VocabularyService.add` 故意不加 `@Transactional`。** 两个仓储适配器的 `saveIfAbsent` 在适配器里捕获重复键异常；如果整个方法在一个共享事务里，异常穿过 Spring Data 的事务代理时会把外层事务标成 rollback-only，Hibernate 会话也被污染，之后同一事务里的重新查询会抛 `AssertionFailure`，输掉竞争的请求变成 500。不加外层事务时，每次仓储调用各自一个事务，重复键在事务结束后才被捕获，重新查询也拿到新的快照。代价：新词的“插入”和“补全”是两个独立步骤，补全现在在后台线程里，PENDING 窗口是正常状态；窗口内进程崩溃会留下 PENDING/PROCESSING 词条，靠“再次添加时领取并补全”修复。补全路径（`VocabularyEnrichmentService`、`JpaEnrichmentUsageRepositoryAdapter`）同样不能放进共享事务。**不要为了统一而给它加回外层事务**；并发行为由 `VocabularyConcurrencyIT` 保护。
@@ -325,7 +336,8 @@ npm run dev
 | 浏览器验收的覆盖面 | 见第 3 节：读屏软件、MySQL 联调、晚上本地与 UTC 日期不同的真实表现仍未验证 |
 | 登出请求在网络日志里显示 `ERR_ABORTED` | 状态是200，验证时没有追查原因，看起来无害，但没有解释清楚 |
 | preview编译配置 | `--enable-preview` 已验证不影响编译和测试，但项目是否需要它仍未知；先确认意图，勿自动删除/扩散运行参数 |
-| fake补全与复习占位 | deterministic fake不是AI；没有掌握度/评估/复习调度。不能为充数据编造业务算法 |
+| fake补全占位 | deterministic fake不是AI；没有掌握度模型和评估。不能为充数据编造业务算法。**在假数据模式下添加的词会一直带着占位内容**（已完成的词不会自动重新补全；要重来，需把它标成 FAILED 再点重试，或删除重加） |
+| 重建时提供方变回假数据 | 提供方由 `.env` 的 `VOCABFLOW_ENRICHMENT_PROVIDER` 决定；shell 里导出的同名变量会压过 `.env`，所以换一个没有这些变量的终端重建，会悄悄回到 `.env` 里写的值。2026-11-01 已把 `.env` 改成 `claude`，现在不依赖终端里的临时指定 |
 | 并发测试边界 | 词汇并发创建有真实 MySQL 多线程 IT；学习计划有服务 mock 冲突路径、MySQL 重复键和失败回滚测试，但没有多线程端到端 get-or-create 竞争测试 |
 | token后续加固 | 当前token未含随机nonce，同用户同秒签发可能得到相同token；撤销记录未见过期清理任务。这些应单独评估，不能在普通前端任务中改变签名格式 |
 | 生产部署 | Vite本地服务的proxy不随dist部署；尚无完整生产SPA回退/同源API转发/CORS部署方案，禁止把开发默认DB连接及profile当生产模板 |
@@ -333,8 +345,8 @@ npm run dev
 必须保护：
 
 - 不重写已完成认证/安全/词汇持久化解耦/学习事务加固，除非当前任务明确包含必要修改。
-- 不编辑既有Flyway V1–V6内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
-- 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言（现为4）。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
+- 不编辑既有Flyway V1–V12内容；后续用新迁移。不要切换Hibernate为自动建表来让测试通过。
+- 增加迁移时同步维护 `MysqlFlywayIT` 中当前固定的迁移数量断言（现为12）。MySQL测试会清空测试数据表，不能手工改连个人/生产数据库。
 - Open-in-View已关闭；当前映射所用关联依赖明确的抓取策略，改为LAZY时必须保证事务内映射/显式fetch，不能依靠控制器持有会话。
 - 不把token存在视作唯一认证证明，不信任客户端 `userId`，不输出密码/token/密钥。
 - 不删除/削弱测试，不把真实MySQL验证替换成仅H2，也不要自动移除H2；两者承担不同责任。
@@ -350,14 +362,15 @@ npm run dev
 | `VOCABFLOW_DB_PASSWORD` | 默认profile所需数据库密码；从外部提供 |
 | `VOCABFLOW_ENRICHMENT_PROVIDER` | `fake`（默认）或 `claude` |
 | `VOCABFLOW_ANTHROPIC_API_KEY` | `claude` 时必需；从外部提供，勿写进仓库/日志 |
-| `VOCABFLOW_ENRICHMENT_MODEL` | 默认 `claude-haiku-5-5` |
-| `VOCABFLOW_ENRICHMENT_DAILY_LIMIT` | 每用户每天补全调用上限，默认 50 |
+| `VOCABFLOW_ENRICHMENT_MODEL` | 词条补全用的模型，默认 `claude-haiku-5-5` |
+| `VOCABFLOW_READING_MODEL` | 阅读短文用的模型，默认 `claude-sonnet-5-5`（Sonnet 5.5 不接受 `thinking: disabled`，适配器按模型选 `between_tools`） |
+| `VOCABFLOW_ENRICHMENT_DAILY_LIMIT` | 每用户每天模型调用上限，默认 50；词条补全和阅读短文共用 |
 | `VOCABFLOW_INVITE_CODE` | 设置后注册必须填写；不设则开放注册（开发和测试）。Compose 要求必须设置 |
 | `VOCABFLOW_AUTH_SECRET` | 默认profile所需HMAC签名密钥；从外部提供，勿写进仓库/日志 |
 | `SPRING_PROFILES_ACTIVE` | Spring可选profile选择入口；也可用上述Maven启动参数选择profile |
 | `SERVER_PORT` | Spring可选端口覆盖入口；若改变需同步考虑Vite代理目标 |
 
-前四项是项目配置明确引用的变量；后两项是Spring标准可选配置入口，不是新加的项目必需变量。未发现当前前端读取任何自定义 `VITE_*` 环境变量；不需要为此编造API key或base URL变量。
+表里以 `VOCABFLOW_` 开头的是项目配置明确引用的变量；`SPRING_PROFILES_ACTIVE` 和 `SERVER_PORT` 是Spring标准可选配置入口，不是新加的项目必需变量。未发现当前前端读取任何自定义 `VITE_*` 环境变量；不需要为此编造API key或base URL变量。
 
 配置文件职责：
 
@@ -366,9 +379,9 @@ npm run dev
 - `application-test.yml`：H2隔离测试/本地联调与测试用认证配置；不得部署到生产。
 - MySQL集成基类使用容器动态JDBC参数覆盖datasource，不依赖个人数据库环境变量。
 - `frontend/vite.config.ts`：开发代理和Vitest/Tailwind集成；API客户端用相对路径。
-- `.env`被忽略不等于自动注入：当前Maven Wrapper/Spring启动脚本未配置自动加载仓库根 `.env`，后端变量需由进程环境/IDE等传入。Vite若日后使用 `VITE_*`，其值会进入客户端，不可放秘密。
+- `.env`被Git忽略。直接用 Maven 启动后端时不会自动加载它，变量要由进程环境/IDE传入；但 **`docker compose` 会读仓库根的 `.env`**（shell 里导出的同名变量优先于它）。Vite若日后使用 `VITE_*`，其值会进入客户端，不可放秘密。
 
-需要用户确认：更细用户画像和下一里程碑范围、`--enable-preview` 的目的、生产部署/认证硬化方案、用户时区是否进后端。未经确认，不把这些事项当成既定设计。
+需要用户确认：更细用户画像和下一里程碑范围、`--enable-preview` 的目的、生产部署/认证硬化方案。未经确认，不把这些事项当成既定设计。
 
 ## 10. 协作与子会话
 

@@ -12,7 +12,7 @@ VocabFlow is a modular-monolith product repository. Keep changes focused and lea
 
 ## Architecture and contracts
 
-- The backend is a modular monolith organized into `identity`, `vocabulary`, and `learning`, with shared security/web support.
+- The backend is a modular monolith organized into `identity`, `vocabulary`, `learning` and `reading`, with shared security/web support.
 - Keep domain code independent from Spring MVC, JPA, MySQL, HTTP clients, and AI providers. Application services use repository/query ports; persistence adapters own Spring Data repositories and entity mapping.
 - Keep API DTOs, domain objects, and persistence models separate. Never expose JPA entities through APIs or import them into frontend models.
 - Frontend code is feature-oriented. Keep HTTP calls in feature API modules behind the shared native-fetch client, out of pages/components.
