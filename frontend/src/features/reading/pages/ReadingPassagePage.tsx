@@ -4,7 +4,7 @@ import { readBackTarget } from '../../../shared/navigation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { formatWordCount, formatWritten } from '../components/formatReading'
-import { PassageText } from '../components/PassageText'
+import { PassageReader } from '../components/PassageReader'
 import { ReadStatus } from '../components/ReadStatus'
 import { useReadingPassage, useSetRead } from '../hooks/useReading'
 
@@ -83,9 +83,7 @@ export function ReadingPassagePage() {
           the ones you studied. Tap any other word to add it to your list.
         </p>
 
-        <div className="mt-6">
-          <PassageText text={current.text} />
-        </div>
+        <PassageReader text={current.text} />
 
         <section aria-label="Words in this passage" className="mt-8">
           <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Words in this passage</h2>
