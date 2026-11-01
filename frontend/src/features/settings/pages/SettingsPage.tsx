@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, memo, useState } from 'react'
 import { getSpeakOnAnswer, setSpeakOnAnswer } from '../../../shared/speech/autoSpeak'
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
@@ -95,26 +95,7 @@ export function SettingsPage() {
             }}
             value={timeZone}
           >
-            <option value="">{deviceTimeZone() ? `Automatic (this device: ${deviceTimeZone()})` : 'Automatic (this device)'}</option>
-            {timeZone !== '' && !canadianTimeZones.includes(timeZone) && !otherTimeZones().includes(timeZone) ? (
-              <option value={timeZone}>{timeZone}</option>
-            ) : null}
-            <optgroup label="Canada">
-              {canadianTimeZones.map((zone) => (
-                <option key={zone} value={zone}>
-                  {zone}
-                </option>
-              ))}
-            </optgroup>
-            {otherTimeZones().length > 0 ? (
-              <optgroup label="Everywhere else">
-                {otherTimeZones().map((zone) => (
-                  <option key={zone} value={zone}>
-                    {zone}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
+            <TimeZoneOptions current={timeZone} />
           </select>
         </label>
         <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-time-zone-hint">
@@ -186,3 +167,34 @@ export function SettingsPage() {
     </div>
   )
 }
+
+// Hundreds of options: kept apart and remembered, so that typing in another field does not draw them
+// all again.
+const TimeZoneOptions = memo(function TimeZoneOptions({ current }: { current: string }) {
+  const others = otherTimeZones()
+
+  return (
+    <>
+      <option value="">{deviceTimeZone() ? `Automatic (this device: ${deviceTimeZone()})` : 'Automatic (this device)'}</option>
+      {current !== '' && !canadianTimeZones.includes(current) && !others.includes(current) ? (
+        <option value={current}>{current}</option>
+      ) : null}
+      <optgroup label="Canada">
+        {canadianTimeZones.map((zone) => (
+          <option key={zone} value={zone}>
+            {zone}
+          </option>
+        ))}
+      </optgroup>
+      {others.length > 0 ? (
+        <optgroup label="Everywhere else">
+          {others.map((zone) => (
+            <option key={zone} value={zone}>
+              {zone}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+    </>
+  )
+})
