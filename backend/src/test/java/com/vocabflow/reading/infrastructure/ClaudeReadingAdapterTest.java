@@ -115,6 +115,16 @@ class ClaudeReadingAdapterTest {
   }
 
   @Test
+  void doesNotMarkAFormThatIsOnlyPartOfAHyphenatedCompound() {
+    assertThat(
+            ClaudeReadingAdapter.mark(
+                "A sleeve and a well-known sleeve, not sleeve-length.", List.of("sleeve")))
+        .isEqualTo("A [[sleeve]] and a well-known [[sleeve]], not sleeve-length.");
+    assertThatThrownBy(() -> ClaudeReadingAdapter.mark("A sleeve-length coat.", List.of("sleeve")))
+        .isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
   void marksAPhraseWhateverTheSpacingAndTheLongerFormWinsAnOverlap() {
     assertThat(
             ClaudeReadingAdapter.mark(

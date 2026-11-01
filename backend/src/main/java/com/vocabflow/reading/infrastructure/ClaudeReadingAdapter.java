@@ -58,8 +58,10 @@ public class ClaudeReadingAdapter implements ReadingProvider {
       separated by a blank line, and no lists or headings inside the text.
 
       Every target must appear, even if it does not fit the setting well: build a plausible \
-      sentence around it in the meaning given, rather than leaving it out. Do not use square \
-      brackets in the text.
+      sentence around it in the meaning given, rather than leaving it out. Make each sentence show \
+      what the word really means, so that a learner who copies the use is correct. Never stretch a \
+      word into a sense it does not have, and do not use a target inside a hyphenated compound. Do \
+      not use square brackets in the text.
 
       Return:
       - title: a short, plain title.
@@ -261,8 +263,8 @@ public class ClaudeReadingAdapter implements ReadingProvider {
 
   /**
    * Wraps every use of each form in {@code [[ ]]}. A form matches whole words only and without
-   * regard to case; where forms overlap, the longer one wins. A form that is not in the text means
-   * the model's list cannot be trusted.
+   * regard to case, and never as part of a hyphenated compound; where forms overlap, the longer one
+   * wins. A form that is not in the text means the model's list cannot be trusted.
    */
   static String mark(String text, List<String> forms) {
     List<int[]> spans = new ArrayList<>();
@@ -275,10 +277,10 @@ public class ClaudeReadingAdapter implements ReadingProvider {
             form -> {
               Pattern pattern =
                   Pattern.compile(
-                      "(?<![\\p{L}\\p{N}])"
+                      "(?<![\\p{L}\\p{N}-])"
                           + String.join(
                               "\\s+", Arrays.stream(form.split(" ")).map(Pattern::quote).toList())
-                          + "(?![\\p{L}\\p{N}])",
+                          + "(?![\\p{L}\\p{N}-])",
                       Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
               Matcher matcher = pattern.matcher(text);
               boolean found = false;

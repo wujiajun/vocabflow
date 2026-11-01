@@ -148,7 +148,7 @@ def mark(text, forms):
     """
     spans, missing = [], []
     for form in sorted({" ".join(f.split()) for f in forms if f.strip()}, key=len, reverse=True):
-        pattern = r"(?<![^\W_])" + r"\s+".join(re.escape(part) for part in form.split(" ")) + r"(?![^\W_])"
+        pattern = r"(?<![^\W_])(?<!-)" + r"\s+".join(re.escape(part) for part in form.split(" ")) + r"(?![^\W_])(?!-)"
         found = False
         for match in re.finditer(pattern, text, re.I):
             found = True
