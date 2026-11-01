@@ -66,6 +66,10 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
     entity.collocations = JsonSupport.write(result.collocations());
     entity.senses = VocabularySenseJson.write(result.senses());
     entity.baseForm = result.baseForm();
+    // Only the capitals can differ: the lookup key stays as it was.
+    if (result.term() != null) {
+      entity.term = result.term();
+    }
     entity.enrichmentStatus = EnrichmentStatus.COMPLETED.name();
     entity.failureReason = null;
     entity.enrichedAt = at;

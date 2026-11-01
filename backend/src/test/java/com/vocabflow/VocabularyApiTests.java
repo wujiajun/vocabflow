@@ -180,6 +180,22 @@ class VocabularyApiTests {
         .andExpect(jsonPath("$.nextCard.baseForm").value("lease"));
   }
 
+  @Test
+  void showsAWordWithTheCapitalsADictionaryUsesWhateverWasTyped() throws Exception {
+    String token = token("capitals@example.com");
+    long id = add(token, "LEASES");
+
+    mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.term").value("leases"));
+    // It is still the same word, whatever the capitals.
+    mvc.perform(
+            post("/api/v1/vocabulary")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"term\":\"Leases\"}"))
+        .andExpect(status().isConflict());
+  }
+
   private long add(String token, String term) throws Exception {
     return json.readTree(
             mvc.perform(
