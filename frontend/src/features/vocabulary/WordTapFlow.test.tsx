@@ -20,6 +20,7 @@ afterEach(() => {
 const lease: VocabularyEntry = {
   id: 7,
   term: 'lease',
+  baseForm: null,
   type: 'WORD',
   phonetic: null,
   partOfSpeech: null,

@@ -75,6 +75,24 @@ test('a word with several meanings says so in the list, instead of one part of s
   expect(row).not.toHaveTextContent('Word · noun')
 })
 
+test('an inflected word names its base word in the list and on its page', async () => {
+  const leases = entry({ id: 5, term: 'leases', baseForm: 'lease', enrichmentStatus: 'COMPLETED' })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([leases])),
+    'GET /api/v1/vocabulary/5': () => jsonResponse(leases),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  const row = await screen.findByRole('listitem')
+  expect(row).toHaveTextContent('form of lease')
+
+  await browserUser.click(within(row).getByRole('link'))
+  expect(await screen.findByRole('heading', { name: 'leases' })).toBeInTheDocument()
+  expect(screen.getByText(/Form of/)).toHaveTextContent('Form of lease')
+})
+
 test('shows an empty state when nothing has been saved yet', async () => {
   stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([])) })
 
@@ -384,6 +402,7 @@ function page(content: VocabularyEntry[], totalPages = content.length === 0 ? 0 
 
 function entry(overrides: Partial<VocabularyEntry> & Pick<VocabularyEntry, 'id' | 'term'>): VocabularyEntry {
   return {
+    baseForm: null,
     senses: overrides.definition
       ? [
           {

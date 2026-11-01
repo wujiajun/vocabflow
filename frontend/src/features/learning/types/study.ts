@@ -19,6 +19,7 @@ export interface StudyCard {
   examples: string[] | null
   collocations: string[] | null
   senses: VocabularySense[]
+  baseForm: string | null
   state: 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING'
   version: number
   options: RatingOption[]

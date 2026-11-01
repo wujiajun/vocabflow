@@ -38,6 +38,15 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   "To begin again after stopping.",
                   List.of("The meeting will resume after lunch."),
                   List.of("resume work"))));
+    if (n.equals("leases"))
+      return new EnrichmentResult(
+              VocabularyType.WORD,
+              "/liːs/",
+              "noun",
+              "A contract to rent a property for a set time.",
+              List.of("We signed a lease for the apartment."),
+              List.of("sign a lease"))
+          .withBaseForm("lease");
     if (n.equals("overwhelmed"))
       return new EnrichmentResult(
           VocabularyType.WORD,

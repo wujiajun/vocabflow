@@ -53,6 +53,7 @@ public class StudyController {
       List<String> examples,
       List<String> collocations,
       List<Sense> senses,
+      String baseForm,
       String state,
       int version,
       List<RatingOption> options) {}
@@ -146,6 +147,7 @@ public class StudyController {
                         sense.examples(),
                         sense.collocations()))
             .toList(),
+        content.baseForm(),
         next.card().state().name(),
         next.version(),
         Arrays.stream(Rating.values())

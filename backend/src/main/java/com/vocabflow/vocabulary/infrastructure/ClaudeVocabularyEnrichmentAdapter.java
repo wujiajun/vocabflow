@@ -49,6 +49,13 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
 
       Return:
       - term: the text inside the tags, exactly as given. Describe that text and nothing else.
+      - baseForm: if the text is an inflected form of a word, that word: the singular of a plural \
+      noun, the base verb for a past tense, -ing or third-person form, the plain form of a \
+      comparative or superlative. Then write the senses for the base word, because that is what the \
+      learner needs to learn. Use an empty string when the text is already a base form or a \
+      phrase, or when the inflected form has a meaning of its own that the base word lacks or is \
+      the form a dictionary lists as a word in its own right, such as "glasses" for spectacles, \
+      "customs" at the border, or "tired" as an adjective. Then describe the text as given.
       - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
       - senses, each with:
         - partOfSpeech: for example noun, verb, adjective, phrasal verb, idiom.
@@ -95,6 +102,8 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
           Map.of(
               "term",
               Map.of("type", "string"),
+              "baseForm",
+              Map.of("type", "string"),
               "type",
               Map.of(
                   "type",
@@ -104,7 +113,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
               "senses",
               Map.of("type", "array", "items", SENSE_SCHEMA)),
           "required",
-          List.of("term", "type", "senses"),
+          List.of("term", "baseForm", "type", "senses"),
           "additionalProperties",
           false);
 
@@ -209,7 +218,16 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     for (JsonNode sense : senses) {
       parsed.add(sense(sense));
     }
-    return EnrichmentResult.ofSenses(type, parsed);
+    return EnrichmentResult.ofSenses(type, parsed).withBaseForm(baseForm(entry, term));
+  }
+
+  // Null when the model found nothing to reduce, or named the text itself.
+  private static String baseForm(JsonNode entry, VocabularyTerm term) {
+    String replied = text(entry, "baseForm");
+    if (replied.isBlank() || new VocabularyTerm(replied).normalized().equals(term.normalized())) {
+      return null;
+    }
+    return bounded(replied, "baseForm", 255);
   }
 
   private static boolean sameTerm(String replied, VocabularyTerm term) {

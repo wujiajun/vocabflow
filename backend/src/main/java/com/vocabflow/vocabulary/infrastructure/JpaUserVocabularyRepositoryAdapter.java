@@ -106,7 +106,8 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
             EnrichmentStatus.valueOf(item.enrichmentStatus),
             item.failureReason,
             item.createdAt,
-            VocabularySenseJson.read(item.senses)),
+            VocabularySenseJson.read(item.senses),
+            item.baseForm),
         LearningStatus.valueOf(entity.learningStatus),
         entity.createdAt);
   }

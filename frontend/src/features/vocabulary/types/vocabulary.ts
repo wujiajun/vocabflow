@@ -23,6 +23,7 @@ export interface VocabularyEntry {
   examples: string[] | null
   collocations: string[] | null
   senses: VocabularySense[]
+  baseForm: string | null
   enrichmentStatus: EnrichmentStatus
   failureReason: string | null
   learningStatus: LearningStatus

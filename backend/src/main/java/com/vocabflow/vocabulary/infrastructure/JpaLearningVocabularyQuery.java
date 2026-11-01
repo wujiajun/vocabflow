@@ -59,7 +59,8 @@ public class JpaLearningVocabularyQuery implements LearningVocabularyQuery {
                   item.phonetic,
                   item.definition,
                   JsonSupport.read(item.examples),
-                  JsonSupport.read(item.collocations))));
+                  JsonSupport.read(item.collocations)),
+              item.baseForm));
     }
     return contents;
   }

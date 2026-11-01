@@ -162,6 +162,24 @@ class VocabularyApiTests {
         .andExpect(jsonPath("$.nextCard.senses.length()").value(2));
   }
 
+  @Test
+  void showsWhichWordAnInflectedWordComesFromOnTheListAndTheStudyCard() throws Exception {
+    String token = token("baseform@example.com");
+    long leases = add(token, "leases");
+    long resume = add(token, "resume");
+
+    mvc.perform(get("/api/v1/vocabulary/" + leases).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.term").value("leases"))
+        .andExpect(jsonPath("$.baseForm").value("lease"));
+    mvc.perform(get("/api/v1/vocabulary/" + resume).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.baseForm").isEmpty());
+    mvc.perform(
+            get("/api/v1/learning/study-queue?date=2026-12-21")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.nextCard.term").value("leases"))
+        .andExpect(jsonPath("$.nextCard.baseForm").value("lease"));
+  }
+
   private long add(String token, String term) throws Exception {
     return json.readTree(
             mvc.perform(

@@ -41,6 +41,7 @@ List the meanings this person really needs, most common first, the way a good tr
 
 Return:
 - term: the text inside the tags, exactly as given. Describe that text and nothing else.
+- baseForm: if the text is an inflected form of a word, that word: the singular of a plural  noun, the base verb for a past tense, -ing or third-person form, the plain form of a  comparative or superlative. Then write the senses for the base word, because that is what the  learner needs to learn. Use an empty string when the text is already a base form or a  phrase, or when the inflected form has a meaning of its own that the base word lacks or is  the form a dictionary lists as a word in its own right, such as "glasses" for spectacles,  "customs" at the border, or "tired" as an adjective. Then describe the text as given.
 - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
 - senses, each with:
 - partOfSpeech: for example noun, verb, adjective, phrasal verb, idiom.
@@ -55,6 +56,7 @@ SCHEMA = {
     "type": "object",
     "properties": {
         "term": {"type": "string"},
+        "baseForm": {"type": "string"},
         "type": {"type": "string", "enum": ["WORD", "PHRASE", "PHRASAL_VERB", "IDIOM", "EXPRESSION"]},
         "senses": {
             "type": "array",
@@ -73,7 +75,7 @@ SCHEMA = {
             },
         },
     },
-    "required": ["term", "type", "senses"],
+    "required": ["term", "baseForm", "type", "senses"],
     "additionalProperties": False,
 }
 
@@ -121,7 +123,8 @@ def show(word, reply):
     if " ".join(entry["term"].split()).lower() != " ".join(word.split()).lower():
         print(f"\n## {word}: WRONG TERM, the reply describes {entry['term']!r}, and the app would refuse it")
         return
-    print(f"\n## {word} ({entry['type']}, {len(entry['senses'])} senses)")
+    base = f", base form: {entry['baseForm']}" if entry["baseForm"].strip() else ""
+    print(f"\n## {word} ({entry['type']}, {len(entry['senses'])} senses{base})")
     for number, sense in enumerate(entry["senses"], 1):
         print(f"{number}. [{sense['partOfSpeech']} · {sense['label']}] {sense['phonetic']}")
         print(f"   {sense['definition']}")

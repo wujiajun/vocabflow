@@ -65,6 +65,7 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
     entity.examples = JsonSupport.write(result.examples());
     entity.collocations = JsonSupport.write(result.collocations());
     entity.senses = VocabularySenseJson.write(result.senses());
+    entity.baseForm = result.baseForm();
     entity.enrichmentStatus = EnrichmentStatus.COMPLETED.name();
     entity.failureReason = null;
     entity.enrichedAt = at;
@@ -115,7 +116,8 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
         EnrichmentStatus.valueOf(entity.enrichmentStatus),
         entity.failureReason,
         entity.createdAt,
-        VocabularySenseJson.read(entity.senses));
+        VocabularySenseJson.read(entity.senses),
+        entity.baseForm);
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {

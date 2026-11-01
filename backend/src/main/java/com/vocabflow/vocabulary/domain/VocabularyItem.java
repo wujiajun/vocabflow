@@ -15,7 +15,37 @@ public record VocabularyItem(
     EnrichmentStatus enrichmentStatus,
     String failureReason,
     Instant createdAt,
-    List<VocabularySense> senses) {
+    List<VocabularySense> senses,
+    String baseForm) {
+  public VocabularyItem(
+      long id,
+      VocabularyTerm term,
+      VocabularyType type,
+      String phonetic,
+      String partOfSpeech,
+      String definition,
+      List<String> examples,
+      List<String> collocations,
+      EnrichmentStatus enrichmentStatus,
+      String failureReason,
+      Instant createdAt,
+      List<VocabularySense> senses) {
+    this(
+        id,
+        term,
+        type,
+        phonetic,
+        partOfSpeech,
+        definition,
+        examples,
+        collocations,
+        enrichmentStatus,
+        failureReason,
+        createdAt,
+        senses,
+        null);
+  }
+
   public VocabularyItem(
       long id,
       VocabularyTerm term,
@@ -40,7 +70,8 @@ public record VocabularyItem(
         enrichmentStatus,
         failureReason,
         createdAt,
-        List.of());
+        List.of(),
+        null);
   }
 
   public List<VocabularySense> displaySenses() {

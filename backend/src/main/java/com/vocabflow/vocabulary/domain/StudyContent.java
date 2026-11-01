@@ -13,4 +13,5 @@ public record StudyContent(
     List<String> examples,
     List<String> collocations,
     EnrichmentStatus enrichmentStatus,
-    List<VocabularySense> senses) {}
+    List<VocabularySense> senses,
+    String baseForm) {}
