@@ -150,6 +150,42 @@ test('a failed word explains why and can be retried, which resumes the progress 
   expect(await screen.findByText(wholeText('A definition.'))).toBeInTheDocument()
 })
 
+test('a failed word can be removed, which returns to the list', async () => {
+  let removed = false
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary/7': () => jsonResponse(failed('Enrichment could not be completed')),
+    'DELETE /api/v1/vocabulary/7': () => {
+      removed = true
+      return new Response(null, { status: 204 })
+    },
+    'GET /api/v1/vocabulary': () => jsonResponse(page([])),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByRole('button', { name: 'Remove word' }))
+
+  expect(await screen.findByText('No words yet. Add your first word or phrase above.')).toBeInTheDocument()
+  expect(removed).toBe(true)
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('a refused removal says why and leaves the word where it is', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary/7': () => jsonResponse(failed('Enrichment could not be completed')),
+    'DELETE /api/v1/vocabulary/7': () => errorResponse(409, 'CONFLICT', 'A word you have studied cannot be removed'),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByRole('button', { name: 'Remove word' }))
+
+  expect(await screen.findByText('A word you have studied cannot be removed')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Remove word' })).not.toHaveAttribute('aria-disabled', 'true')
+})
+
 test('shows the daily limit message when a retry is refused', async () => {
   stubApi({
     ...signedIn(),
@@ -191,7 +227,7 @@ test('a word that is already enriched shows no progress or retry controls', asyn
   await screen.findByText(wholeText('A definition.'))
 
   expect(screen.getByRole('status')).toBeEmptyDOMElement()
-  expect(screen.queryByRole('button', { name: /Retry|Check now/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Retry|Check now|Remove/ })).not.toBeInTheDocument()
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 

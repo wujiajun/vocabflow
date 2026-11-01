@@ -12,5 +12,7 @@ public interface LearningCardJpaRepository extends JpaRepository<LearningCardEnt
   List<LearningCardEntity> findByUserIdAndStateAndDueDateLessThanEqualOrderByDueDateAscIdAsc(
       Long userId, String state, LocalDate date);
 
+  boolean existsByUserIdAndUserVocabularyId(Long userId, Long userVocabularyId);
+
   List<LearningCardEntity> findByUserIdAndUserVocabularyIdIn(Long userId, Collection<Long> ids);
 }

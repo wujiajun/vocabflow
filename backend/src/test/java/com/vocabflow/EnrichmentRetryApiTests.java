@@ -112,6 +112,53 @@ class EnrichmentRetryApiTests {
         .andExpect(status().isUnauthorized());
   }
 
+  @Test
+  void aFailedWordCanBeRemovedWithItsPlaceInTheDailyPlanAndAddedAgainAfterwards() throws Exception {
+    String owner = token("remove-owner@example.com");
+    providerDown.set(true);
+    long id = add(owner, "typo");
+    long kept = add(owner, "another typo");
+    // The plan is stored with both words in it.
+    mvc.perform(get("/api/v1/learning/daily-plan").header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.newItems.length()").value(2));
+
+    mvc.perform(delete("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isNotFound());
+    mvc.perform(get("/api/v1/vocabulary/" + kept).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isOk());
+    mvc.perform(get("/api/v1/learning/daily-plan").header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.newItems.length()").value(1))
+        .andExpect(jsonPath("$.newItems[0].term").value("another typo"));
+    mvc.perform(delete("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isNotFound());
+
+    providerDown.set(false);
+    long again = add(owner, "typo");
+    mvc.perform(get("/api/v1/vocabulary/" + again).header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"));
+  }
+
+  @Test
+  void onlyAFailedWordOfTheSignedInUserCanBeRemoved() throws Exception {
+    String owner = token("remove-guard-owner@example.com");
+    String other = token("remove-guard-other@example.com");
+    long done = add(owner, "fine");
+    providerDown.set(true);
+    long failed = add(owner, "broken word");
+
+    mvc.perform(delete("/api/v1/vocabulary/" + done).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("Only a failed word can be removed"));
+    mvc.perform(delete("/api/v1/vocabulary/" + failed).header("Authorization", "Bearer " + other))
+        .andExpect(status().isNotFound());
+    mvc.perform(delete("/api/v1/vocabulary/" + failed)).andExpect(status().isUnauthorized());
+    mvc.perform(get("/api/v1/vocabulary/" + failed).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isOk());
+  }
+
   private long add(String token, String term) throws Exception {
     String body =
         mvc.perform(

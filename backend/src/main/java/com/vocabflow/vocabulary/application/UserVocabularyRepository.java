@@ -16,4 +16,9 @@ public interface UserVocabularyRepository {
       long userId, LearningStatus status, Collection<Long> ids, int page, int size);
 
   Optional<UserVocabulary> findByIdAndUserId(long id, long userId);
+
+  /** Returns false when something else still refers to the entry, such as a plan being extended. */
+  boolean delete(long id, long userId);
+
+  boolean existsByVocabularyItemId(long vocabularyItemId);
 }

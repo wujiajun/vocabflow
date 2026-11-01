@@ -104,6 +104,12 @@ public class VocabularyController {
     return map(service.retryEnrichment(userId, id));
   }
 
+  @DeleteMapping("/{id}")
+  @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+  public void remove(@AuthenticationPrincipal Long userId, @PathVariable long id) {
+    service.remove(userId, id);
+  }
+
   @GetMapping("/{id}")
   public Item detail(@AuthenticationPrincipal Long userId, @PathVariable long id) {
     return map(service.detail(userId, id));

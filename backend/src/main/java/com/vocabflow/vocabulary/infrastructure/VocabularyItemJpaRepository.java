@@ -16,6 +16,15 @@ public interface VocabularyItemJpaRepository extends JpaRepository<VocabularyIte
           + " where e.enrichmentStatus = 'COMPLETED' and e.senses is null order by e.id")
   List<Long> findCompletedIdsWithoutSenses();
 
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query(
+      """
+      delete from VocabularyItemEntity e
+       where e.id = :id
+         and not exists (select 1 from UserVocabularyEntity u where u.item.id = :id)
+      """)
+  int deleteIfUnused(@Param("id") long id);
+
   @Transactional
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query(

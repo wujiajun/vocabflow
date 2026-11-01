@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Set;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class VocabularyService {
@@ -14,18 +15,21 @@ public class VocabularyService {
   private final VocabularyEnrichmentService enrichment;
   private final EnrichmentScheduler scheduler;
   private final DueVocabularyQuery due;
+  private final StudyRecords studyRecords;
 
   public VocabularyService(
       VocabularyItemRepository items,
       UserVocabularyRepository userItems,
       VocabularyEnrichmentService enrichment,
       EnrichmentScheduler scheduler,
-      DueVocabularyQuery due) {
+      DueVocabularyQuery due,
+      StudyRecords studyRecords) {
     this.items = items;
     this.userItems = userItems;
     this.enrichment = enrichment;
     this.scheduler = scheduler;
     this.due = due;
+    this.studyRecords = studyRecords;
   }
 
   // Deliberately not @Transactional: the adapters catch duplicate-key errors from saveIfAbsent, and
@@ -87,6 +91,30 @@ public class VocabularyService {
       items.markFailed(itemId, "Enrichment is busy; try again shortly");
     }
     return detail(userId, id);
+  }
+
+  /**
+   * Removes a word whose enrichment failed, along with its place in any stored daily plan. A word
+   * that finished, or that the user has already rated, stays. The shared item goes too once no
+   * one's entry refers to it, so adding the same text again starts afresh.
+   */
+  @Transactional
+  public void remove(long userId, long id) {
+    UserVocabulary owned = detail(userId, id);
+    if (owned.item().enrichmentStatus() != EnrichmentStatus.FAILED) {
+      throw new ConflictException("Only a failed word can be removed");
+    }
+    if (studyRecords.hasHistory(userId, id)) {
+      throw new ConflictException("A word you have studied cannot be removed");
+    }
+    studyRecords.removeFromPlans(userId, id);
+    if (!userItems.delete(id, userId)) {
+      // A plan was extended with it at the same moment; the whole removal is rolled back.
+      throw new ConflictException("That word is in use right now; try again");
+    }
+    if (!userItems.existsByVocabularyItemId(owned.item().id())) {
+      items.deleteIfUnused(owned.item().id());
+    }
   }
 
   public VocabularyPage list(long userId, int page, int size) {

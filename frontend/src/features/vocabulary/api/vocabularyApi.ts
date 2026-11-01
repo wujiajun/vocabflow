@@ -18,6 +18,10 @@ export function retryEnrichment(id: number) {
   return apiClient<VocabularyEntry>(`${vocabularyPath}/${id}/enrichment/retry`, { method: 'POST' })
 }
 
+export function removeVocabulary(id: number) {
+  return apiClient<void>(`${vocabularyPath}/${id}`, { method: 'DELETE' })
+}
+
 export function getVocabulary(id: number) {
   return apiClient<VocabularyEntry>(`${vocabularyPath}/${id}`)
 }
