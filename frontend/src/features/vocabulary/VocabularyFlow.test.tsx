@@ -403,6 +403,7 @@ function page(content: VocabularyEntry[], totalPages = content.length === 0 ? 0 
 function entry(overrides: Partial<VocabularyEntry> & Pick<VocabularyEntry, 'id' | 'term'>): VocabularyEntry {
   return {
     baseForm: null,
+    spellingSuggestion: null,
     senses: overrides.definition
       ? [
           {

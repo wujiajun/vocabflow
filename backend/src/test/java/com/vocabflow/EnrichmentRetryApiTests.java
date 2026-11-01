@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vocabflow.vocabulary.application.MisspelledTermException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.EnrichmentResult;
 import com.vocabflow.vocabulary.domain.VocabularyTerm;
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class EnrichmentRetryApiTests {
   static final AtomicBoolean providerDown = new AtomicBoolean();
+  static final AtomicBoolean providerMisspells = new AtomicBoolean();
 
   @TestConfiguration
   static class Config {
@@ -38,6 +40,9 @@ class EnrichmentRetryApiTests {
         public EnrichmentResult enrich(VocabularyTerm term) {
           if (providerDown.get()) {
             throw new IllegalStateException("provider down");
+          }
+          if (providerMisspells.get() && term.normalized().equals("recieve")) {
+            throw new MisspelledTermException("receive");
           }
           return new EnrichmentResult(
               VocabularyType.WORD, null, "noun", "a definition", List.of("an example"), List.of());
@@ -52,6 +57,7 @@ class EnrichmentRetryApiTests {
   @BeforeEach
   void providerWorks() {
     providerDown.set(false);
+    providerMisspells.set(false);
   }
 
   @Test
@@ -139,6 +145,30 @@ class EnrichmentRetryApiTests {
     long again = add(owner, "typo");
     mvc.perform(get("/api/v1/vocabulary/" + again).header("Authorization", "Bearer " + owner))
         .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"));
+  }
+
+  @Test
+  void aMisspelledWordFailsWithTheCorrectSpellingCannotBeRetriedAndCanBeRemoved() throws Exception {
+    String owner = token("misspelled-owner@example.com");
+    providerMisspells.set(true);
+    long id = add(owner, "recieve");
+
+    mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.enrichmentStatus").value("FAILED"))
+        .andExpect(jsonPath("$.failureReason").value("Looks misspelled"))
+        .andExpect(jsonPath("$.spellingSuggestion").value("receive"))
+        .andExpect(jsonPath("$.definition").isEmpty());
+    mvc.perform(
+            post("/api/v1/vocabulary/" + id + "/enrichment/retry")
+                .header("Authorization", "Bearer " + owner))
+        .andExpect(status().isConflict());
+
+    long correct = add(owner, "receive");
+    mvc.perform(get("/api/v1/vocabulary/" + correct).header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"))
+        .andExpect(jsonPath("$.spellingSuggestion").isEmpty());
+    mvc.perform(delete("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
+        .andExpect(status().isNoContent());
   }
 
   @Test

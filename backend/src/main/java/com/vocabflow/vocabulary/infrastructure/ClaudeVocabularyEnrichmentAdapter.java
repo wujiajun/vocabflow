@@ -3,6 +3,7 @@ package com.vocabflow.vocabulary.infrastructure;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
+import com.vocabflow.vocabulary.application.MisspelledTermException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.time.Duration;
@@ -59,6 +60,10 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       phrase, or when the inflected form has a meaning of its own that the base word lacks or is \
       the form a dictionary lists as a word in its own right, such as "glasses" for spectacles, \
       "customs" at the border, or "tired" as an adjective. Then describe the text as given.
+      - misspelled: true only if the text is clearly a misspelling or typing slip of a different \
+      word. Then baseForm is the correctly spelled word and the senses describe that word. Use \
+      false for a real word, a name, a technical term, an informal word, and a spelling that is \
+      correct in Canadian or American English.
       - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
       - senses, each with:
         - partOfSpeech: for example noun, verb, adjective, phrasal verb, idiom.
@@ -107,6 +112,8 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
               Map.of("type", "string"),
               "baseForm",
               Map.of("type", "string"),
+              "misspelled",
+              Map.of("type", "boolean"),
               "type",
               Map.of(
                   "type",
@@ -116,7 +123,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
               "senses",
               Map.of("type", "array", "items", SENSE_SCHEMA)),
           "required",
-          List.of("term", "baseForm", "type", "senses"),
+          List.of("term", "baseForm", "misspelled", "type", "senses"),
           "additionalProperties",
           false);
 
@@ -207,6 +214,13 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     if (!sameTerm(text(entry, "term"), term)) {
       throw new EnrichmentRejectedException("Model reply describes a different term");
     }
+    if (flag(entry, "misspelled")) {
+      String suggestion = baseForm(entry, term);
+      if (suggestion == null) {
+        throw new EnrichmentRejectedException("Model reply marks a misspelling without a spelling");
+      }
+      throw new MisspelledTermException(suggestion);
+    }
     VocabularyType type;
     try {
       type = VocabularyType.valueOf(text(entry, "type"));
@@ -224,6 +238,14 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     return EnrichmentResult.ofSenses(type, parsed)
         .withBaseForm(baseForm(entry, term))
         .withTerm(new VocabularyTerm(text(entry, "term")).value());
+  }
+
+  private static boolean flag(JsonNode node, String field) {
+    JsonNode value = node.get(field);
+    if (value == null || !value.isBoolean()) {
+      throw new EnrichmentRejectedException("Model reply is missing " + field);
+    }
+    return value.asBoolean();
   }
 
   // Null when the model found nothing to reduce, or named the text itself.

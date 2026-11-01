@@ -24,6 +24,7 @@ public class VocabularyEnrichmentService {
   static final Duration PROCESSING_LOST_AFTER = Duration.ofMinutes(5);
   static final String FAILED_REASON = "Enrichment could not be completed";
   static final String LIMIT_REASON = "Daily enrichment limit reached";
+  static final String MISSPELLED_REASON = "Looks misspelled";
 
   private final VocabularyItemRepository items;
   private final EnrichmentUsageRepository usage;
@@ -71,6 +72,8 @@ public class VocabularyEnrichmentService {
       VocabularyItem item = items.findById(itemId).orElseThrow();
       EnrichmentResult result = provider.enrich(item.term());
       items.markCompleted(itemId, result, provider.source(), Instant.now());
+    } catch (MisspelledTermException exception) {
+      items.markMisspelled(itemId, exception.suggestion(), MISSPELLED_REASON);
     } catch (EnrichmentRejectedException exception) {
       log.warn("Enrichment of item {} rejected: {}", itemId, exception.getMessage());
       items.markFailed(itemId, FAILED_REASON);

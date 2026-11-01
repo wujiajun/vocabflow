@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
+import com.vocabflow.vocabulary.application.MisspelledTermException;
 import com.vocabflow.vocabulary.domain.*;
 import java.util.HashMap;
 import java.util.List;
@@ -127,6 +128,38 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> same = entry();
     same.put("baseForm", "  RESUME");
     assertThat(parse(same).baseForm()).isNull();
+  }
+
+  @Test
+  void aMisspellingIsReportedWithTheCorrectSpellingInsteadOfBeingStored() {
+    Map<String, Object> entry = entry();
+    entry.put("term", "resume");
+    entry.put("baseForm", "résumé");
+    entry.put("misspelled", true);
+
+    assertThatThrownBy(() -> parse(entry))
+        .isInstanceOfSatisfying(
+            MisspelledTermException.class,
+            exception -> assertThat(exception.suggestion()).isEqualTo("résumé"));
+  }
+
+  @Test
+  void aMisspellingWithoutADifferentSpellingIsRefused() {
+    Map<String, Object> entry = entry();
+    entry.put("misspelled", true);
+    entry.put("baseForm", "");
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
+
+    entry.put("baseForm", "RESUME");
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
+  void refusesAReplyWithoutTheMisspelledFlag() {
+    Map<String, Object> entry = entry();
+    entry.remove("misspelled");
+
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
   }
 
   @Test
@@ -274,6 +307,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> entry = new HashMap<>();
     entry.put("term", "resume");
     entry.put("baseForm", "");
+    entry.put("misspelled", false);
     entry.put("type", "WORD");
     entry.put("senses", List.of(first, second));
     return entry;

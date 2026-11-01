@@ -66,6 +66,7 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
     entity.collocations = JsonSupport.write(result.collocations());
     entity.senses = VocabularySenseJson.write(result.senses());
     entity.baseForm = result.baseForm();
+    entity.spellingSuggestion = null;
     // Only the capitals can differ: the lookup key stays as it was.
     if (result.term() != null) {
       entity.term = result.term();
@@ -85,6 +86,15 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
   @Override
   public List<Long> findCompletedIdsWithoutSenses() {
     return items.findCompletedIdsWithoutSenses();
+  }
+
+  @Override
+  public void markMisspelled(long id, String suggestion, String reason) {
+    VocabularyItemEntity entity = items.findById(id).orElseThrow();
+    entity.enrichmentStatus = EnrichmentStatus.FAILED.name();
+    entity.failureReason = reason;
+    entity.spellingSuggestion = suggestion;
+    items.save(entity);
   }
 
   @Override
@@ -126,7 +136,8 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
         entity.failureReason,
         entity.createdAt,
         VocabularySenseJson.read(entity.senses),
-        entity.baseForm);
+        entity.baseForm,
+        entity.spellingSuggestion);
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {
