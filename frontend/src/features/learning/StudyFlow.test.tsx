@@ -355,6 +355,12 @@ test('the finished day lists what was studied and links each word to its page an
 
   expect(await screen.findByRole('heading', { name: 'Today’s study is complete' })).toBeInTheDocument()
   const studied = screen.getByRole('region', { name: 'Studied today' })
+  // The list is folded, so that a long one does not push the buttons off the first screen.
+  const toggle = within(studied).getByRole('button', { name: /^Studied today · 1/ })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(within(studied).queryByRole('listitem')).not.toBeInTheDocument()
+  await browserUser.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
   expect(within(studied).getByRole('listitem')).toHaveTextContent('overwhelmedFamiliar')
   expect(screen.queryByRole('button', { name: 'Study more new words' })).not.toBeInTheDocument()
 

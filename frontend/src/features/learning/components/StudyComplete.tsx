@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { backState } from '../../../shared/navigation'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -22,6 +22,8 @@ export function StudyComplete({
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const more = useStudyMore()
+  const [listOpen, setListOpen] = useState(false)
+  const listId = useId()
 
   // Only on mount: pressing "Study more" must leave focus on the button if the request fails.
   useEffect(() => {
@@ -60,9 +62,23 @@ export function StudyComplete({
       ) : null}
 
       {queue.studiedToday.length > 0 ? (
+        // Folded by default: a long list would push the buttons below it off the first screen.
         <section aria-label="Studied today" className="mt-5">
-          <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Studied today</h3>
-          <ul className="mt-2 divide-y divide-slate-100">
+          <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+            <button
+              aria-controls={listId}
+              aria-expanded={listOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-left tracking-wide uppercase transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              onClick={() => setListOpen((open) => !open)}
+              type="button"
+            >
+              <span>Studied today · {queue.studiedToday.length}</span>
+              <span className="text-xs font-semibold tracking-normal text-indigo-700 normal-case">
+                {listOpen ? 'Hide' : 'Show'}
+              </span>
+            </button>
+          </h3>
+          <ul className="mt-2 divide-y divide-slate-100" hidden={!listOpen} id={listId}>
             {queue.studiedToday.map((word) => (
               <li className="flex items-baseline justify-between gap-4 py-2" key={word.userVocabularyId}>
                 <Link
