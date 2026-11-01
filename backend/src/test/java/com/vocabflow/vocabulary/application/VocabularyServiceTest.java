@@ -21,9 +21,10 @@ class VocabularyServiceTest {
   private final UserVocabularyRepository userItems = mock(UserVocabularyRepository.class);
   private final VocabularyEnrichmentService enrichment = mock(VocabularyEnrichmentService.class);
   private final EnrichmentScheduler scheduler = mock(EnrichmentScheduler.class);
+  private final StudyRecords studyRecords = mock(StudyRecords.class);
   private final VocabularyService service =
       new VocabularyService(
-          items, userItems, enrichment, scheduler, mock(DueVocabularyQuery.class));
+          items, userItems, enrichment, scheduler, mock(DueVocabularyQuery.class), studyRecords);
 
   @Test
   void translatesDuplicatePersistenceResultToConflictThroughRepositoryPort() {
@@ -154,6 +155,80 @@ class VocabularyServiceTest {
     when(userItems.findByIdAndUserId(7L, 2L))
         .thenReturn(
             Optional.of(new UserVocabulary(7, 2, item(status), LearningStatus.NEW, Instant.now())));
+  }
+
+  @Test
+  void removesAFailedWordFromPlansAndTheListAndDropsTheItemWhenNoOneElseHasIt() {
+    when(userItems.findByIdAndUserId(5L, 2L))
+        .thenReturn(Optional.of(entry(EnrichmentStatus.FAILED)));
+    when(studyRecords.hasHistory(2L, 5L)).thenReturn(false);
+    when(userItems.delete(5L, 2L)).thenReturn(true);
+    when(userItems.existsByVocabularyItemId(1L)).thenReturn(false);
+
+    service.remove(2L, 5L);
+
+    var order = inOrder(studyRecords, userItems, items);
+    order.verify(studyRecords).removeFromPlans(2L, 5L);
+    order.verify(userItems).delete(5L, 2L);
+    order.verify(items).deleteIfUnused(1L);
+  }
+
+  @Test
+  void keepsTheSharedItemWhileAnotherUserStillHasIt() {
+    when(userItems.findByIdAndUserId(5L, 2L))
+        .thenReturn(Optional.of(entry(EnrichmentStatus.FAILED)));
+    when(userItems.delete(5L, 2L)).thenReturn(true);
+    when(userItems.existsByVocabularyItemId(1L)).thenReturn(true);
+
+    service.remove(2L, 5L);
+
+    verify(items, never()).deleteIfUnused(anyLong());
+  }
+
+  @Test
+  void refusesToRemoveAWordThatDidNotFail() {
+    for (EnrichmentStatus status :
+        Set.of(EnrichmentStatus.PENDING, EnrichmentStatus.PROCESSING, EnrichmentStatus.COMPLETED)) {
+      when(userItems.findByIdAndUserId(5L, 2L)).thenReturn(Optional.of(entry(status)));
+
+      assertThatThrownBy(() -> service.remove(2L, 5L))
+          .isInstanceOf(ConflictException.class)
+          .hasMessage("Only a failed word can be removed");
+    }
+    verify(userItems, never()).delete(anyLong(), anyLong());
+  }
+
+  @Test
+  void refusesToRemoveAWordTheUserHasRated() {
+    when(userItems.findByIdAndUserId(5L, 2L))
+        .thenReturn(Optional.of(entry(EnrichmentStatus.FAILED)));
+    when(studyRecords.hasHistory(2L, 5L)).thenReturn(true);
+
+    assertThatThrownBy(() -> service.remove(2L, 5L)).isInstanceOf(ConflictException.class);
+    verify(studyRecords, never()).removeFromPlans(anyLong(), anyLong());
+    verify(userItems, never()).delete(anyLong(), anyLong());
+  }
+
+  @Test
+  void asksToTryAgainWhenAPlanWasExtendedWithTheWordAtTheSameTime() {
+    when(userItems.findByIdAndUserId(5L, 2L))
+        .thenReturn(Optional.of(entry(EnrichmentStatus.FAILED)));
+    when(userItems.delete(5L, 2L)).thenReturn(false);
+
+    assertThatThrownBy(() -> service.remove(2L, 5L)).isInstanceOf(ConflictException.class);
+    verify(items, never()).deleteIfUnused(anyLong());
+  }
+
+  @Test
+  void anotherUsersWordIsNotFound() {
+    when(userItems.findByIdAndUserId(5L, 3L)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.remove(3L, 5L)).isInstanceOf(NotFoundException.class);
+  }
+
+  private static UserVocabulary entry(EnrichmentStatus status) {
+    return new UserVocabulary(
+        5, 2, item(status), LearningStatus.NEW, Instant.parse("2026-01-01T00:00:00Z"));
   }
 
   private static VocabularyItem item(EnrichmentStatus status) {

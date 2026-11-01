@@ -78,6 +78,11 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
   }
 
   @Override
+  public void deleteIfUnused(long id) {
+    items.deleteIfUnused(id);
+  }
+
+  @Override
   public List<Long> findCompletedIdsWithoutSenses() {
     return items.findCompletedIdsWithoutSenses();
   }

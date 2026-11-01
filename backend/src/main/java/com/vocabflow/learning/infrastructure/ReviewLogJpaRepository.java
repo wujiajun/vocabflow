@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ReviewLogJpaRepository extends JpaRepository<ReviewLogEntity, Long> {
+  boolean existsByUserIdAndUserVocabularyId(Long userId, Long userVocabularyId);
+
   @Query(
       """
       select r.userVocabularyId from ReviewLogEntity r

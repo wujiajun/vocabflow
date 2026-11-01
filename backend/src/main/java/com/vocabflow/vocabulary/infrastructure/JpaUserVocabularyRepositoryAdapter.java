@@ -76,6 +76,20 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
   }
 
   @Override
+  public boolean delete(long id, long userId) {
+    try {
+      return userVocabularies.deleteOwned(id, userId) == 1;
+    } catch (DataIntegrityViolationException exception) {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean existsByVocabularyItemId(long vocabularyItemId) {
+    return userVocabularies.existsByItem_Id(vocabularyItemId);
+  }
+
+  @Override
   public Optional<UserVocabulary> findByIdAndUserId(long id, long userId) {
     return userVocabularies.findByIdAndUserId(id, userId).map(this::map);
   }

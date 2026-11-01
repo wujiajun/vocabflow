@@ -211,6 +211,7 @@ npm run dev
 - **词汇并发创建**：多个请求同时添加同一个新词，输掉的请求以前会因共享事务里的 Hibernate 会话被污染而抛 `AssertionFailure`，变成 500。现在已修复，并有真实 MySQL 的并发 IT 覆盖（见第 7 节）。
 - **异步补全与领取标记（M5 后端）**：`POST /api/v1/vocabulary` 只保存词条为 `PENDING` 并立刻返回（返回的是保存时的快照，补全结果要通过 GET 读到）；补全由进程内小线程池（2 个线程，队列 200，队列满则词条留在 PENDING，下次添加同一个词会再调度）在后台执行。只有 `claimForEnrichment` 条件更新成功的调用者才能调用 provider：状态在允许集合内，或已是 `PROCESSING` 但开始时间早于 5 分钟前（认为 worker 丢了）。添加路径只允许领取 `PENDING`；重试路径只允许领取 `FAILED`。所以并发添加同一个词只花一次模型调用，进程崩溃留下的 PENDING/PROCESSING 会在下次有人添加该词时被重领（包括该用户已拥有它的情况）。
 - **重试**：`POST /api/v1/vocabulary/{id}/enrichment/retry`（id 是 `UserVocabulary` id，只能重试自己词库里状态为 `FAILED` 的词；其他状态 409；超出每日次数 429 `ENRICHMENT_LIMIT_REACHED`；别人的 404）。请求内同步领取，再交给后台执行，响应里是领取后的当前状态。没有无限自动重试。
+- **删除失败的词**：`DELETE /api/v1/vocabulary/{id}`（204）。只能删自己词库里状态为 `FAILED` 且从没评过分的词（否则 409；别人的 404）。同一事务里依次：学习模块（`StudyRecords` 端口，由 `JpaStudyRecords` 实现）把这个词从所有已存的每日计划里删掉（其余条目的 `item_order` 不变，这是对“已存计划条目不变”的有意例外，只对失败且没学过的词）、删用户词条、没人再引用时删共享的 `vocabulary_items`（这样再次添加同一文本会重新开始）。若同一时刻有计划正在把这个词加进去，外键冲突会让整个删除回滚并返回 409“try again”。前端：详情页失败提示里的 “Remove word”，成功后回到列表并刷新学习队列。
 - **每日次数上限**：`enrichment_usage(user_id, usage_date, request_count)`，按 UTC 日期，每次调用 provider 前原子加一（默认 50，`VOCABFLOW_ENRICHMENT_DAILY_LIMIT`）。次数记在触发补全的那个用户名下（添加者或重试者）。超限时新词仍会保存，但词条被标为 `FAILED`，`failureReason` 是 `Daily enrichment limit reached`，重试接口则直接 429。
 - **来源记录**：补全成功时写入 `enrichment_source`（`claude:<模型名>` 或 `fake`）、`enriched_at`；`enrichment_attempts` 记录领取次数；`failureReason` 现在也出现在词汇 API 的响应里。
 - **Claude 适配器**：Spring `RestClient` 直连 Messages API，不引入 SDK；`thinking: disabled`、`output_config.format` 要求 JSON Schema，服务端再次严格校验（类型枚举、非空、长度、例句 1–5 条、搭配 0–8 条），不合格或 `stop_reason` 不是 `end_turn` 都算失败。超时 30 秒（`vocabflow.enrichment.claude.timeout-seconds`）。日志只记异常类名，不记密钥、请求或响应内容。配置 `claude` 但没有密钥时应用启动失败。
@@ -239,6 +240,7 @@ npm run dev
 | GET `/api/v1/vocabulary?status=&due=` | 可选筛选：`status` 是学习状态；`due=<日期>` 只留当天要学的词（学习中和重学中的，以及到期的复习）；两者可同时用。无效值 400 |
 | PATCH `/api/v1/auth/me` | `{dailyNewVocabularyGoal}`，1–100。调高后没结束的当天立即补词；调低不移除已加入的词 |
 | GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
+| DELETE `/api/v1/vocabulary/{id}` | 删除 `FAILED` 且没评过分的词（连同每日计划里的位置）；其他 409；别人的 404 |
 | POST `/api/v1/vocabulary/{id}/enrichment/retry` | 重试 `FAILED` 词条的补全；非 FAILED 409；超过每日次数 429；别人的 404 |
 | GET `/api/v1/learning/study-queue` | 下一张卡、各评分结果、各队列数量、`nextDueAt`；`date` 可选 |
 | POST `/api/v1/learning/cards/{userVocabularyId}/reviews` | `{rating,version,date}`，返回新的队列；`version` 过期 409，别人的词 404 |

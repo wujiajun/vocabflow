@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { readBackTarget } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
@@ -19,6 +19,7 @@ export function VocabularyDetailPage() {
   const detail = useVocabularyDetail(id)
   const accent = useVoiceAccent()
   const back = readBackTarget(useLocation().state, defaultBackTarget)
+  const navigate = useNavigate()
   usePageTitle(detail.data?.term ?? 'Vocabulary')
 
   return (
@@ -74,7 +75,11 @@ export function VocabularyDetailPage() {
           <PronounceButton term={entry.term} />
         </div>
         <BaseFormNote baseForm={entry.baseForm} className="mt-1" />
-        <EnrichmentPanel entry={entry} onCheckAgain={() => void detail.refetch()} />
+        <EnrichmentPanel
+          entry={entry}
+          onCheckAgain={() => void detail.refetch()}
+          onRemoved={() => navigate(back.path, { replace: true })}
+        />
         <p className="mt-2 text-sm text-slate-500">
           {[kind, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}
         </p>

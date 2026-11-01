@@ -30,5 +30,11 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
 
   Optional<UserVocabularyEntity> findByIdAndUserId(Long id, Long userId);
 
+  boolean existsByItem_Id(Long itemId);
+
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
+  @Query("delete from UserVocabularyEntity u where u.id = :id and u.userId = :userId")
+  int deleteOwned(@Param("id") long id, @Param("userId") long userId);
+
   List<UserVocabularyEntity> findByUserIdAndIdIn(Long userId, Collection<Long> ids);
 }

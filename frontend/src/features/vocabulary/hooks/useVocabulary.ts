@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createVocabulary, getVocabulary, listVocabulary, retryEnrichment } from '../api/vocabularyApi'
+import { createVocabulary, getVocabulary, listVocabulary, removeVocabulary, retryEnrichment } from '../api/vocabularyApi'
 import type { CreateVocabularyRequest } from '../types/vocabulary'
 import { entryIsUnfinished, pageHasUnfinished, useEnrichmentRefetchInterval } from './enrichmentPolling'
 
@@ -59,6 +59,22 @@ export function useRetryEnrichment() {
       return queryClient.invalidateQueries({ queryKey: vocabularyKeys.lists() })
     },
     // The entry changed under us (already retried, or finished): show where it really stands.
+    onError: (_error, id) => queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(id) }),
+  })
+}
+
+export function useRemoveVocabulary() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: number) => removeVocabulary(id),
+    onSuccess: (_result, id) => {
+      queryClient.removeQueries({ queryKey: vocabularyKeys.detail(id) })
+      // The word may also have been in today's study queue.
+      void queryClient.invalidateQueries({ queryKey: ['learning'] })
+      return queryClient.invalidateQueries({ queryKey: vocabularyKeys.lists() })
+    },
+    // Already gone, or finished in the meantime: show where it really stands.
     onError: (_error, id) => queryClient.invalidateQueries({ queryKey: vocabularyKeys.detail(id) }),
   })
 }

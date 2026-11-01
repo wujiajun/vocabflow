@@ -30,4 +30,7 @@ public interface VocabularyItemRepository {
   void markFailed(long id, String reason);
 
   List<Long> findCompletedIdsWithoutSenses();
+
+  /** Removes the shared item unless some user's entry still refers to it. */
+  void deleteIfUnused(long id);
 }
