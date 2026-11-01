@@ -25,8 +25,11 @@ class ClaudeReadingAdapterTest {
           new TargetWord("lease", List.of("noun: A contract to rent.")),
           new TargetWord("landlord", List.of("noun: A person who rents out a home.")));
   private static final String TEXT =
-      "Maya read the [[lease]] again before she signed it. Her new [[landlord]] had written "
-          + "every rule down, and she wanted to be sure she understood each one.";
+      "Maya read the lease again before she signed it. Her new landlord had written every rule "
+          + "down, and she wanted to be sure she understood each one.";
+  private static final String MARKED =
+      "Maya read the [[lease]] again before she signed it. Her new [[landlord]] had written every "
+          + "rule down, and she wanted to be sure she understood each one.";
 
   private final RestClient.Builder builder =
       RestClient.builder().baseUrl("https://api.anthropic.com");
@@ -53,7 +56,7 @@ class ClaudeReadingAdapterTest {
 
     server.verify();
     assertThat(content.title()).isEqualTo("The new lease");
-    assertThat(content.body()).isEqualTo(TEXT);
+    assertThat(content.body()).isEqualTo(MARKED);
     assertThat(content.words()).containsExactly("lease", "landlord");
     assertThat(adapter.source()).isEqualTo("claude:claude-test");
   }
@@ -88,7 +91,7 @@ class ClaudeReadingAdapterTest {
   }
 
   @Test
-  void refusesAFormThatIsNotMarkedInTheText() {
+  void refusesAFormThatIsNotInTheText() {
     Map<String, Object> entry = entry();
     entry.put(
         "used",
@@ -98,13 +101,33 @@ class ClaudeReadingAdapterTest {
 
     assertThatThrownBy(() -> parse(entry))
         .isInstanceOf(EnrichmentRejectedException.class)
-        .hasMessage("Model reply names a form that is not marked");
+        .hasMessage("Model reply names a form not in the text");
   }
 
   @Test
-  void acceptsAChangedFormAndIgnoresCaseAndSpacing() {
+  void marksEveryUseOfAFormWholeWordsOnlyAndKeepsTheWritersCapitals() {
+    assertThat(
+            ClaudeReadingAdapter.mark(
+                "Lease terms vary. She will release the lease. A leased car, a lease.",
+                List.of("lease", "leased")))
+        .isEqualTo(
+            "[[Lease]] terms vary. She will release the [[lease]]. A [[leased]] car, a [[lease]].");
+  }
+
+  @Test
+  void marksAPhraseWhateverTheSpacingAndTheLongerFormWinsAnOverlap() {
+    assertThat(
+            ClaudeReadingAdapter.mark(
+                "I can figure   out the sum. Then I figure out how to figure.",
+                List.of("figure out", "figure out how", "figure")))
+        .isEqualTo("I can [[figure   out]] the sum. Then I [[figure out how]] to [[figure]].");
+  }
+
+  @Test
+  void acceptsAChangedFormAndIgnoresCaseAndSpacingInTheTerm() {
     Map<String, Object> entry = entry();
-    entry.put("text", TEXT.replace("[[lease]]", "[[Leases]]") + " [[  figure   out ]]");
+    entry.put(
+        "text", TEXT.replace("the lease", "the leases") + " Then she had to Figure Out the rest.");
     entry.put(
         "used",
         List.of(
@@ -116,26 +139,23 @@ class ClaudeReadingAdapterTest {
         parse(entry, List.of(WORDS.get(0), WORDS.get(1), new TargetWord("figure out", List.of())));
 
     assertThat(content.words()).containsExactly("lease", "landlord", "figure out");
+    assertThat(content.body()).contains("[[leases]]", "[[landlord]]", "[[Figure Out]]");
   }
 
   @Test
-  void refusesBrokenMarkers() {
-    for (String text :
-        List.of(
-            TEXT + " A stray [[ marker here.",
-            TEXT + " Another ]] stray one here.",
-            TEXT.replace("[[lease]]", "[[lease [[nested]]]]"),
-            TEXT.replace("[[", "").replace("]]", ""))) {
-      Map<String, Object> entry = entry();
-      entry.put("text", text);
-      assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
-    }
+  void refusesATextThatBringsItsOwnBrackets() {
+    Map<String, Object> entry = entry();
+    entry.put("text", MARKED);
+
+    assertThatThrownBy(() -> parse(entry))
+        .isInstanceOf(EnrichmentRejectedException.class)
+        .hasMessage("Model reply uses square brackets");
   }
 
   @Test
   void refusesAShortTextAnAbsurdTitleAndAMissingStop() {
     Map<String, Object> shortText = entry();
-    shortText.put("text", "[[lease]] [[landlord]]");
+    shortText.put("text", "lease landlord");
     assertThatThrownBy(() -> parse(shortText)).isInstanceOf(EnrichmentRejectedException.class);
 
     Map<String, Object> noTitle = entry();

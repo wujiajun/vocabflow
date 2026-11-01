@@ -7,6 +7,9 @@ import com.vocabflow.reading.domain.ReadingContent;
 import com.vocabflow.reading.domain.TargetWord;
 import com.vocabflow.shared.infrastructure.ClaudeClient;
 import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -22,13 +25,14 @@ import org.springframework.web.client.RestClient;
 
 /**
  * Writes a passage with one Claude Messages API call. The reply is requested as schema-constrained
- * JSON and still checked here: every target word must be used, and each use must be marked.
+ * JSON and still checked here: every target word must be used. The model only names the form it
+ * used for each word; the uses are marked here, because a model that is asked to mark them as it
+ * writes tends to skip some.
  */
 @Component
 @ConditionalOnProperty(name = "vocabflow.enrichment.provider", havingValue = "claude")
 public class ClaudeReadingAdapter implements ReadingProvider {
   private static final ObjectMapper JSON = new ObjectMapper();
-  private static final Pattern MARKED = Pattern.compile("\\[\\[(.+?)\\]\\]", Pattern.DOTALL);
 
   private static final String SYSTEM_PROMPT =
       """
@@ -53,14 +57,16 @@ public class ClaudeReadingAdapter implements ReadingProvider {
       grammar a reader at that level can follow. Write in Canadian English. Use short paragraphs \
       separated by a blank line, and no lists or headings inside the text.
 
-      Wrap every use of a target word or phrase in double square brackets, exactly as written in \
-      the text, for example [[leased]]. Wrap nothing else, and do not nest the brackets.
+      Every target must appear, even if it does not fit the setting well: build a plausible \
+      sentence around it in the meaning given, rather than leaving it out. Do not use square \
+      brackets in the text.
 
       Return:
       - title: a short, plain title.
       - text: the passage.
-      - used: for each target, term exactly as given, and form: the words as written inside the \
-      brackets in the text.""";
+      - used: one entry for each target, in the same order: term exactly as given, and form: the \
+      words exactly as they appear in your text, for example "leased" where the target is "lease". \
+      Before you answer, check that each form really appears in the text.""";
 
   private static final Map<String, Object> SCHEMA =
       Map.of(
@@ -231,17 +237,17 @@ public class ClaudeReadingAdapter implements ReadingProvider {
     if (body.length() < 100 || body.length() > 8000) {
       throw new EnrichmentRejectedException("Model reply has an invalid text length");
     }
-    Set<String> marked = markedForms(body);
+    if (body.contains("[[") || body.contains("]]")) {
+      throw new EnrichmentRejectedException("Model reply uses square brackets");
+    }
     Set<String> covered = new HashSet<>();
+    List<String> forms = new ArrayList<>();
     JsonNode used = entry.get("used");
     if (used == null || !used.isArray()) {
       throw new EnrichmentRejectedException("Model reply is missing used");
     }
     for (JsonNode item : used) {
-      String form = normalize(text(item, "form"));
-      if (!marked.contains(form)) {
-        throw new EnrichmentRejectedException("Model reply names a form that is not marked");
-      }
+      forms.add(text(item, "form"));
       covered.add(normalize(text(item, "term")));
     }
     for (TargetWord word : words) {
@@ -249,28 +255,53 @@ public class ClaudeReadingAdapter implements ReadingProvider {
         throw new EnrichmentRejectedException("Model reply leaves out a target word");
       }
     }
+    body = mark(body, forms);
     return new ReadingContent(title, body, words.stream().map(TargetWord::term).toList());
   }
 
-  // The marked texts, lower-cased; a stray or nested bracket means the markup cannot be trusted.
-  private static Set<String> markedForms(String body) {
-    Set<String> forms = new HashSet<>();
-    Matcher matcher = MARKED.matcher(body);
-    while (matcher.find()) {
-      String form = matcher.group(1);
-      if (form.contains("[[") || form.contains("[") || form.contains("]")) {
-        throw new EnrichmentRejectedException("Model reply has badly nested markers");
-      }
-      forms.add(normalize(form));
+  /**
+   * Wraps every use of each form in {@code [[ ]]}. A form matches whole words only and without
+   * regard to case; where forms overlap, the longer one wins. A form that is not in the text means
+   * the model's list cannot be trusted.
+   */
+  static String mark(String text, List<String> forms) {
+    List<int[]> spans = new ArrayList<>();
+    forms.stream()
+        .map(form -> form.strip().replaceAll("\\s+", " "))
+        .filter(form -> !form.isEmpty())
+        .distinct()
+        .sorted(Comparator.comparingInt(String::length).reversed())
+        .forEach(
+            form -> {
+              Pattern pattern =
+                  Pattern.compile(
+                      "(?<![\\p{L}\\p{N}])"
+                          + String.join(
+                              "\\s+", Arrays.stream(form.split(" ")).map(Pattern::quote).toList())
+                          + "(?![\\p{L}\\p{N}])",
+                      Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+              Matcher matcher = pattern.matcher(text);
+              boolean found = false;
+              while (matcher.find()) {
+                found = true;
+                int start = matcher.start();
+                int end = matcher.end();
+                if (spans.stream().noneMatch(span -> start < span[1] && end > span[0])) {
+                  spans.add(new int[] {start, end});
+                }
+              }
+              if (!found) {
+                throw new EnrichmentRejectedException("Model reply names a form not in the text");
+              }
+            });
+    spans.sort(Comparator.comparingInt(span -> span[0]));
+    StringBuilder marked = new StringBuilder();
+    int from = 0;
+    for (int[] span : spans) {
+      marked.append(text, from, span[0]).append("[[").append(text, span[0], span[1]).append("]]");
+      from = span[1];
     }
-    String rest = MARKED.matcher(body).replaceAll("");
-    if (rest.contains("[[") || rest.contains("]]")) {
-      throw new EnrichmentRejectedException("Model reply has unbalanced markers");
-    }
-    if (forms.isEmpty()) {
-      throw new EnrichmentRejectedException("Model reply marks no word");
-    }
-    return forms;
+    return marked.append(text.substring(from)).toString();
   }
 
   private static String normalize(String value) {

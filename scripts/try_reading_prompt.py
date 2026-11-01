@@ -141,26 +141,49 @@ def norm(value):
     return " ".join(value.split()).lower()
 
 
+def mark(text, forms):
+    """Wraps every whole-word, case-insensitive use of each form in [[ ]], as the app does.
+
+    Returns the marked text and the forms that are not in the text.
+    """
+    spans, missing = [], []
+    for form in sorted({" ".join(f.split()) for f in forms if f.strip()}, key=len, reverse=True):
+        pattern = r"(?<![^\W_])" + r"\s+".join(re.escape(part) for part in form.split(" ")) + r"(?![^\W_])"
+        found = False
+        for match in re.finditer(pattern, text, re.I):
+            found = True
+            if not any(match.start() < end and match.end() > start for start, end in spans):
+                spans.append((match.start(), match.end()))
+        if not found:
+            missing.append(form)
+    out, position = [], 0
+    for start, end in sorted(spans):
+        out.append(text[position:start] + "[[" + text[start:end] + "]]")
+        position = end
+    out.append(text[position:])
+    return "".join(out), missing
+
+
 def show(words, reply):
     if reply.get("stop_reason") != "end_turn":
         print(f"stopped with {reply.get('stop_reason')}")
         return
     entry = json.loads(next(block["text"] for block in reply["content"] if block["type"] == "text"))
     text = entry["text"]
-    marked = {norm(form) for form in re.findall(r"\[\[(.+?)\]\]", text, re.S)}
-    covered = {norm(item["term"]) for item in entry["used"] if norm(item["form"]) in marked}
-    missing = [term for term in words if norm(term) not in covered]
-    stray = len(re.sub(r"\[\[(.+?)\]\]", "", text, flags=re.S).replace("[[", "").replace("]]", "")) != len(
-        re.sub(r"\[\[(.+?)\]\]", "", text, flags=re.S)
-    )
+    covered = {norm(item["term"]) for item in entry["used"]}
+    absent = [term for term in words if norm(term) not in covered]
+    marked, missing = mark(text, [item["form"] for item in entry["used"]])
     print(f"# {entry['title']}\n")
-    print(text)
-    count = len(re.sub(r"\[\[|\]\]", "", text).split())
-    print(f"\n({count} words; {len(marked)} marked forms)")
+    print(marked)
+    print(f"\n({len(text.split())} words)")
+    for item in entry["used"]:
+        print(f"  {item['term']} -> {item['form']}")
+    if "[[" in text or "]]" in text:
+        print("THE APP WOULD REFUSE THIS: the text has square brackets of its own")
+    if absent:
+        print(f"THE APP WOULD REFUSE THIS: no entry in 'used' for {absent}")
     if missing:
-        print(f"THE APP WOULD REFUSE THIS: no marked use of {missing}")
-    if stray:
-        print("THE APP WOULD REFUSE THIS: stray or unbalanced [[ ]]")
+        print(f"THE APP WOULD REFUSE THIS: these forms are not in the text: {missing}")
 
 
 def main():
