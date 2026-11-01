@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { getSpeakOnAnswer } from '../../../shared/speech/autoSpeak'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { describeKind } from '../../vocabulary/components/formatVocabulary'
 import { BaseFormNote } from '../../vocabulary/components/BaseFormNote'
@@ -51,6 +53,14 @@ export function StudyCardView({
     }
   }, [revealed])
 
+  // Speech is only allowed to start from a press, and showing the answer is one.
+  function showAnswer() {
+    setRevealed(true)
+    if (isSpeechSupported() && getSpeakOnAnswer()) {
+      speakText(card.term, { onStart: () => {}, onEnd: () => {} })
+    }
+  }
+
   function rate(rating: Rating) {
     if (review.isPending) {
       return
@@ -101,7 +111,7 @@ export function StudyCardView({
       ) : (
         <button
           className="mt-6 w-full rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 active:bg-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-          onClick={() => setRevealed(true)}
+          onClick={showAnswer}
           type="button"
         >
           Show answer
