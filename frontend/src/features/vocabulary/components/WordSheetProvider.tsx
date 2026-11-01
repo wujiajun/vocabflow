@@ -5,19 +5,20 @@ import { WordTapContext } from './wordTapContext'
 // Holds the one panel for adding a word, so a tap on any word in the app, or the "Add a word"
 // button, opens the same place. Closing returns focus to where it was, if that was a control.
 export function WordSheetProvider({ children }: { children: ReactNode }) {
-  const [target, setTarget] = useState<{ word: string; opening: number }>()
+  const [target, setTarget] = useState<{ word: string; spot?: string; opening: number }>()
   const opener = useRef<Element | null>(null)
   const openings = useRef(0)
 
   const tap = useMemo(
     () => ({
-      open: (word = '') => {
+      open: (word = '', spot?: string) => {
         if (!target) {
           opener.current = document.activeElement
         }
         openings.current += 1
-        setTarget({ word, opening: openings.current })
+        setTarget({ word, spot, opening: openings.current })
       },
+      spot: target?.spot,
     }),
     [target],
   )
