@@ -101,22 +101,30 @@ test('showing the answer reads the word aloud once, unless that is turned off', 
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
 
-test('the word is read as its card appears when the learner chose that, and not again on Show answer', async () => {
+test('the word can be read as its card appears, and again on Show answer when both are chosen', async () => {
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi({
     ...signedIn(),
     'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
   })
   const browserUser = userEvent.setup()
-  window.localStorage.setItem('vocabflow.speakOnAnswer', 'card')
+  window.localStorage.setItem('vocabflow.speakOnCard', 'on')
+  window.localStorage.setItem('vocabflow.speakOnAnswer', 'off')
 
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'overwhelmed' })
   await waitFor(() => expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed']))
-
   await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
   expect(speech.spoken).toHaveLength(1)
+
+  cleanup()
+  window.localStorage.setItem('vocabflow.speakOnAnswer', 'on')
+  renderApp('/app/study')
+  await waitFor(() => expect(speech.spoken).toHaveLength(2))
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+  expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed', 'overwhelmed', 'overwhelmed'])
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
 })
 
 test('the study day is the one in the learner’s chosen time zone', async () => {

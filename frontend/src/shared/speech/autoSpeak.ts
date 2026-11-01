@@ -1,23 +1,36 @@
-const key = 'vocabflow.speakOnAnswer'
+const answerKey = 'vocabflow.speakOnAnswer'
+const cardKey = 'vocabflow.speakOnCard'
 
-// When the word on a study card is read aloud on its own: as the card appears, when the answer is
-// shown, or never.
-export type SpeakMode = 'card' | 'answer' | 'off'
-
-// Kept in this browser, because it depends on where and on what the learner is studying. The key and
-// its older "on" and "off" values stay, so a choice made before the third option still holds.
-export function getSpeakMode(): SpeakMode {
+// Whether the word on a study card is read aloud on its own, as the card appears and when its answer
+// is shown. The two are separate, so a learner can have either, both or neither. Kept in this browser,
+// because it depends on where and on what the learner is studying.
+export function getSpeakOnAnswer() {
   try {
-    const stored = window.localStorage.getItem(key)
-    return stored === 'off' || stored === 'card' ? stored : 'answer'
+    return window.localStorage.getItem(answerKey) !== 'off'
   } catch {
-    return 'answer'
+    return true
   }
 }
 
-export function setSpeakMode(mode: SpeakMode) {
+export function setSpeakOnAnswer(on: boolean) {
+  store(answerKey, on)
+}
+
+export function getSpeakOnCard() {
   try {
-    window.localStorage.setItem(key, mode === 'answer' ? 'on' : mode)
+    return window.localStorage.getItem(cardKey) === 'on'
+  } catch {
+    return false
+  }
+}
+
+export function setSpeakOnCard(on: boolean) {
+  store(cardKey, on)
+}
+
+function store(key: string, on: boolean) {
+  try {
+    window.localStorage.setItem(key, on ? 'on' : 'off')
   } catch {
     // The choice then lasts only until the page is closed.
   }

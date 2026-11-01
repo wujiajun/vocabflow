@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getSpeakMode } from '../../../shared/speech/autoSpeak'
+import { getSpeakOnAnswer, getSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -61,7 +61,7 @@ export function StudyCardView({
   // card is up (a link or a rating got them here). A page opened straight on this card may stay silent
   // until the first press; the button beside the word says it again.
   useEffect(() => {
-    if (isSpeechSupported() && getSpeakMode() === 'card') {
+    if (isSpeechSupported() && getSpeakOnCard()) {
       speakText(card.term, { onStart: () => {}, onEnd: () => {} })
     }
     // Only on mount: a card kept after a failed save must not be read again.
@@ -71,7 +71,7 @@ export function StudyCardView({
   // Showing the answer is a press, which is where speech is always allowed to start.
   function showAnswer() {
     setRevealed(true)
-    if (isSpeechSupported() && getSpeakMode() === 'answer') {
+    if (isSpeechSupported() && getSpeakOnAnswer()) {
       speakText(card.term, { onStart: () => {}, onEnd: () => {} })
     }
   }

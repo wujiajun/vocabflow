@@ -1,5 +1,5 @@
 import { type FormEvent, memo, useState } from 'react'
-import { getSpeakMode, setSpeakMode, type SpeakMode } from '../../../shared/speech/autoSpeak'
+import { getSpeakOnAnswer, getSpeakOnCard, setSpeakOnAnswer, setSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { canadianTimeZones, deviceTimeZone, otherTimeZones } from '../../../shared/timeZones'
@@ -8,12 +8,6 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { clbLabel, clbLevels } from '../../auth/clbLevels'
 import { useAuth, useUpdateSettings } from '../../auth/hooks/useAuth'
 import type { ClbLevel, UpdateSettingsRequest } from '../../auth/types/auth'
-
-const speakChoices: { mode: SpeakMode; label: string }[] = [
-  { mode: 'card', label: 'When a card appears' },
-  { mode: 'answer', label: 'When I show the answer' },
-  { mode: 'off', label: 'Never' },
-]
 
 export function SettingsPage() {
   usePageTitle('Settings')
@@ -24,7 +18,8 @@ export function SettingsPage() {
   const [clbLevel, setClbLevel] = useState<ClbLevel>(auth.user?.clbLevel ?? 'CLB_4')
   // An empty text is the device's own zone.
   const [timeZone, setTimeZone] = useState(auth.user?.timeZone ?? '')
-  const [speakMode, setSpeakModeState] = useState<SpeakMode>(getSpeakMode)
+  const [speakOnCard, setSpeakOnCardState] = useState(getSpeakOnCard)
+  const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
   const [validationError, setValidationError] = useState<string>()
   const [saved, setSaved] = useState('')
   const error = validationError || (update.isError ? authErrorMessage(update.error, 'Unable to save your settings.') : undefined)
@@ -153,21 +148,30 @@ export function SettingsPage() {
           <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
           <fieldset aria-describedby="settings-speak-hint" className="mt-3">
             <legend className="text-sm font-medium text-slate-800">Read the word aloud</legend>
-            {speakChoices.map((choice) => (
-              <label className="mt-2 flex items-center gap-3 text-sm text-slate-800" key={choice.mode}>
-                <input
-                  checked={speakMode === choice.mode}
-                  className="size-5 shrink-0 accent-indigo-700"
-                  name="speak-mode"
-                  onChange={() => {
-                    setSpeakModeState(choice.mode)
-                    setSpeakMode(choice.mode)
-                  }}
-                  type="radio"
-                />
-                {choice.label}
-              </label>
-            ))}
+            <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
+              <input
+                checked={speakOnCard}
+                className="size-5 shrink-0 accent-indigo-700"
+                onChange={(event) => {
+                  setSpeakOnCardState(event.target.checked)
+                  setSpeakOnCard(event.target.checked)
+                }}
+                type="checkbox"
+              />
+              When a card appears
+            </label>
+            <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
+              <input
+                checked={speakOnAnswer}
+                className="size-5 shrink-0 accent-indigo-700"
+                onChange={(event) => {
+                  setSpeakOnAnswerState(event.target.checked)
+                  setSpeakOnAnswer(event.target.checked)
+                }}
+                type="checkbox"
+              />
+              When I show the answer
+            </label>
           </fieldset>
           <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-speak-hint">
             Uses this device’s voice. The choice is kept in this browser only.
