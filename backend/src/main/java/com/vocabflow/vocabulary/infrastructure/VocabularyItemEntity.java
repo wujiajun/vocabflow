@@ -34,6 +34,9 @@ public class VocabularyItemEntity {
   @Column(name = "senses_json")
   public String senses;
 
+  @Column(name = "base_form")
+  public String baseForm;
+
   @Column(name = "enrichment_status", nullable = false)
   public String enrichmentStatus;
 

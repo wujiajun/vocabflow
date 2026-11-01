@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { describeKind } from '../../vocabulary/components/formatVocabulary'
+import { BaseFormNote } from '../../vocabulary/components/BaseFormNote'
 import { SenseTabs } from '../../vocabulary/components/SenseTabs'
 import { useSubmitReview } from '../hooks/useStudy'
 import type { Rating, StudyCard } from '../types/study'
@@ -71,6 +72,7 @@ export function StudyCardView({
       {revealed ? (
         <>
           <div className="mt-4 outline-none" ref={answerRef} tabIndex={-1}>
+            <BaseFormNote baseForm={card.baseForm} className="mb-1" />
             {kind ? <p className="mb-2 text-sm text-slate-600">{kind}</p> : null}
             <SenseTabs headingLevel="h3" senses={card.senses} />
           </div>

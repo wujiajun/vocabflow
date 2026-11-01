@@ -92,6 +92,38 @@ class ClaudeVocabularyEnrichmentAdapterTest {
   }
 
   @Test
+  void keepsTheBaseFormTheModelNamedForAnInflectedWord() {
+    Map<String, Object> entry = entry();
+    entry.put("term", "resumes");
+    entry.put("baseForm", " Resume ");
+
+    server
+        .expect(requestTo("https://api.anthropic.com/v1/messages"))
+        .andRespond(withSuccess(reply(entry), MediaType.APPLICATION_JSON));
+
+    EnrichmentResult result = adapter.enrich(new VocabularyTerm("resumes"));
+
+    assertThat(result.baseForm()).isEqualTo("Resume");
+  }
+
+  @Test
+  void noBaseFormWhenTheModelLeftItEmptyOrNamedTheTextItself() {
+    assertThat(parse(entry()).baseForm()).isNull();
+
+    Map<String, Object> same = entry();
+    same.put("baseForm", "  RESUME");
+    assertThat(parse(same).baseForm()).isNull();
+  }
+
+  @Test
+  void refusesAReplyWithoutABaseFormField() {
+    Map<String, Object> entry = entry();
+    entry.remove("baseForm");
+
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
+  }
+
+  @Test
   void thereIsNoLimitOnHowManyMeaningsAWordHas() {
     Map<String, Object> entry = entry();
     entry.put("senses", java.util.Collections.nCopies(12, sense("noun", "x")));
@@ -219,6 +251,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     second.put("collocations", List.of("resume work"));
     Map<String, Object> entry = new HashMap<>();
     entry.put("term", "resume");
+    entry.put("baseForm", "");
     entry.put("type", "WORD");
     entry.put("senses", List.of(first, second));
     return entry;

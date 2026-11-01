@@ -39,6 +39,7 @@ public class VocabularyController {
       List<String> examples,
       List<String> collocations,
       List<Sense> senses,
+      String baseForm,
       String enrichmentStatus,
       String failureReason,
       String learningStatus,
@@ -68,6 +69,7 @@ public class VocabularyController {
                         sense.examples(),
                         sense.collocations()))
             .toList(),
+        item.baseForm(),
         item.enrichmentStatus().name(),
         item.failureReason(),
         userVocabulary.learningStatus().name(),

@@ -19,6 +19,7 @@ export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
       >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-base font-semibold text-slate-950 [overflow-wrap:anywhere]">{entry.term}</span>
+          {entry.baseForm ? <span className="text-sm text-slate-600">form of {entry.baseForm}</span> : null}
           {kind ? <span className="text-sm text-slate-600">{kind}</span> : null}
           {severalMeanings ? <span className="text-sm text-slate-600">{entry.senses.length} meanings</span> : null}
           <EnrichmentBadge status={entry.enrichmentStatus} />

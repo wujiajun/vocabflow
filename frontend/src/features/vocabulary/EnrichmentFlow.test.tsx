@@ -215,6 +215,7 @@ function entry(overrides: Partial<VocabularyEntry> = {}): VocabularyEntry {
   return {
     id: 7,
     term: 'overwhelmed',
+    baseForm: null,
     type: null,
     phonetic: null,
     partOfSpeech: null,

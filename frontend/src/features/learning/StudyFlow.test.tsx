@@ -58,6 +58,21 @@ test('hides the answer until asked, then shows it with what each rating would do
   expect(ratings.map((button) => button.textContent)).toEqual(['Again1 min', 'Hard1 min', 'Good10 min', 'Easy4 days'])
 })
 
+test('a card for an inflected word says which word the meaning belongs to, once the answer is shown', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card({ term: 'leases', baseForm: 'lease' }) })),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'leases' })
+  expect(screen.queryByText(/Form of/)).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+
+  expect(screen.getByText(/Form of/)).toHaveTextContent('Form of lease')
+})
+
 test('a card with several meanings offers them as tabs, says how many, and starts hidden again', async () => {
   const resume = card({
     term: 'resume',
@@ -473,6 +488,7 @@ function card(overrides: Partial<StudyCard> = {}): StudyCard {
   return {
     userVocabularyId: 7,
     term: 'overwhelmed',
+    baseForm: null,
     type: 'WORD',
     phonetic: '/ˌoʊvərˈwelmd/',
     partOfSpeech: 'adjective',

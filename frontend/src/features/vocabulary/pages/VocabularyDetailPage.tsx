@@ -6,6 +6,7 @@ import { usePageTitle } from '../../../shared/usePageTitle'
 import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentPanel } from '../components/EnrichmentPanel'
+import { BaseFormNote } from '../components/BaseFormNote'
 import { SenseTabs } from '../components/SenseTabs'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
 import { useVocabularyDetail } from '../hooks/useVocabulary'
@@ -72,6 +73,7 @@ export function VocabularyDetailPage() {
           <h1 className="min-w-0 text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">{entry.term}</h1>
           <PronounceButton term={entry.term} />
         </div>
+        <BaseFormNote baseForm={entry.baseForm} className="mt-1" />
         <EnrichmentPanel entry={entry} onCheckAgain={() => void detail.refetch()} />
         <p className="mt-2 text-sm text-slate-500">
           {[kind, `Status: ${formatLearningStatus(entry.learningStatus)}`].filter(Boolean).join(' · ')}
