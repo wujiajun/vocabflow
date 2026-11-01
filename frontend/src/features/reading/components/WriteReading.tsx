@@ -1,22 +1,14 @@
 import { Link, useNavigate } from 'react-router'
-import { authErrorMessage } from '../../auth/components/AuthError'
-import { useGeneratePassage, useReadingToday } from '../hooks/useReading'
+import { useReadingToday } from '../hooks/useReading'
 
 // On the page shown when a day's study is complete. Writing is the learner's choice, once a day.
 export function WriteReading({ date }: { date: string }) {
   const today = useReadingToday(date, true)
-  const generate = useGeneratePassage()
   const navigate = useNavigate()
 
   // Until it is known whether today already has a passage, offer nothing rather than the wrong thing.
   if (!today.data) {
     return null
-  }
-
-  function write() {
-    if (!generate.isPending) {
-      generate.mutate(date, { onSuccess: (passage) => navigate(`/app/reading/${passage.id}`) })
-    }
   }
 
   const written = today.data.passageId !== null
@@ -44,22 +36,14 @@ export function WriteReading({ date }: { date: string }) {
           <p className="mt-2 text-sm text-slate-700">
             Write a short passage that uses 10 to 15 of the words you studied today. You can write one a day.
           </p>
-          {generate.isError ? (
-            <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
-              {authErrorMessage(generate.error, 'Unable to write a passage. Please try again.')}
-            </p>
-          ) : null}
+          {/* The writing happens on its own page, so the wait is spent where the passage will appear. */}
           <button
-            aria-disabled={generate.isPending}
             className="mt-3 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            onClick={write}
+            onClick={() => navigate(`/app/reading/writing?date=${date}`)}
             type="button"
           >
-            {generate.isPending ? 'Writing your passage…' : '✎ Write a reading passage'}
+            ✎ Write a reading passage
           </button>
-          <p className="mt-2 text-sm text-slate-600" role="status">
-            {generate.isPending ? 'This takes about 15 seconds. If you leave, it will be in Reading when it is done.' : ''}
-          </p>
         </>
       )}
     </section>
