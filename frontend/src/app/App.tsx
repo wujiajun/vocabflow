@@ -1,5 +1,11 @@
+import { NewVersionNotice } from './NewVersionNotice'
 import { AppRouter } from './router/AppRouter'
 
 export function App() {
-  return <AppRouter />
+  return (
+    <>
+      <NewVersionNotice />
+      <AppRouter />
+    </>
+  )
 }
