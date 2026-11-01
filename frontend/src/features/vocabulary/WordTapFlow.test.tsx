@@ -221,3 +221,41 @@ test('Close dismisses the panel', async () => {
 
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
+
+test('the tapped word is highlighted until the panel closes, and only that one', async () => {
+  stubApi(
+    routes({
+      'POST /api/v1/vocabulary': () => jsonResponse(added('rent'), 201),
+      'GET /api/v1/vocabulary': () => jsonResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
+    }),
+  )
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  const rent = await screen.findByText('rent')
+  expect(rent).not.toHaveAttribute('data-selected')
+
+  await browserUser.click(rent)
+  expect(rent).toHaveAttribute('data-selected')
+
+  await browserUser.click(screen.getByText('property'))
+  expect(rent).not.toHaveAttribute('data-selected')
+  expect(screen.getByText('property')).toHaveAttribute('data-selected')
+
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+  await within(screen.getByRole('dialog')).findByRole('status')
+  // Still marked after adding, so it is clear which word was added.
+  expect(screen.getByText('property')).toHaveAttribute('data-selected')
+
+  await browserUser.click(screen.getByRole('button', { name: 'Close' }))
+  expect(screen.getByText('property')).not.toHaveAttribute('data-selected')
+})
+
+test('opening the panel with “Add a word” highlights nothing', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+  await browserUser.click(screen.getByRole('button', { name: 'Add a word' }))
+
+  expect(document.querySelector('[data-selected]')).toBeNull()
+})

@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useId } from 'react'
 import { splitWords } from './wordTokens'
 import { WordTapContext } from './wordTapContext'
 
@@ -6,6 +6,7 @@ import { WordTapContext } from './wordTapContext'
 // is unchanged for a keyboard or a screen reader; "Add a word" in the navigation is their way in.
 export function TappableText({ text }: { text: string }) {
   const tap = useContext(WordTapContext)
+  const id = useId()
 
   if (!tap) {
     return <>{text}</>
@@ -18,14 +19,17 @@ export function TappableText({ text }: { text: string }) {
         if (word === undefined) {
           return part.text
         }
+        const spot = `${id}-${index}`
+        const selected = tap.spot === spot
         return (
           <span
-            className="cursor-pointer rounded-sm hover:bg-indigo-50 active:bg-indigo-100"
+            className={`cursor-pointer rounded-sm ${selected ? 'bg-indigo-200' : 'hover:bg-indigo-50 active:bg-indigo-100'}`}
+            data-selected={selected ? true : undefined}
             key={index}
             onClick={() => {
               // A drag to select some text also ends in a click on a word.
               if (!window.getSelection()?.toString()) {
-                tap.open(word)
+                tap.open(word, spot)
               }
             }}
           >
