@@ -101,6 +101,24 @@ test('showing the answer reads the word aloud once, unless that is turned off', 
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
 
+test('the word is read as its card appears when the learner chose that, and not again on Show answer', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
+  })
+  const browserUser = userEvent.setup()
+  window.localStorage.setItem('vocabflow.speakOnAnswer', 'card')
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+  await waitFor(() => expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed']))
+
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(speech.spoken).toHaveLength(1)
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
+})
+
 test('the study day is the one in the learner’s chosen time zone', async () => {
   const asked: (string | null)[] = []
   stubApi({

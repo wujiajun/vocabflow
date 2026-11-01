@@ -202,28 +202,29 @@ test('changing the level and the goal together saves both', async () => {
   expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 })
 })
 
-test('the switch for reading the word aloud on Show answer is kept in this browser, and absent without speech', async () => {
+test('when the word is read aloud is kept in this browser, and absent without speech', async () => {
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
 
   renderApp('/app/settings')
   await screen.findByLabelText('CLB level')
-  expect(screen.queryByLabelText('Read the word aloud when I show the answer')).not.toBeInTheDocument()
+  expect(screen.queryByRole('radio', { name: 'When a card appears' })).not.toBeInTheDocument()
   cleanup()
 
   installSpeechSynthesis([voice('Samantha', 'en-US')])
   const browserUser = userEvent.setup()
   renderApp('/app/settings')
-  const box = await screen.findByLabelText('Read the word aloud when I show the answer')
-  expect(box).toBeChecked()
+  expect(await screen.findByRole('radio', { name: 'When I show the answer' })).toBeChecked()
 
-  await browserUser.click(box)
-  expect(box).not.toBeChecked()
-  expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('off')
+  await browserUser.click(screen.getByRole('radio', { name: 'When a card appears' }))
+  expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('card')
 
   cleanup()
   renderApp('/app/settings')
-  expect(await screen.findByLabelText('Read the word aloud when I show the answer')).not.toBeChecked()
+  expect(await screen.findByRole('radio', { name: 'When a card appears' })).toBeChecked()
+
+  await browserUser.click(screen.getByRole('radio', { name: 'Never' }))
+  expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('off')
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
 
