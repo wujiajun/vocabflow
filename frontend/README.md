@@ -41,23 +41,28 @@ The proxy is a development convenience and is not part of the production build. 
 src/
   main.tsx                    entry: StrictMode and BrowserRouter
   app/
-    App.tsx
+    App.tsx                   the new-version notice above the routes
+    NewVersionNotice.tsx      "A new version is available" with a Reload button
     providers/                QueryClient and auth token providers
     router/AppRouter.tsx      all routes
-    layout/AppShell.tsx       header, Study/Vocabulary tabs, sign out, <Outlet />
+    layout/AppShell.tsx       header, Study/Vocabulary/Reading/Settings tabs, "+ Add", sign out, <Outlet />
   features/
-    auth/                     sign in, register, current user, route guards
-    vocabulary/               add form, paginated list, detail page
-    learning/                 study page and today's progress
+    auth/                     sign in, register, current user and its settings, route guards
+    vocabulary/               add form, paginated list, detail page, meanings (tabs), tap-to-add panel
+    learning/                 study page, flashcards, today's progress, the finished page
+    reading/                  reading passages: write, list, read, read aloud
+    settings/                 CLB level, time zone, daily goal, per-device switches
       <feature>/{api,hooks,components,pages,types}
   shared/
     api/apiClient.ts          fetch wrapper: Bearer header, error mapping, 401 reporting
     api/tokenStorage.ts       the only code that touches localStorage
     api/sessionEvents.ts      how the client tells the auth layer a token was rejected
-    date.ts                   local calendar date helpers
-    useToday.ts               today's local date; updates itself at midnight
+    date.ts                   calendar dates, today in a named time zone, time to midnight
+    useToday.ts               today's date (in a zone or the device's); updates itself at midnight
+    timeZones.ts              the time zone choices: Canada first, then what the browser knows
+    appVersion.ts             reads which build the server has; useNewVersion.ts compares it
     navigation.ts             where a detail page's back link should return to
-    speech/                   pronunciation: PronounceButton, usePronunciation, voice choice
+    speech/                   pronunciation: PronounceButton, usePronunciation, voice choice, speak-on-answer switch
   test/                       Vitest setup and shared test helpers
 ```
 
@@ -71,9 +76,12 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/login`, `/register` | Public-only; signed-in users are redirected to `/app` |
 | `/app` | Redirects to `/app/study`; everything under `/app` needs a session |
 | `/app/vocabulary` | Add a word or phrase and browse the paginated list, optionally filtered; the page and filter are in the URL as `?page=N` (1-based, anything unusable means page 1) and `?show=due/new/learning/familiar/mastered` |
-| `/app/settings` | Change the daily new vocabulary goal |
-| `/app/study` | The home page. Today's progress and flashcards: reveal the answer, then rate it Again, Hard, Good or Easy. When nothing is due it lists what was studied and offers another batch of new words |
-| `/app/vocabulary/:id` | One vocabulary entry; while it is still being enriched the page polls, and a failed entry offers “Retry details”; `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
+| `/app/settings` | CLB level, time zone and daily new vocabulary goal (one Save), and, where the browser can speak, the per-device switch “Read the word aloud when I show the answer” |
+| `/app/study` | The home page. Today's progress and flashcards: reveal the answer (the word is read aloud once unless switched off), then rate it Again, Hard, Good or Easy. When nothing is due it lists what was studied (folded until opened) and offers another batch of new words; when the day's study is complete it also offers to write today's reading passage, or to open it if it is written |
+| `/app/reading` | The reading passages, newest first, with a clear Unread mark; filter `?show=unread/read` and `?page=N` |
+| `/app/reading/writing?date=` | Where the learner waits while today's passage is written (one request, then it replaces itself with the passage) |
+| `/app/reading/:id` | One passage: the studied words are highlighted, every other word can be tapped to add it, Listen / Pause / Resume / Stop reads it aloud, Mark as read |
+| `/app/vocabulary/:id` | One vocabulary entry; while it is still being enriched the page polls, and a failed entry offers “Retry details” and “Remove word”, and a misspelled one “Yes, add …” (adds the correct word, removes this one); `:id` is the user's own entry id. Its back link returns to wherever it was opened from (the same list page, or today's plan) |
 
 ## Authentication behaviour
 
@@ -85,11 +93,24 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 
 ## Pronunciation
 
-`PronounceButton` (in `src/shared/speech/`) speaks a word with the browser's Web Speech API. It asks for American English: `chooseVoice` picks a voice whose language is `en-US` (`en_US` on some Android devices), preferring the device's default one, and falls back to another English voice, which the button's tooltip and the detail page then say plainly. Voices load late in some browsers, so the accent is read through `useSyncExternalStore` on the `voiceschanged` event. The button renders nothing when the browser has no speech support, stops speaking when clicked again or when its page is left, and sits next to a row's link, never inside it. Browsers only allow speech after a user gesture, so there is no autoplay. What the voice actually sounds like depends on the device and cannot be checked by tests.
+`PronounceButton` (in `src/shared/speech/`) speaks a word with the browser's Web Speech API. It asks for American English: `chooseVoice` picks a voice whose language is `en-US` (`en_US` on some Android devices), preferring the device's default one, and falls back to another English voice, which the button's tooltip and the detail page then say plainly. Voices load late in some browsers, so the accent is read through `useSyncExternalStore` on the `voiceschanged` event. The button renders nothing when the browser has no speech support, stops speaking when clicked again or when its page is left, and sits next to a row's link, never inside it. Browsers only allow speech after a user gesture, so nothing is read on its own: a word is read when its button is pressed or when “Show answer” is pressed, in that same click. What the voice actually sounds like depends on the device and cannot be checked by tests.
+
+## Reading aloud and speaking on Show answer
+
+`useReadAloud` (in `features/reading/hooks/`) reads a passage sentence by sentence with the same voice choice. A long text given to the browser in one piece is cut off by some browsers, and the browser's own pause is unreliable, so each sentence is its own utterance, Pause cancels the current one and Resume starts it again from its beginning, and a run counter makes the events of a cancelled utterance harmless. Sentences come from `Intl.Segmenter` (a regex where it is missing), with `Mr.` and `p.m.` not ending one; `splitIntoSentences` keeps the `[[studied word]]` marks, so the sentence being read can be tinted and scrolled into view while the studied words stay highlighted. The speed (Normal 0.9, Slow 0.7) is kept in `localStorage`. Showing the answer on a study card reads the word in the same click (browsers only start speech from a press), unless `shared/speech/autoSpeak.ts` says it is switched off in Settings.
+
+## Time zone
+
+The study day is the calendar date in the learner's time zone: `useUserToday` passes the zone from the current user to `useToday`, which computes the date with `Intl.DateTimeFormat` and rolls over at that zone's midnight. With no zone set it is the device's own date. Send dates built this way, never `toISOString()`.
+
+## New version notice
+
+When the app comes back into view (at most every 30 seconds) and every 15 minutes while open, `NewVersionNotice` fetches `/` with `cache: 'no-store'`, reads the hashed script it names and compares it with the one the page loaded with; a different name shows a bar with Reload. It never reloads by itself, does nothing in development (no hashed script) and shows nothing when the request fails. It relies on `index.html` being served with `Cache-Control: no-cache` (see `Caddyfile`).
 
 ## Testing conventions
 
 - Tests run against a stubbed `fetch`. Use `stubApi` from `src/test/utils.tsx`: routes are keyed `"METHOD /path"`, and a request with no route fails the test instead of quietly rendering a network error. `renderApp(path)` mounts the whole app with fresh providers and a memory router.
+- Time-dependent code takes the instant or zone as an argument (`todayIn(zone, now)`), so tests need no machine time zone.
 - jsdom has no Web Speech API. `installSpeechSynthesis` in `src/test/speech.ts` installs a fake with controllable voices and playback; without it the pronunciation buttons are not rendered.
 - `src/app/AxeScan.test.tsx` runs axe-core (a dev dependency) on every main page and fails on any rule violation; add a page or a new error state there when you add one. jsdom cannot compute colors, so contrast is checked in a real browser instead.
 - `src/test/setup.ts` unmounts everything after each test, because Vitest globals are off and Testing Library cannot do it itself. A component left mounted can schedule React work that fires after the file ends; CI then fails with "window is not defined" even though every test passed.
