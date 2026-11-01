@@ -37,6 +37,10 @@ export function StudyCardView({
   const review = useSubmitReview()
   const termRef = useRef<HTMLHeadingElement>(null)
   const answerRef = useRef<HTMLDivElement>(null)
+  // A word can be said differently in different meanings ("lead"), so every distinct one is shown.
+  const phonetics =
+    [...new Set((card.senses.length > 0 ? card.senses.map((sense) => sense.phonetic) : [card.phonetic]).filter(Boolean))].join(' · ') ||
+    null
   const kind = describeKind(card.type, card.senses.length > 1 ? null : card.partOfSpeech)
 
   // Only on mount: a card kept after a failed save must leave focus on the button pressed.
@@ -78,6 +82,13 @@ export function StudyCardView({
         </h2>
         <PronounceButton term={card.term} />
       </div>
+      {/* Before the answer, so it can be said aloud with the word; after it, each meaning shows its own. */}
+      {!revealed && phonetics ? (
+        <p className="mt-1 text-base text-slate-600">
+          <span className="sr-only">Pronunciation: </span>
+          {phonetics}
+        </p>
+      ) : null}
 
       {revealed ? (
         <>

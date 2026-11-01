@@ -35,6 +35,47 @@ test('tapping a word on the answer offers to add it and leaves the card as it wa
   expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
 })
 
+test('the phonetic spelling is on the front of the card, with every distinct one for a word said in more than one way', async () => {
+  const lead = card({
+    term: 'lead',
+    phonetic: '/liːd/',
+    senses: [
+      { partOfSpeech: 'verb', label: 'guide', phonetic: '/liːd/', definition: 'To show the way.', examples: ['Lead us.'], collocations: [] },
+      { partOfSpeech: 'noun', label: 'metal', phonetic: '/lɛd/', definition: 'A heavy metal.', examples: ['Lead pipes.'], collocations: [] },
+      { partOfSpeech: 'noun', label: 'advantage', phonetic: '/liːd/', definition: 'A position ahead.', examples: ['Take the lead.'], collocations: [] },
+    ],
+  })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: lead })),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+
+  expect(await screen.findByText('/liːd/ · /lɛd/')).toBeInTheDocument()
+  expect(screen.getByText('Pronunciation:')).toBeInTheDocument()
+
+  // Once the answer is shown, each meaning carries its own, so the front line is not repeated.
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.queryByText('/liːd/ · /lɛd/')).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('tab', { name: 'noun · metal' }))
+  expect(screen.getByText('/lɛd/')).toBeInTheDocument()
+})
+
+test('a word without a phonetic spelling shows no empty line', async () => {
+  const plain = card({ phonetic: null, senses: [{ partOfSpeech: 'noun', label: null, phonetic: null, definition: 'A thing.', examples: [], collocations: [] }] })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: plain })),
+  })
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+
+  expect(screen.queryByText('Pronunciation:')).not.toBeInTheDocument()
+})
+
 test('showing the answer reads the word aloud once, unless that is turned off', async () => {
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi({
@@ -87,7 +128,8 @@ test('hides the answer until asked, then shows it with what each rating would do
   expect(document.title).toBe('Study · VocabFlow')
   expect(screen.getByRole('img', { name: '0 studied, 0 learning, 1 not started, 1 in total' })).toBeInTheDocument()
   expect(screen.queryByText(wholeText('Feeling unable to cope.'))).not.toBeInTheDocument()
-  expect(screen.queryByText(/\/ˌoʊ/)).not.toBeInTheDocument()
+  // The phonetic spelling is part of the front of the card, though the meaning is not.
+  expect(screen.getByText(/\/ˌoʊvərˈwelmd\//)).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: /remember/ })).not.toBeInTheDocument()
 
   await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
