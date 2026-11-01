@@ -19,6 +19,12 @@ export interface AuthUser {
   dailyNewVocabularyGoal: number
 }
 
+// Either may be given; what is left out stays as it is.
+export interface UpdateSettingsRequest {
+  dailyNewVocabularyGoal?: number
+  clbLevel?: ClbLevel
+}
+
 export interface LoginRequest {
   email: string
   password: string

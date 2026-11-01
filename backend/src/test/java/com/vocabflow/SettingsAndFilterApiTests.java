@@ -74,6 +74,40 @@ class SettingsAndFilterApiTests {
   }
 
   @Test
+  void theClbLevelCanBeChangedOnItsOwnOrWithTheGoalAndLeavesTheRestAlone() throws Exception {
+    String token = token("settings-clb@example.com", 7);
+
+    mvc.perform(patchBody(token, "{\"clbLevel\":\"CLB_8\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.clbLevel").value("CLB_8"))
+        .andExpect(jsonPath("$.dailyNewVocabularyGoal").value(7));
+    mvc.perform(patchBody(token, "{\"dailyNewVocabularyGoal\":9}"))
+        .andExpect(jsonPath("$.clbLevel").value("CLB_8"))
+        .andExpect(jsonPath("$.dailyNewVocabularyGoal").value(9));
+    mvc.perform(patchBody(token, "{\"clbLevel\":\"clb-3\",\"dailyNewVocabularyGoal\":4}"))
+        .andExpect(jsonPath("$.clbLevel").value("CLB_3"))
+        .andExpect(jsonPath("$.dailyNewVocabularyGoal").value(4));
+    mvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.clbLevel").value("CLB_3"));
+  }
+
+  @Test
+  void refusesAnUnknownClbLevelAndAnEmptyChange() throws Exception {
+    String token = token("settings-clb-bad@example.com", 7);
+
+    mvc.perform(patchBody(token, "{\"clbLevel\":\"CLB_13\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("CLB level must be CLB_1 through CLB_12"));
+    mvc.perform(patchBody(token, "{}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Give a daily goal or a CLB level"));
+    mvc.perform(patchBody(token, "{\"dailyNewVocabularyGoal\":0}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.clbLevel").value("CLB_5"));
+  }
+
+  @Test
   void raisingTheGoalFillsTodayAndLoweringItRemovesNothing() throws Exception {
     String token = token("settings-plan@example.com", 1);
     long first = add(token, "goal plan first");
@@ -174,6 +208,14 @@ class SettingsAndFilterApiTests {
         .header("Authorization", "Bearer " + token)
         .contentType(MediaType.APPLICATION_JSON)
         .content("{\"dailyNewVocabularyGoal\":" + value + "}");
+  }
+
+  private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder patchBody(
+      String token, String body) {
+    return patch("/api/v1/auth/me")
+        .header("Authorization", "Bearer " + token)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body);
   }
 
   private List<Long> ids(JsonNode page) {

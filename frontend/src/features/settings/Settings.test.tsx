@@ -127,6 +127,50 @@ test('the field can be emptied, an empty goal is refused, and a saved value is t
   expect(input).toHaveDisplayValue('3')
 })
 
+test('shows the current CLB level and saves a change to it on its own', async () => {
+  let current = { ...user }
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(current),
+    'PATCH /api/v1/auth/me': ({ init }) => {
+      current = { ...current, ...JSON.parse(String(init.body)) }
+      return jsonResponse(current)
+    },
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/settings')
+  const select = await screen.findByLabelText('CLB level')
+  expect(select).toHaveValue('CLB_4')
+  expect(select).toHaveAccessibleDescription(/one level below it/)
+
+  await browserUser.selectOptions(select, 'CLB 7')
+  await browserUser.click(screen.getByRole('button', { name: 'Save' }))
+
+  expect(await screen.findByRole('status')).toHaveTextContent('Saved.')
+  const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
+  expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_7' })
+  expect(select).toHaveValue('CLB_7')
+})
+
+test('changing the level and the goal together saves both', async () => {
+  const fetchMock = stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'PATCH /api/v1/auth/me': () => jsonResponse({ ...user, clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 }),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/settings')
+  await browserUser.selectOptions(await screen.findByLabelText('CLB level'), 'CLB 9')
+  const goal = screen.getByLabelText('Daily new vocabulary goal')
+  await browserUser.clear(goal)
+  await browserUser.type(goal, '12')
+  await browserUser.click(screen.getByRole('button', { name: 'Save' }))
+
+  await screen.findByText('Saved.')
+  const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
+  expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 })
+})
+
 test('explains when saving fails and does not claim it saved', async () => {
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),

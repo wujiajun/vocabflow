@@ -242,7 +242,7 @@ npm run dev
 | POST `/api/v1/auth/logout` | Bearer认证，响应无业务JSON正文 |
 | POST/GET `/api/v1/vocabulary` | 创建/分页，身份由principal获取；重复添加返回409；创建返回的 `enrichmentStatus` 通常是 `PENDING` |
 | GET `/api/v1/vocabulary?status=&due=` | 可选筛选：`status` 是学习状态；`due=<日期>` 只留当天要学的词（学习中和重学中的，以及到期的复习）；两者可同时用。无效值 400 |
-| PATCH `/api/v1/auth/me` | `{dailyNewVocabularyGoal}`，1–100。调高后没结束的当天立即补词；调低不移除已加入的词 |
+| PATCH `/api/v1/auth/me` | `{dailyNewVocabularyGoal?, clbLevel?}`，至少给一个；目标 1–100，调高后没结束的当天立即补词，调低不移除已加入的词；`clbLevel` 为 `CLB_1`–`CLB_12`（不认的 400），目前只影响阅读短文的难度（用户 CLB 减一）。设置页有 “CLB level” 下拉框，只发改过的字段 |
 | GET `/api/v1/vocabulary/{id}` | 查询个人词库关系的详情，限制归属；别人的或不存在的返回404 |
 | DELETE `/api/v1/vocabulary/{id}` | 删除 `FAILED` 且没评过分的词（连同每日计划里的位置）；其他 409；别人的 404 |
 | POST `/api/v1/vocabulary/{id}/enrichment/retry` | 重试 `FAILED` 词条的补全；非 FAILED 409；超过每日次数 429；别人的 404 |
