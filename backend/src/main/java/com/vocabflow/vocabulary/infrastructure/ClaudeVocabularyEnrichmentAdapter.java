@@ -2,11 +2,11 @@ package com.vocabflow.vocabulary.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vocabflow.shared.infrastructure.ClaudeClient;
 import com.vocabflow.vocabulary.application.EnrichmentRejectedException;
 import com.vocabflow.vocabulary.application.MisspelledTermException;
 import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +14,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -148,15 +147,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   }
 
   private static RestClient client(String apiKey, int timeoutSeconds) {
-    SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-    factory.setConnectTimeout(Duration.ofSeconds(5));
-    factory.setReadTimeout(Duration.ofSeconds(timeoutSeconds));
-    return RestClient.builder()
-        .baseUrl("https://api.anthropic.com")
-        .requestFactory(factory)
-        .defaultHeader("x-api-key", apiKey)
-        .defaultHeader("anthropic-version", "2023-06-01")
-        .build();
+    return ClaudeClient.create(apiKey, timeoutSeconds);
   }
 
   @Override

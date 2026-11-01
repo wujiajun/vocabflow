@@ -110,6 +110,11 @@ public class JpaReviewCardRepositoryAdapter implements ReviewCardRepository {
   }
 
   @Override
+  public List<Long> findStruggledOn(long userId, LocalDate date) {
+    return logs.findStruggledOn(userId, date);
+  }
+
+  @Override
   public List<Long> findStudiedOn(long userId, LocalDate date) {
     return logs.findStudiedOn(userId, date);
   }
