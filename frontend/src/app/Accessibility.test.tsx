@@ -213,7 +213,10 @@ test('ties the sign-in error to both fields', async () => {
 })
 
 function signedIn() {
-  return { 'GET /api/v1/auth/me': () => jsonResponse(user) }
+  return {
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+  }
 }
 
 function vocabularyPage(content: ReturnType<typeof entry>[], totalPages = content.length === 0 ? 0 : 1, totalElements = content.length) {

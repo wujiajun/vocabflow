@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { backState } from '../../../shared/navigation'
 import { authErrorMessage } from '../../auth/components/AuthError'
+import { WriteReading } from '../../reading/components/WriteReading'
 import { formatLearningStatus } from '../../vocabulary/components/formatVocabulary'
 import { useStudyMore } from '../hooks/useStudy'
 import type { StudyQueue } from '../types/study'
@@ -77,6 +78,8 @@ export function StudyComplete({
           </ul>
         </section>
       ) : null}
+
+      {queue.finished ? <WriteReading date={date} /> : null}
 
       {more.isError ? (
         <p className="mt-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">

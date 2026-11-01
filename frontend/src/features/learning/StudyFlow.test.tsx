@@ -460,7 +460,10 @@ test.each([
 })
 
 function signedIn() {
-  return { 'GET /api/v1/auth/me': () => jsonResponse(user) }
+  return {
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+  }
 }
 
 function queue(overrides: Partial<StudyQueue> = {}): StudyQueue {

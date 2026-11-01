@@ -160,6 +160,7 @@ test('the study page has no axe violations, before and after revealing the answe
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...base, nextCard }),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
     'POST /api/v1/learning/cards/7/reviews': () => jsonResponse({
         ...base,
         newCount: 0,
