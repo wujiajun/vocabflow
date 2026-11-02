@@ -38,24 +38,50 @@ interface SpeakCallbacks {
   onEnd: () => void
 }
 
+// Chrome on a computer drops an utterance that is spoken right after a cancel() of one that is still
+// playing, so after stopping something the new word waits a moment. Each call supersedes the earlier one.
+const restartDelayMs = 80
+let latestRequest = 0
+
 export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
   const synth = window.speechSynthesis
+  const request = ++latestRequest
+  const interrupting = synth.speaking || synth.pending
   synth.cancel()
 
-  const { voice } = chooseVoice(synth.getVoices())
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = voice?.lang ?? preferredLang
-  if (voice) {
-    utterance.voice = voice
-  }
-  utterance.rate = speechRate
-  utterance.onstart = onStart
-  utterance.onend = onEnd
-  utterance.onerror = onEnd
+  function start() {
+    if (request !== latestRequest) {
+      return
+    }
+    const { voice } = chooseVoice(synth.getVoices())
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = voice?.lang ?? preferredLang
+    if (voice) {
+      utterance.voice = voice
+    }
+    utterance.rate = speechRate
+    utterance.onstart = onStart
+    // An utterance that was cancelled for a newer one must not report that the newer one has ended.
+    const ended = () => {
+      if (request === latestRequest) {
+        onEnd()
+      }
+    }
+    utterance.onend = ended
+    utterance.onerror = ended
 
-  synth.speak(utterance)
+    synth.resume()
+    synth.speak(utterance)
+  }
+
+  if (interrupting) {
+    window.setTimeout(start, restartDelayMs)
+  } else {
+    start()
+  }
 }
 
 export function stopSpeaking() {
+  latestRequest++
   window.speechSynthesis.cancel()
 }

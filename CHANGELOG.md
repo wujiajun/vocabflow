@@ -11,6 +11,8 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 - Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
   Chrome could then drop the word spoken in that click. It now runs on touch only.
+- Chrome on a computer also dropped a word spoken right after stopping another (a card read aloud, then Show answer):
+  the new word now starts a moment after the stop.
 
 ## [1.1.0] - 2026-11-01
 

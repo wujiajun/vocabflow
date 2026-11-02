@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { chooseVoice, currentVoiceAccent, isSpeechSupported, speakText, stopSpeaking } from './pronunciation'
 
@@ -86,4 +86,26 @@ test('stops anything being spoken', () => {
   stopSpeaking()
 
   expect(speech.synth.cancel).toHaveBeenCalledTimes(1)
+})
+
+describe('speakText after something is already playing', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  test('waits a moment after the cancel, and only the newest word is spoken', () => {
+    vi.useFakeTimers()
+    const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+    speech.synth.speaking = true
+    const callbacks = { onStart: vi.fn(), onEnd: vi.fn() }
+
+    speakText('first', callbacks)
+    speakText('second', callbacks)
+
+    expect(speech.synth.cancel).toHaveBeenCalledTimes(2)
+    expect(speech.spoken).toHaveLength(0)
+    vi.advanceTimersByTime(200)
+    expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['second'])
+  })
 })
