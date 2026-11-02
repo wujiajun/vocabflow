@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [Unreleased]
+
+### Fixed
+
+- Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
+  Chrome could then drop the word spoken in that click. It now runs on touch only.
+
 ## [1.1.0] - 2026-11-01
 
 Phone navigation, after the first weeks of daily use.
