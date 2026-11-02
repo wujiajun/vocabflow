@@ -146,7 +146,7 @@ function Summary({ results, onAgain }: { results: RoundResult[]; onAgain: () => 
   const missed = results.flatMap((result) => result.missed)
 
   return (
-    <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+    <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
       <h2 className="text-xl font-bold tracking-tight">
         {firstTry === total ? 'Perfect!' : 'Nicely done!'} {firstTry} of {total} on the first try
       </h2>

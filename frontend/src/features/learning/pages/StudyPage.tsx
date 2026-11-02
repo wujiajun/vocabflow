@@ -15,7 +15,7 @@ export function StudyPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">Study</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Study</h1>
       {queue.isPending ? (
         <p className="mt-6 text-sm text-slate-600" role="status">
           Loading your cards…
@@ -42,7 +42,7 @@ export function StudyPage() {
                 : `${queue.data.unavailableCount} words aren’t ready to study yet.`}
             </p>
           ) : null}
-          <div className="mt-6">
+          <div className="mt-4 sm:mt-6">
             {queue.data.nextCard ? (
               <StudyCardView
                 card={queue.data.nextCard}

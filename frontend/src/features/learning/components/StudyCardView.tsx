@@ -86,7 +86,7 @@ export function StudyCardView({
   }
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 className="min-w-0 text-3xl font-bold tracking-tight outline-none [overflow-wrap:anywhere]" ref={termRef} tabIndex={-1}>
           {card.term}

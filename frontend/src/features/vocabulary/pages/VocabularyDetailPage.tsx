@@ -69,9 +69,9 @@ export function VocabularyDetailPage() {
     const kind = describeKind(entry.type, entry.senses.length > 1 ? null : entry.partOfSpeech)
 
     return (
-      <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h1 className="min-w-0 text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">{entry.term}</h1>
+          <h1 className="min-w-0 text-2xl sm:text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">{entry.term}</h1>
           <PronounceButton term={entry.term} />
         </div>
         <BaseFormNote baseForm={entry.baseForm} className="mt-1" />

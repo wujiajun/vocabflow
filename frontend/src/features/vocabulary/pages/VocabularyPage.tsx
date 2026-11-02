@@ -36,15 +36,15 @@ export function VocabularyPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">Your vocabulary</h1>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Your vocabulary</h1>
+      <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">
         Save words and phrases as you meet them. Newest first.
       </p>
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         {/* Back to the unfiltered first page, where the new word is sure to be visible. */}
         <AddVocabularyForm onAdded={() => setSearchParams({})} />
       </div>
-      <section aria-label="Saved vocabulary" className="mt-8 outline-none" ref={resultsRef} tabIndex={-1}>
+      <section aria-label="Saved vocabulary" className="mt-5 outline-none sm:mt-8" ref={resultsRef} tabIndex={-1}>
         <ListFilters current={filter} />
         {list.isPending ? (
           <p className="text-sm text-slate-600" role="status">
