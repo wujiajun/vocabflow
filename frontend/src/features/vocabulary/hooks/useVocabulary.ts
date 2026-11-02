@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createVocabulary, getVocabulary, listVocabulary, removeVocabulary, retryEnrichment } from '../api/vocabularyApi'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import type { CreateVocabularyRequest, VocabularyEntry } from '../types/vocabulary'
@@ -33,6 +33,17 @@ export function useVocabularyDetail(id: number | undefined) {
     enabled: id !== undefined,
     retry: false,
     refetchInterval,
+  })
+}
+
+// Several entries at once, under the same keys as the single one, so a page that opens one finds it cached.
+export function useVocabularyDetails(ids: number[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: vocabularyKeys.detail(id),
+      queryFn: () => getVocabulary(id),
+      retry: false,
+    })),
   })
 }
 

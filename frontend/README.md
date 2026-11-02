@@ -49,7 +49,7 @@ src/
   features/
     auth/                     sign in, register, current user and its settings, route guards
     vocabulary/               add form, paginated list, detail page, meanings (tabs), tap-to-add panel
-    learning/                 study page, flashcards, today's progress, the finished page
+    learning/                 study page, flashcards, today's progress, the finished page, the Quick review game
     reading/                  reading passages: write, list, read, read aloud
     settings/                 CLB level, time zone, daily goal, per-device switches
       <feature>/{api,hooks,components,pages,types}
@@ -78,6 +78,7 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/app/vocabulary` | Add a word or phrase and browse the paginated list, optionally filtered; the page and filter are in the URL as `?page=N` (1-based, anything unusable means page 1) and `?show=due/new/learning/familiar/mastered` |
 | `/app/settings` | CLB level, time zone and daily new vocabulary goal (one Save), and, where the browser can speak, the per-device switch “Read the word aloud when I show the answer” |
 | `/app/study` | The home page. Today's progress and flashcards: reveal the answer (the word is read aloud once unless switched off), then rate it Again, Hard, Good or Easy. When nothing is due it lists what was studied (folded until opened) and offers another batch of new words; when the day's study is complete it also offers to write today's reading passage, or to open it if it is written |
+| `/app/study/review` | The “Quick review” matching game, offered on the study-complete page once five words were studied: drag each of today's words onto its meaning (or tap a word, then a meaning). Practice only, nothing is saved |
 | `/app/reading` | The reading passages, newest first, with a clear Unread mark; filter `?show=unread/read` and `?page=N` |
 | `/app/reading/writing?date=` | Where the learner waits while today's passage is written (one request, then it replaces itself with the passage) |
 | `/app/reading/:id` | One passage: the studied words are highlighted, every other word can be tapped to add it, Listen / Pause / Resume / Stop reads it aloud, Mark as read |
@@ -98,6 +99,10 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 ## Reading aloud and speaking the word
 
 `useReadAloud` (in `features/reading/hooks/`) reads a passage sentence by sentence with the same voice choice. A long text given to the browser in one piece is cut off by some browsers, and the browser's own pause is unreliable, so each sentence is its own utterance, Pause cancels the current one and Resume starts it again from its beginning, and a run counter makes the events of a cancelled utterance harmless. Sentences come from `Intl.Segmenter` (a regex where it is missing), with `Mr.` and `p.m.` not ending one; `splitIntoSentences` keeps the `[[studied word]]` marks, so the sentence being read can be tinted and scrolled into view while the studied words stay highlighted. The speed (Normal 0.9, Slow 0.7) is kept in `localStorage`. Showing the answer on a study card reads the word in the same click (browsers only start speech from a press), unless `shared/speech/autoSpeak.ts` says it is switched off in Settings.
+
+## Quick review game
+
+`QuickReviewPage` takes the words studied today from the study queue, fetches the entries of a random twelve (`useVocabularyDetails`, same keys as the detail page) and, once they are in, fixes the game: `buildPairs` picks one meaning per word and blanks the word out of it (`maskTerm`, which also hides common endings such as `leasing` and `carried`), leaving out words without a meaning and meanings that read the same; `planRounds` shares up to ten words over rounds of at most five. `MatchRound` is the round: meanings are cards (`data-card-id`), words are chips. It is built to fit one phone screen: the words and the status line are sticky at the bottom, and `buildPairs` prefers a meaning of at most 90 characters when a word has one. A chip is dragged with pointer events (not the HTML drag-and-drop, which does not work on touch screens), with `touch-action: none` on the chips only; the card under the pointer comes from `document.elementsFromPoint`. Choosing a word and then a card does the same, which is the keyboard and screen-reader way and the way jsdom tests play (jsdom does no layout, so the drag test stubs `elementsFromPoint`). The dragged chip is moved with a `transform` set from script, which the CSP allows (it only forbids style attributes in the markup). A right match says the word aloud (`speakText`) and a wrong one turns the word and the meaning red for under a second, shakes the word and plays a short falling buzz made with the Web Audio API (`shared/sound/effects.ts`: no sound files, which the CSP, allowing only our own files, would have no complaint about, and the audio context is made on the first press because browsers keep it silent until then); on Android it also vibrates. A "Sound effects in the games" checkbox in Settings (On this device) turns the buzz and the vibration off, kept in `localStorage` (`vocabflow.gameSound`). A touch drag is answered on `touchend`, not on `pointerup`, because the phone browsers that only allow a voice or a sound from a press count the former. Nothing is sent to the server, so scores never touch the review schedule.
 
 ## Time zone
 

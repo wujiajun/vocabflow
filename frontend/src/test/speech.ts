@@ -9,6 +9,7 @@ export class FakeUtterance {
   lang = ''
   voice: SpeechSynthesisVoice | null = null
   rate = 1
+  volume = 1
   onstart: (() => void) | null = null
   onend: (() => void) | null = null
   onerror: (() => void) | null = null

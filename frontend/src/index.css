@@ -36,3 +36,35 @@ body {
     opacity: 0.7;
   }
 }
+
+/* The matching game: a wrong drop shakes the word, a right one pops into place. Only for people who
+   have not asked for less motion (the classes carry the motion- prefix). */
+@theme {
+  --animate-shake: shake 0.35s ease-in-out;
+  --animate-pop: pop 0.3s ease-out;
+
+  @keyframes shake {
+    0%,
+    100% {
+      translate: 0;
+    }
+    25% {
+      translate: -6px;
+    }
+    75% {
+      translate: 6px;
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      scale: 0.96;
+    }
+    60% {
+      scale: 1.03;
+    }
+    100% {
+      scale: 1;
+    }
+  }
+}
