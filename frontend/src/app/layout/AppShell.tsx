@@ -58,7 +58,7 @@ export function AppShell() {
         {/* Outside the header so that it can stay at the top of the screen when the page is scrolled: the
             tabs are always one press away. */}
         <div className="sticky top-0 z-20 border-b border-slate-200 bg-white">
-          <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap gap-x-4 px-5 sm:gap-x-5 sm:px-8">
+          <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap px-3 sm:px-6">
             <NavLink className={navLinkClass} replace to="/app/study">
               Study
             </NavLink>
@@ -88,7 +88,8 @@ export function AppShell() {
 }
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `border-b-2 pb-2.5 text-sm font-semibold whitespace-nowrap ${
+  // 44px tall, the least a finger hits reliably; the side padding takes the place of the gap between tabs.
+  return `inline-flex min-h-11 items-center border-b-2 px-2 text-sm font-semibold whitespace-nowrap ${
     isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
   }`
 }
