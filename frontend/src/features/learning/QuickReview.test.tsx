@@ -197,6 +197,7 @@ test('choosing a meaning before a word asks for a word first', async () => {
 })
 
 test('a word dragged onto its meaning is placed, and one dropped on the wrong meaning or nowhere is not', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi(routes())
   renderApp('/app/study/review')
   await screen.findByRole('heading', { name: 'Round 1 of 1' })
@@ -230,6 +231,7 @@ test('a word dragged onto its meaning is placed, and one dropped on the wrong me
   expect(screen.getByRole('status')).toHaveTextContent('Correct: cope.')
   expect(within(tray()).queryByRole('button', { name: 'cope' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: meaning(words[0]) })).not.toBeInTheDocument()
+  expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['cope'])
 })
 
 test('a small movement is a tap, not a drag', async () => {
