@@ -38,7 +38,7 @@ export function AppShell() {
         >
           Skip to main content
         </a>
-        <header className="border-b border-slate-200 bg-white">
+        <header className="bg-white">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3 sm:px-8 sm:py-4">
             <div>
               <p className="text-lg font-bold">VocabFlow</p>
@@ -54,6 +54,10 @@ export function AppShell() {
               {logout.isPending ? 'Signing out…' : 'Sign out'}
             </button>
           </div>
+        </header>
+        {/* Outside the header so that it can stay at the top of the screen when the page is scrolled: the
+            tabs are always one press away. */}
+        <div className="sticky top-0 z-20 border-b border-slate-200 bg-white">
           <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap gap-x-4 px-5 sm:gap-x-5 sm:px-8">
             <NavLink className={navLinkClass} replace to="/app/study">
               Study
@@ -69,7 +73,7 @@ export function AppShell() {
             </NavLink>
             <AddWordButton />
           </nav>
-        </header>
+        </div>
         <main
           className="mx-auto max-w-5xl px-5 pt-4 pb-8 outline-none sm:px-8 sm:py-10"
           id="main-content"
