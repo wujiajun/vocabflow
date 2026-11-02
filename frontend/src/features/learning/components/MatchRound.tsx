@@ -200,12 +200,12 @@ export function MatchRound({
           {message}
         </p>
         {done ? (
-          <div className="rounded-xl bg-indigo-50 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl bg-indigo-50 px-4 py-3">
             <h3 className="text-lg font-bold tracking-tight outline-none" ref={doneRef} tabIndex={-1}>
               {missed.size === 0 ? 'All matched on the first try!' : 'All matched!'}
             </h3>
             <button
-              className="mt-3 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              className="shrink-0 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
               onClick={() =>
                 onContinue({
                   total: pairs.length,
