@@ -15,6 +15,12 @@ body {
   margin: 0;
 }
 
+/* The tabs stay at the top of the screen, so what the page scrolls to (a focused field, a card that was
+   just shown) must stop below them, not behind them. */
+html {
+  scroll-padding-top: 3.5rem;
+}
+
 /* iOS Safari zooms in on a focused field smaller than 16px, and stays zoomed after leaving it. */
 @layer base {
   input,

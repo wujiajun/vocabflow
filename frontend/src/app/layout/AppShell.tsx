@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuth, useLogoutMutation } from '../../features/auth/hooks/useAuth'
 import { AddWordButton } from '../../features/vocabulary/components/AddWordButton'
 import { WordSheetProvider } from '../../features/vocabulary/components/WordSheetProvider'
+import { useTabNavigation } from './useTabNavigation'
 
 export function AppShell() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ export function AppShell() {
   const mainRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
   const previousPathname = useRef(pathname)
+  const { pending, pressTab } = useTabNavigation()
 
   // Following a link does not reload the page, so keyboard focus would stay on a control that has
   // just disappeared. Moving it to the content lets the next Tab continue from there.
@@ -38,7 +40,7 @@ export function AppShell() {
         >
           Skip to main content
         </a>
-        <header className="border-b border-slate-200 bg-white">
+        <header className="bg-white">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3 sm:px-8 sm:py-4">
             <div>
               <p className="text-lg font-bold">VocabFlow</p>
@@ -54,29 +56,34 @@ export function AppShell() {
               {logout.isPending ? 'Signing out…' : 'Sign out'}
             </button>
           </div>
-          <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap gap-x-4 px-5 sm:gap-x-5 sm:px-8">
-            <NavLink className={navLinkClass} replace to="/app/study">
+        </header>
+        {/* Outside the header so that it can stay at the top of the screen when the page is scrolled: the
+            tabs are always one press away. On a phone the 12px above them keep them clear of the top edge,
+            where the status bar and the system's own gestures take the touches. */}
+        <div className="sticky top-0 z-20 border-b border-slate-200 bg-white pt-3 sm:pt-0">
+          <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap px-3 sm:px-6">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/study')} replace to="/app/study">
               Study
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/vocabulary">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/vocabulary')} replace to="/app/vocabulary">
               Vocabulary
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/reading">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/reading')} replace to="/app/reading">
               Reading
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/settings">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/settings')} replace to="/app/settings">
               Settings
             </NavLink>
             <AddWordButton />
           </nav>
-        </header>
+        </div>
         <main
           className="mx-auto max-w-5xl px-5 pt-4 pb-8 outline-none sm:px-8 sm:py-10"
           id="main-content"
           ref={mainRef}
           tabIndex={-1}
         >
-          <Outlet />
+          {pending === null ? <Outlet /> : null}
         </main>
       </div>
     </WordSheetProvider>
@@ -84,7 +91,8 @@ export function AppShell() {
 }
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
-  return `border-b-2 pb-2.5 text-sm font-semibold whitespace-nowrap ${
+  // 44px tall, the least a finger hits reliably; the side padding takes the place of the gap between tabs.
+  return `inline-flex min-h-11 items-center border-b-2 px-2 text-sm font-semibold whitespace-nowrap ${
     isActive ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-slate-600 hover:text-slate-900'
   }`
 }

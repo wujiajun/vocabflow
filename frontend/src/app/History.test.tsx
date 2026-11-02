@@ -100,3 +100,24 @@ test('an entry opened straight from an address has nothing behind it, so back ta
 
   expect(screen.getByRole('heading', { name: 'Your vocabulary' })).toBeInTheDocument()
 })
+
+test('pressing a tab from a page opened from a list starts a fresh stack: back no longer returns to the list', async () => {
+  api()
+  const browserUser = userEvent.setup()
+  const app = renderApp('/app/vocabulary')
+  await browserUser.click(await screen.findByRole('link', { name: /^one/ }))
+  await screen.findByRole('link', { name: '← Back to vocabulary' })
+
+  // A phone's history knows how deep the page is; jsdom has none of its own, so it is stood in for here.
+  Object.defineProperty(window.history, 'state', { value: { idx: 1 }, configurable: true })
+  try {
+    await browserUser.click(screen.getByRole('link', { name: 'Reading' }))
+    await screen.findByRole('heading', { name: 'Reading' })
+    await app.goBack()
+  } finally {
+    delete (window.history as { state?: unknown }).state
+  }
+
+  // The vocabulary list under the entry was walked back over and replaced: nothing is left to return to.
+  expect(screen.getByRole('heading', { name: 'Reading' })).toBeInTheDocument()
+})
