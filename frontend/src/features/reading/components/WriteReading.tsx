@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router'
+import { backState } from '../../../shared/navigation'
 import { useReadingToday } from '../hooks/useReading'
 
 // On the page shown when a day's study is complete. Writing is the learner's choice, once a day.
@@ -39,7 +40,7 @@ export function WriteReading({ date }: { date: string }) {
           {/* The writing happens on its own page, so the wait is spent where the passage will appear. */}
           <button
             className="mt-3 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            onClick={() => navigate(`/app/reading/writing?date=${date}`)}
+            onClick={() => navigate(`/app/reading/writing?date=${date}`, { state: backState('/app/study', 'Back to study') })}
             type="button"
           >
             ✎ Write a reading passage

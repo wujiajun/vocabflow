@@ -1,5 +1,6 @@
-import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
+import { BackLink } from '../../../shared/BackLink'
 import { readBackTarget } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { usePageTitle } from '../../../shared/usePageTitle'
@@ -24,9 +25,7 @@ export function VocabularyDetailPage() {
 
   return (
     <div>
-      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to={back.path}>
-        ← {back.label}
-      </Link>
+      <BackLink fallback={defaultBackTarget} />
       <div className="mt-5">{renderBody()}</div>
     </div>
   )

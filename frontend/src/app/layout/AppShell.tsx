@@ -55,16 +55,16 @@ export function AppShell() {
             </button>
           </div>
           <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap gap-x-4 px-5 sm:gap-x-5 sm:px-8">
-            <NavLink className={navLinkClass} to="/app/study">
+            <NavLink className={navLinkClass} replace to="/app/study">
               Study
             </NavLink>
-            <NavLink className={navLinkClass} to="/app/vocabulary">
+            <NavLink className={navLinkClass} replace to="/app/vocabulary">
               Vocabulary
             </NavLink>
-            <NavLink className={navLinkClass} to="/app/reading">
+            <NavLink className={navLinkClass} replace to="/app/reading">
               Reading
             </NavLink>
-            <NavLink className={navLinkClass} to="/app/settings">
+            <NavLink className={navLinkClass} replace to="/app/settings">
               Settings
             </NavLink>
             <AddWordButton />

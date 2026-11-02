@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import { expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { App } from '../app/App'
 import { AuthTokenProvider } from '../features/auth/hooks/AuthTokenProvider'
+import { BackProbe } from './BackProbe'
 
 export const user = {
   id: 1,
@@ -69,6 +70,7 @@ export function expectNoUnexpectedRequests() {
 }
 
 export function renderApp(initialPath: string, prepare?: (queryClient: QueryClient) => void) {
+  let back = () => {}
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -76,11 +78,13 @@ export function renderApp(initialPath: string, prepare?: (queryClient: QueryClie
 
   return {
     queryClient,
+    goBack: () => act(() => back()),
     ...render(
       <QueryClientProvider client={queryClient}>
         <AuthTokenProvider>
           <MemoryRouter initialEntries={[initialPath]}>
             <App />
+            <BackProbe onReady={(navigateBack) => (back = navigateBack)} />
           </MemoryRouter>
         </AuthTokenProvider>
       </QueryClientProvider>,
