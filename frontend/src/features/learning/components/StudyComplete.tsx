@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useContext, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { backState } from '../../../shared/navigation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { WriteReading } from '../../reading/components/WriteReading'
 import { formatLearningStatus } from '../../vocabulary/components/formatVocabulary'
+import { WordTapContext } from '../../vocabulary/components/wordTapContext'
 import { useStudyMore } from '../hooks/useStudy'
 import type { StudyQueue } from '../types/study'
 import { minPairs } from './matching'
@@ -25,6 +26,7 @@ export function StudyComplete({
   const more = useStudyMore()
   const [listOpen, setListOpen] = useState(false)
   const listId = useId()
+  const addWord = useContext(WordTapContext)
 
   // Only on mount: pressing "Study more" must leave focus on the button if the request fails.
   useEffect(() => {
@@ -124,12 +126,17 @@ export function StudyComplete({
             Quick review game
           </Link>
         ) : null}
-        <Link
-          className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-          to="/app/vocabulary"
-        >
-          Add new words
-        </Link>
+        {/* Only when there is nothing more to study: with words waiting, "Study more" is the way on. The
+            panel is the same as the "+ Add" in the tabs, so the learner stays on this page. */}
+        {addWord && !queue.moreNewWords ? (
+          <button
+            className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            onClick={() => addWord.open()}
+            type="button"
+          >
+            Add new words
+          </button>
+        ) : null}
         <Link
           className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
           to="/app/settings"

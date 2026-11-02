@@ -257,7 +257,34 @@ test('says when studying is finished and moves focus there', async () => {
   await browserUser.click(screen.getByRole('button', { name: /^Easy/ }))
 
   expect(await screen.findByRole('heading', { name: 'Today’s study is complete' })).toHaveFocus()
-  expect(screen.getByRole('link', { name: 'Add new words' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Add new words' })).toBeInTheDocument()
+})
+
+test('Add new words is offered only when there are no more words to study, and Study more only when there are', async () => {
+  const api = (moreNewWords: boolean) =>
+    stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ newCount: 0, finished: true, moreNewWords })) })
+
+  api(true)
+  renderApp('/app/study')
+  expect(await screen.findByRole('button', { name: 'Study more new words' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Add new words' })).not.toBeInTheDocument()
+  cleanup()
+
+  api(false)
+  renderApp('/app/study')
+  expect(await screen.findByRole('button', { name: 'Add new words' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Study more new words' })).not.toBeInTheDocument()
+})
+
+test('Add new words opens the same panel as the tabs’ Add, without leaving the page', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ newCount: 0, finished: true })) })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Add new words' }))
+
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('')
+  expect(screen.getByRole('heading', { name: 'Today’s study is complete' })).toBeInTheDocument()
 })
 
 test('with nothing to study from the start, does not take focus', async () => {
