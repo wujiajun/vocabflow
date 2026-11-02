@@ -58,8 +58,9 @@ export function AppShell() {
           </div>
         </header>
         {/* Outside the header so that it can stay at the top of the screen when the page is scrolled: the
-            tabs are always one press away. */}
-        <div className="sticky top-0 z-20 border-b border-slate-200 bg-white">
+            tabs are always one press away. On a phone the 12px above them keep them clear of the top edge,
+            where the status bar and the system's own gestures take the touches. */}
+        <div className="sticky top-0 z-20 border-b border-slate-200 bg-white pt-3 sm:pt-0">
           <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap px-3 sm:px-6">
             <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/study')} replace to="/app/study">
               Study
