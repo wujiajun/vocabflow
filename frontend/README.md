@@ -49,7 +49,7 @@ src/
   features/
     auth/                     sign in, register, current user and its settings, route guards
     vocabulary/               add form, paginated list, detail page, meanings (tabs), tap-to-add panel
-    learning/                 study page, flashcards, today's progress, the finished page
+    learning/                 study page, flashcards, today's progress, the finished page, the Quick review game
     reading/                  reading passages: write, list, read, read aloud
     settings/                 CLB level, time zone, daily goal, per-device switches
       <feature>/{api,hooks,components,pages,types}
