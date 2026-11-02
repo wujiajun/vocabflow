@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuth, useLogoutMutation } from '../../features/auth/hooks/useAuth'
 import { AddWordButton } from '../../features/vocabulary/components/AddWordButton'
 import { WordSheetProvider } from '../../features/vocabulary/components/WordSheetProvider'
+import { useTabNavigation } from './useTabNavigation'
 
 export function AppShell() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ export function AppShell() {
   const mainRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
   const previousPathname = useRef(pathname)
+  const { pending, pressTab } = useTabNavigation()
 
   // Following a link does not reload the page, so keyboard focus would stay on a control that has
   // just disappeared. Moving it to the content lets the next Tab continue from there.
@@ -59,16 +61,16 @@ export function AppShell() {
             tabs are always one press away. */}
         <div className="sticky top-0 z-20 border-b border-slate-200 bg-white">
           <nav aria-label="Main" className="mx-auto flex max-w-5xl flex-wrap px-3 sm:px-6">
-            <NavLink className={navLinkClass} replace to="/app/study">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/study')} replace to="/app/study">
               Study
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/vocabulary">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/vocabulary')} replace to="/app/vocabulary">
               Vocabulary
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/reading">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/reading')} replace to="/app/reading">
               Reading
             </NavLink>
-            <NavLink className={navLinkClass} replace to="/app/settings">
+            <NavLink className={navLinkClass} onClick={(event) => pressTab(event, '/app/settings')} replace to="/app/settings">
               Settings
             </NavLink>
             <AddWordButton />
@@ -80,7 +82,7 @@ export function AppShell() {
           ref={mainRef}
           tabIndex={-1}
         >
-          <Outlet />
+          {pending === null ? <Outlet /> : null}
         </main>
       </div>
     </WordSheetProvider>
