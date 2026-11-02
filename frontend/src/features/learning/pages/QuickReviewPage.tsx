@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { getGameSound, setGameSound } from '../../../shared/sound/effects'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
@@ -101,12 +100,9 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
 
   return (
     <section aria-label={`Round ${round + 1} of ${rounds.length}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-7">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
-          Round {round + 1} of {rounds.length}
-        </h2>
-        <SoundSwitch />
-      </div>
+      <h2 className="mb-2 text-sm font-semibold tracking-wide text-slate-600 uppercase">
+        Round {round + 1} of {rounds.length}
+      </h2>
       <MatchRound
         continueLabel={round + 1 < rounds.length ? 'Next round' : 'See results'}
         key={round}
@@ -117,26 +113,6 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
         pairs={rounds[round]}
       />
     </section>
-  )
-}
-
-// Wrong answers buzz, which not everyone wants: a choice kept in this browser.
-function SoundSwitch() {
-  const [on, setOn] = useState(getGameSound)
-
-  return (
-    <label className="flex w-fit items-center gap-2 text-sm text-slate-700">
-      <input
-        checked={on}
-        className="size-4 accent-indigo-700"
-        onChange={(event) => {
-          setOn(event.target.checked)
-          setGameSound(event.target.checked)
-        }}
-        type="checkbox"
-      />
-      Sound effects
-    </label>
   )
 }
 

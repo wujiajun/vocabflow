@@ -1,4 +1,5 @@
 import { type FormEvent, memo, useState } from 'react'
+import { getGameSound, setGameSound } from '../../../shared/sound/effects'
 import { getSpeakOnAnswer, getSpeakOnCard, setSpeakOnAnswer, setSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
@@ -20,6 +21,7 @@ export function SettingsPage() {
   const [timeZone, setTimeZone] = useState(auth.user?.timeZone ?? '')
   const [speakOnCard, setSpeakOnCardState] = useState(getSpeakOnCard)
   const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
+  const [gameSound, setGameSoundState] = useState(getGameSound)
   const [validationError, setValidationError] = useState<string>()
   const [saved, setSaved] = useState('')
   const error = validationError || (update.isError ? authErrorMessage(update.error, 'Unable to save your settings.') : undefined)
@@ -140,41 +142,56 @@ export function SettingsPage() {
         </div>
       </form>
 
-      {isSpeechSupported() ? (
-        <section aria-label="On this device" className="mt-4 max-w-md sm:mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-          <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
-          <fieldset aria-describedby="settings-speak-hint" className="mt-3">
-            <legend className="text-sm font-medium text-slate-800">Read the word aloud</legend>
-            <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
-              <input
-                checked={speakOnCard}
-                className="size-5 shrink-0 accent-indigo-700"
-                onChange={(event) => {
-                  setSpeakOnCardState(event.target.checked)
-                  setSpeakOnCard(event.target.checked)
-                }}
-                type="checkbox"
-              />
-              When a card appears
-            </label>
-            <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
-              <input
-                checked={speakOnAnswer}
-                className="size-5 shrink-0 accent-indigo-700"
-                onChange={(event) => {
-                  setSpeakOnAnswerState(event.target.checked)
-                  setSpeakOnAnswer(event.target.checked)
-                }}
-                type="checkbox"
-              />
-              When I show the answer
-            </label>
-          </fieldset>
-          <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-speak-hint">
-            Uses this device’s voice. The choice is kept in this browser only.
-          </p>
-        </section>
-      ) : null}
+      <section aria-label="On this device" className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-7">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
+        {isSpeechSupported() ? (
+          <>
+            <fieldset aria-describedby="settings-speak-hint" className="mt-3">
+              <legend className="text-sm font-medium text-slate-800">Read the word aloud</legend>
+              <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
+                <input
+                  checked={speakOnCard}
+                  className="size-5 shrink-0 accent-indigo-700"
+                  onChange={(event) => {
+                    setSpeakOnCardState(event.target.checked)
+                    setSpeakOnCard(event.target.checked)
+                  }}
+                  type="checkbox"
+                />
+                When a card appears
+              </label>
+              <label className="mt-2 flex items-center gap-3 text-sm text-slate-800">
+                <input
+                  checked={speakOnAnswer}
+                  className="size-5 shrink-0 accent-indigo-700"
+                  onChange={(event) => {
+                    setSpeakOnAnswerState(event.target.checked)
+                    setSpeakOnAnswer(event.target.checked)
+                  }}
+                  type="checkbox"
+                />
+                When I show the answer
+              </label>
+            </fieldset>
+            <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-speak-hint">
+              Uses this device’s voice.
+            </p>
+          </>
+        ) : null}
+        <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-800">
+          <input
+            checked={gameSound}
+            className="size-5 shrink-0 accent-indigo-700"
+            onChange={(event) => {
+              setGameSoundState(event.target.checked)
+              setGameSound(event.target.checked)
+            }}
+            type="checkbox"
+          />
+          Sound effects in the games
+        </label>
+        <p className="mt-2 text-sm leading-6 text-slate-600">These choices are kept in this browser only.</p>
+      </section>
     </div>
   )
 }

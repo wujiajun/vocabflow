@@ -206,10 +206,13 @@ test('when the word is read aloud is kept in this browser, and absent without sp
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
   window.localStorage.removeItem('vocabflow.speakOnCard')
+  window.localStorage.removeItem('vocabflow.gameSound')
 
   renderApp('/app/settings')
   await screen.findByLabelText('CLB level')
   expect(screen.queryByRole('checkbox', { name: 'When a card appears' })).not.toBeInTheDocument()
+  // The sounds of the games do not need speech.
+  expect(screen.getByRole('checkbox', { name: 'Sound effects in the games' })).toBeChecked()
   cleanup()
 
   installSpeechSynthesis([voice('Samantha', 'en-US')])
@@ -222,8 +225,10 @@ test('when the word is read aloud is kept in this browser, and absent without sp
 
   await browserUser.click(onCard)
   await browserUser.click(onAnswer)
+  await browserUser.click(screen.getByRole('checkbox', { name: 'Sound effects in the games' }))
   expect(window.localStorage.getItem('vocabflow.speakOnCard')).toBe('on')
   expect(window.localStorage.getItem('vocabflow.speakOnAnswer')).toBe('off')
+  expect(window.localStorage.getItem('vocabflow.gameSound')).toBe('off')
 
   cleanup()
   renderApp('/app/settings')
@@ -231,6 +236,7 @@ test('when the word is read aloud is kept in this browser, and absent without sp
   expect(screen.getByRole('checkbox', { name: 'When I show the answer' })).not.toBeChecked()
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
   window.localStorage.removeItem('vocabflow.speakOnCard')
+  window.localStorage.removeItem('vocabflow.gameSound')
 })
 
 test('explains when saving fails and does not claim it saved', async () => {
