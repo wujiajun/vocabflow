@@ -118,6 +118,7 @@ export function StudyComplete({
         {queue.studiedToday.length >= minPairs ? (
           <Link
             className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            state={backState('/app/study', 'Back to study')}
             to="/app/study/review"
           >
             Quick review game

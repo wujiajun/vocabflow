@@ -19,10 +19,14 @@ export function ReadingListPage() {
 
   function goToPage(nextPage: number) {
     const param = paramFromPage(nextPage)
-    setSearchParams({
-      ...(filter === 'all' ? {} : { show: filter }),
-      ...(param === undefined ? {} : { page: param }),
-    })
+    // Pages and filters are siblings: each replaces the last, so going back leaves the list.
+    setSearchParams(
+      {
+        ...(filter === 'all' ? {} : { show: filter }),
+        ...(param === undefined ? {} : { page: param }),
+      },
+      { replace: true },
+    )
   }
 
   // The button that was used is disabled while the next page loads, or for good on the last page,

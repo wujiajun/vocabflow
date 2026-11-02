@@ -1,6 +1,6 @@
-import { Link, useLocation, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
-import { readBackTarget } from '../../../shared/navigation'
+import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { formatWordCount, formatWritten } from '../components/formatReading'
@@ -15,14 +15,11 @@ export function ReadingPassagePage() {
   const id = rawId !== undefined && /^\d+$/.test(rawId) ? Number(rawId) : undefined
   const passage = useReadingPassage(id)
   const setRead = useSetRead()
-  const back = readBackTarget(useLocation().state, defaultBackTarget)
   usePageTitle(passage.data?.title ?? 'Reading')
 
   return (
     <div>
-      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to={back.path}>
-        ← {back.label}
-      </Link>
+      <BackLink fallback={defaultBackTarget} />
       <div className="mt-5">{renderBody()}</div>
     </div>
   )

@@ -21,10 +21,14 @@ export function VocabularyPage() {
 
   function goToPage(nextPage: number) {
     const param = paramFromPage(nextPage)
-    setSearchParams({
-      ...(filter === 'all' ? {} : { show: filter }),
-      ...(param === undefined ? {} : { page: param }),
-    })
+    // Pages and filters are siblings: each replaces the last, so going back leaves the list.
+    setSearchParams(
+      {
+        ...(filter === 'all' ? {} : { show: filter }),
+        ...(param === undefined ? {} : { page: param }),
+      },
+      { replace: true },
+    )
   }
 
   // The button that was used is disabled while the next page loads, or for good on the last page,
@@ -42,7 +46,7 @@ export function VocabularyPage() {
       </p>
       <div className="mt-4 sm:mt-6">
         {/* Back to the unfiltered first page, where the new word is sure to be visible. */}
-        <AddVocabularyForm onAdded={() => setSearchParams({})} />
+        <AddVocabularyForm onAdded={() => setSearchParams({}, { replace: true })} />
       </div>
       <section aria-label="Saved vocabulary" className="mt-5 outline-none sm:mt-8" ref={resultsRef} tabIndex={-1}>
         <ListFilters current={filter} />

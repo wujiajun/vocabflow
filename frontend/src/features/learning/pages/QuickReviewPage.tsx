@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
@@ -13,11 +13,7 @@ import type { StudiedWord } from '../types/study'
 // A few words may turn out to have no usable meaning, so a little more than the game needs is fetched.
 const wordsToFetch = 12
 
-const backLink = (
-  <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to="/app/study">
-    ← Back to study
-  </Link>
-)
+const studyPage = { path: '/app/study', label: 'Back to study' }
 
 // Practice only: nothing here is sent to the server, so it never changes what comes back for review.
 export function QuickReviewPage() {
@@ -29,7 +25,7 @@ export function QuickReviewPage() {
     <div>
       <div className="flex items-baseline justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Quick review</h1>
-        {backLink}
+        <BackLink fallback={studyPage} />
       </div>
       <div className="mt-3">
         {queue.isPending ? (
@@ -137,12 +133,12 @@ function Summary({ results, onAgain }: { results: RoundResult[]; onAgain: () => 
         >
           Play again
         </button>
-        <Link
+        <BackLink
           className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-          to="/app/study"
+          fallback={studyPage}
         >
           Back to study
-        </Link>
+        </BackLink>
       </div>
     </section>
   )

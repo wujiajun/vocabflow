@@ -9,6 +9,7 @@ export function ListFilters({ current }: { current: ListFilter }) {
           aria-current={value === current ? 'true' : undefined}
           className="rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm sm:px-3 font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 aria-[current]:border-indigo-700 aria-[current]:bg-indigo-700 aria-[current]:text-white"
           key={value}
+          replace
           to={value === 'all' ? '/app/vocabulary' : `/app/vocabulary?show=${value}`}
         >
           {label}

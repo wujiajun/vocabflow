@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
+import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useGeneratePassage } from '../hooks/useReading'
+
+const studyPage = { path: '/app/study', label: 'Back to study' }
 
 // Where the learner waits while the passage is written: the day comes from the address, so a
 // refresh keeps working, and the server writes one passage a day, so asking again is safe.
@@ -36,9 +39,7 @@ export function ReadingWritingPage() {
 
   return (
     <div>
-      <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to="/app/study">
-        ← Back to study
-      </Link>
+      <BackLink fallback={studyPage} />
       <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
         {generate.isError ? (
           <>
@@ -54,12 +55,12 @@ export function ReadingWritingPage() {
               >
                 Try again
               </button>
-              <Link
+              <BackLink
                 className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-                to="/app/study"
+                fallback={studyPage}
               >
                 Back to study
-              </Link>
+              </BackLink>
             </div>
           </>
         ) : (
