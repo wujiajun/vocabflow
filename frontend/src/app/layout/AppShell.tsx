@@ -39,10 +39,11 @@ export function AppShell() {
           Skip to main content
         </a>
         <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3 sm:px-8 sm:py-4">
             <div>
               <p className="text-lg font-bold">VocabFlow</p>
-              <p className="text-sm text-slate-600">{auth.user.email}</p>
+              {/* Left out on a phone, where the height matters more than seeing one's own address. */}
+              <p className="hidden text-sm text-slate-600 sm:block">{auth.user.email}</p>
             </div>
             <button
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"

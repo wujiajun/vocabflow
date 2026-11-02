@@ -34,12 +34,11 @@ export function ReadingListPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">Reading</h1>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-        Passages written from the words you studied. When a day’s study is complete, you can write one from the Study page.
-        Newest first.
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Reading</h1>
+      <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">
+        Passages from the words you studied. Write one from the Study page when a day’s study is complete.
       </p>
-      <section aria-label="Reading passages" className="mt-6 outline-none" ref={resultsRef} tabIndex={-1}>
+      <section aria-label="Reading passages" className="mt-4 outline-none sm:mt-6" ref={resultsRef} tabIndex={-1}>
         <ReadingFilters current={filter} />
         {list.isPending ? (
           <p className="text-sm text-slate-600" role="status">

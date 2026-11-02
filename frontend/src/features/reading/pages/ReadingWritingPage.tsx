@@ -39,7 +39,7 @@ export function ReadingWritingPage() {
       <Link className="text-sm font-semibold text-indigo-700 underline underline-offset-4" to="/app/study">
         ← Back to study
       </Link>
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
         {generate.isError ? (
           <>
             <h1 className="text-2xl font-bold tracking-tight">We couldn’t write your passage</h1>

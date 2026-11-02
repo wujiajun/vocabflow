@@ -43,7 +43,7 @@ export function StudyComplete({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
       <h2 className="text-xl font-bold tracking-tight outline-none" ref={headingRef} tabIndex={-1}>
         {heading(queue)}
       </h2>

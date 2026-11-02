@@ -61,8 +61,8 @@ export function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-      <form className="mt-6 max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7" noValidate onSubmit={submit}>
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+      <form className="mt-4 max-w-md sm:mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7" noValidate onSubmit={submit}>
         <label className="block text-sm font-medium text-slate-800" htmlFor="settings-clb-level">
           CLB level
           <select
@@ -83,10 +83,9 @@ export function SettingsPage() {
           </select>
         </label>
         <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-clb-hint">
-          Your Canadian Language Benchmarks level. Reading passages are written one level below it, so that they read
-          easily and the words you studied stand out.
+          Reading passages are written one level below it, so they read easily and the words you studied stand out.
         </p>
-        <label className="mt-6 block text-sm font-medium text-slate-800" htmlFor="settings-time-zone">
+        <label className="mt-4 block sm:mt-6 text-sm font-medium text-slate-800" htmlFor="settings-time-zone">
           Time zone
           <select
             aria-describedby="settings-time-zone-hint"
@@ -102,10 +101,9 @@ export function SettingsPage() {
           </select>
         </label>
         <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-time-zone-hint">
-          Your study day starts and ends at midnight in this zone, on every device. Right now it is {todayIn(timeZone || null)} for
-          you.
+          Your study day starts and ends at midnight in this zone, on every device. Now it is {todayIn(timeZone || null)} for you.
         </p>
-        <label className="mt-6 block text-sm font-medium text-slate-800" htmlFor="settings-daily-goal">
+        <label className="mt-4 block sm:mt-6 text-sm font-medium text-slate-800" htmlFor="settings-daily-goal">
           Daily new vocabulary goal
           <input
             aria-describedby={error ? 'settings-error settings-goal-hint' : 'settings-goal-hint'}
@@ -123,8 +121,7 @@ export function SettingsPage() {
           />
         </label>
         <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-goal-hint">
-          A higher goal adds words to today’s study, unless today’s study is already complete. A lower goal keeps the
-          words already added today.
+          A higher goal adds words to today’s study unless it is already complete; a lower one keeps the words already added.
         </p>
         {error ? (
           <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" id="settings-error" role="alert">
@@ -145,7 +142,7 @@ export function SettingsPage() {
         </div>
       </form>
 
-      <section aria-label="On this device" className="mt-6 max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <section aria-label="On this device" className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-7">
         <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
         {isSpeechSupported() ? (
           <>

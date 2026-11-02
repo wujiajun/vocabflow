@@ -54,10 +54,10 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
       <label className="block text-sm font-medium text-slate-800" htmlFor="new-vocabulary-term">
         New word or phrase
       </label>
-      <div className="mt-1.5 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-1.5 flex gap-2 sm:gap-3">
         <input
           autoComplete="off"
-          className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
+          className="block min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
           aria-describedby={error ? 'new-vocabulary-term-error' : undefined}
           aria-invalid={error ? true : undefined}
           id="new-vocabulary-term"
@@ -70,7 +70,7 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
           value={term}
         />
         <button
-          className="rounded-lg bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+          className="shrink-0 rounded-lg bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
           disabled={addVocabulary.isPending}
           type="submit"
         >
