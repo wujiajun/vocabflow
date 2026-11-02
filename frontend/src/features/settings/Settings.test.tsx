@@ -202,6 +202,15 @@ test('changing the level and the goal together saves both', async () => {
   expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ clbLevel: 'CLB_9', dailyNewVocabularyGoal: 12 })
 })
 
+test('shows the version of the release', async () => {
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+
+  renderApp('/app/settings')
+
+  expect(await screen.findByText(`VocabFlow ${__APP_VERSION__}`)).toBeInTheDocument()
+  expect(__APP_VERSION__).toMatch(/^\d+\.\d+\.\d+$/)
+})
+
 test('when the word is read aloud is kept in this browser, and absent without speech', async () => {
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   window.localStorage.removeItem('vocabflow.speakOnAnswer')

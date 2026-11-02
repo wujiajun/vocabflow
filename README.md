@@ -125,6 +125,14 @@ npm run test
 npm run build
 ```
 
+## Releases
+
+`CHANGELOG.md` lists what each version changed, and each release is a `vX.Y.Z` tag. The number is in two places that
+must match: `version` in `frontend/package.json` (and its lockfile; `npm version X.Y.Z --no-git-tag-version` sets both)
+and `<version>` in `backend/pom.xml`. The frontend shows it at the bottom of Settings. To release: add the version to
+`CHANGELOG.md`, bump both numbers in the same pull request, merge it, then tag the merge commit
+(`git tag -a vX.Y.Z`) and push the tag.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and on every push to `main`, in two parallel jobs named `backend` and `frontend`. `backend` runs `./mvnw spotless:check` and `./mvnw verify` on JDK 21 (Docker is provided by the GitHub runner for the Testcontainers tests). `frontend` runs `npm ci`, `lint`, `typecheck`, `test` and `build` on the Node version in `.node-version`. These are the same commands as in the section above; run them locally before pushing.

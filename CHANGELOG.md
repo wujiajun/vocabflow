@@ -1,0 +1,77 @@
+# Changelog
+
+All notable changes to VocabFlow. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
+versions follow [Semantic Versioning](https://semver.org/): a fix raises the last number, a new feature or a change
+in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
+first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
+
+## [1.1.0] - 2026-11-01
+
+Phone navigation, after the first weeks of daily use.
+
+### Added
+
+- The version number at the bottom of Settings, so the release a browser is running can be told from this file.
+- This changelog, and one version number for the backend and the frontend (they were 0.1.0 and 0.0.0).
+
+### Changed
+
+- The top tabs stay on screen while the page is scrolled, 44px tall and 12px clear of the top edge on a phone, so a
+  tab is easy to hit from anywhere on a long page.
+- Swiping back no longer walks through every tab pressed. Tabs, filters and page numbers replace the current history
+  entry instead of adding one, and pressing a tab starts a fresh history, so swiping back from a tab leaves the app
+  rather than returning to a list or word opened from another tab. The "Back to …" links go back one step when the
+  page was opened from there.
+- "Add new words" on the study-complete page opens the same add-word panel as "+ Add" instead of leaving the page,
+  and is offered only when there are no more words to study ("Study more new words" otherwise).
+- Holding a finger on a link no longer opens iOS's link menu and address preview.
+
+## [1.0.0] - 2026-11-01
+
+The first version for daily use.
+
+### Vocabulary
+
+- Add a word or phrase; its details are filled in by Claude in the background: meanings, phonetic spelling, part of
+  speech, examples, collocations, the dictionary spelling and capitals, and the base form of an inflected word
+  ("Form of …"). Words with several meanings show them as tabs.
+- A word that looks misspelled is stopped with a "Did you mean …?" and a "Yes, add …" button. A failed word can be
+  retried or removed. The model calls are limited per user per day.
+- Tap any word in a passage or an answer to add it, or use "+ Add" in the tabs.
+- The list can be filtered (All, Due today, New, Learning, Familiar, Mastered) and is paged.
+
+### Study
+
+- A daily plan: new words up to the daily goal, plus every review that is due, shown as flashcards with Again, Hard,
+  Good and Easy. Scheduling follows SM-2 as Anki applies it, with learning steps. A progress bar, a "Study more new
+  words" button, and a folded "Studied today" list on the study-complete page.
+- The word can be read aloud when a card appears and when the answer is shown (each a switch in Settings), with a
+  speaker button beside every word and the phonetic spelling on the front of the card. Voices are the device's own.
+
+### Reading
+
+- Once a day, after the day's study is complete and at least 10 words were rated, a short passage is written from
+  10 to 15 of them at the learner's CLB level minus one. The studied words are highlighted, any other word can be
+  tapped to add it, and the passage can be read aloud (Listen, Pause, Resume, Stop, normal or slow). Passages are marked
+  read or unread and listed with an Unread / Read filter.
+
+### Quick review game
+
+- A matching game for the day's words: each word is dragged onto its meaning (or chosen and then tapped). A right
+  match says the word aloud; a wrong one turns red and buzzes (sound effects can be switched off in Settings). It is
+  practice only and never changes the review schedule.
+
+### Account and settings
+
+- Register and sign in (an invite code can be required). Settings: CLB level, daily new-word goal, and time zone
+  (the study day starts and ends at midnight in it, on every device).
+
+### The app
+
+- Made for a phone: tight layout, press feedback on buttons, installable to the home screen, and a "new version
+  available" bar with a Reload button after an update.
+- Runs with Docker Compose (MySQL, backend, and Caddy serving the frontend), with backup and restore scripts.
+  GitHub Actions run the backend (including MySQL integration tests) and frontend checks on every pull request.
+
+[1.1.0]: https://github.com/wujiajun/vocabflow/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/wujiajun/vocabflow/releases/tag/v1.0.0
