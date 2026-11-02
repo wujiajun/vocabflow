@@ -70,7 +70,7 @@ export function AppShell() {
           </nav>
         </header>
         <main
-          className="mx-auto max-w-5xl px-5 py-8 outline-none sm:px-8 sm:py-10"
+          className="mx-auto max-w-5xl px-5 pt-4 pb-8 outline-none sm:px-8 sm:py-10"
           id="main-content"
           ref={mainRef}
           tabIndex={-1}
