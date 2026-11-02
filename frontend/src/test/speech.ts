@@ -29,6 +29,9 @@ export function installSpeechSynthesis(initialVoices: SpeechSynthesisVoice[] = [
       spoken.push(utterance)
     }),
     cancel: vi.fn(),
+    resume: vi.fn(),
+    speaking: false,
+    pending: false,
     getVoices: () => voices,
   })
 

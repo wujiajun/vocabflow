@@ -2,8 +2,8 @@ const answerKey = 'vocabflow.speakOnAnswer'
 const cardKey = 'vocabflow.speakOnCard'
 
 // Whether the word on a study card is read aloud on its own, as the card appears and when its answer
-// is shown. The two are separate, so a learner can have either, both or neither. Kept in this browser,
-// because it depends on where and on what the learner is studying.
+// is shown. The two are separate, so a learner can have either, both or neither, and both start on. Kept in
+// this browser, because it depends on where and on what the learner is studying.
 export function getSpeakOnAnswer() {
   try {
     return window.localStorage.getItem(answerKey) !== 'off'
@@ -18,9 +18,9 @@ export function setSpeakOnAnswer(on: boolean) {
 
 export function getSpeakOnCard() {
   try {
-    return window.localStorage.getItem(cardKey) === 'on'
+    return window.localStorage.getItem(cardKey) !== 'off'
   } catch {
-    return false
+    return true
   }
 }
 

@@ -5,6 +5,23 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [Unreleased]
+
+### Changed
+
+- Reading the word aloud as a card appears is now on by default, like reading it on Show answer. The choice is still
+  kept per browser, so a new browser starts with both on.
+
+### Fixed
+
+- Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
+  Chrome could then drop the word spoken in that click. It now runs on touch only.
+- Chrome on a computer also dropped a word spoken right after stopping another (a card read aloud, then Show answer):
+  the new word now starts a moment after the stop.
+- A pronunciation button could stay on "speaking" when Chrome never reported the end of a word, so every later press
+  only stopped it and nothing was heard until the page was signed out and in again. A replaced or stopped word is now
+  always reported as ended.
+
 ## [1.1.0] - 2026-11-01
 
 Phone navigation, after the first weeks of daily use.

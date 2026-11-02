@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { chooseVoice, currentVoiceAccent, isSpeechSupported, speakText, stopSpeaking } from './pronunciation'
 
@@ -65,7 +65,7 @@ test('asks for American English when no voice list is available yet', () => {
   expect(speech.lastUtterance()).toMatchObject({ text: 'overwhelmed', lang: 'en-US', voice: null })
 })
 
-test('reports when playback starts, ends or fails', () => {
+test('reports when playback starts and ends, once, whether it ends or fails', () => {
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   const onStart = vi.fn()
   const onEnd = vi.fn()
@@ -77,7 +77,21 @@ test('reports when playback starts, ends or fails', () => {
   utterance.onerror?.()
 
   expect(onStart).toHaveBeenCalledTimes(1)
-  expect(onEnd).toHaveBeenCalledTimes(2)
+  expect(onEnd).toHaveBeenCalledTimes(1)
+})
+
+test('a word that is stopped or replaced is reported as ended even if the browser never says so', () => {
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const first = vi.fn()
+  const second = vi.fn()
+
+  speakText('one', { onStart: vi.fn(), onEnd: first })
+  speakText('two', { onStart: vi.fn(), onEnd: second })
+  expect(first).toHaveBeenCalledTimes(1)
+  expect(second).not.toHaveBeenCalled()
+
+  stopSpeaking()
+  expect(second).toHaveBeenCalledTimes(1)
 })
 
 test('stops anything being spoken', () => {
@@ -86,4 +100,26 @@ test('stops anything being spoken', () => {
   stopSpeaking()
 
   expect(speech.synth.cancel).toHaveBeenCalledTimes(1)
+})
+
+describe('speakText after something is already playing', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  test('waits a moment after the cancel, and only the newest word is spoken', () => {
+    vi.useFakeTimers()
+    const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+    speech.synth.speaking = true
+    const callbacks = { onStart: vi.fn(), onEnd: vi.fn() }
+
+    speakText('first', callbacks)
+    speakText('second', callbacks)
+
+    expect(speech.synth.cancel).toHaveBeenCalledTimes(2)
+    expect(speech.spoken).toHaveLength(0)
+    vi.advanceTimersByTime(200)
+    expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['second'])
+  })
 })
