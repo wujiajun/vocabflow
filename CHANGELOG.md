@@ -13,6 +13,9 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
   Chrome could then drop the word spoken in that click. It now runs on touch only.
 - Chrome on a computer also dropped a word spoken right after stopping another (a card read aloud, then Show answer):
   the new word now starts a moment after the stop.
+- A pronunciation button could stay on "speaking" when Chrome never reported the end of a word, so every later press
+  only stopped it and nothing was heard until the page was signed out and in again. A replaced or stopped word is now
+  always reported as ended.
 
 ## [1.1.0] - 2026-11-01
 

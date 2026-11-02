@@ -42,11 +42,22 @@ interface SpeakCallbacks {
 // playing, so after stopping something the new word waits a moment. Each call supersedes the earlier one.
 const restartDelayMs = 80
 let latestRequest = 0
+// The word being spoken. Kept here because Chrome may collect an utterance that nothing refers to and then
+// never report its end, which would leave a pronunciation button showing "speaking" for good.
+let current: { utterance: SpeechSynthesisUtterance; onEnd: () => void } | null = null
+
+// Tell whoever asked for the word that is being replaced or stopped that it is over, once.
+function finishCurrent() {
+  const finished = current
+  current = null
+  finished?.onEnd()
+}
 
 export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
   const synth = window.speechSynthesis
   const request = ++latestRequest
   const interrupting = synth.speaking || synth.pending
+  finishCurrent()
   synth.cancel()
 
   function start() {
@@ -61,15 +72,15 @@ export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
     }
     utterance.rate = speechRate
     utterance.onstart = onStart
-    // An utterance that was cancelled for a newer one must not report that the newer one has ended.
     const ended = () => {
-      if (request === latestRequest) {
-        onEnd()
+      if (current?.utterance === utterance) {
+        finishCurrent()
       }
     }
     utterance.onend = ended
     utterance.onerror = ended
 
+    current = { utterance, onEnd }
     synth.resume()
     synth.speak(utterance)
   }
@@ -83,5 +94,6 @@ export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
 
 export function stopSpeaking() {
   latestRequest++
+  finishCurrent()
   window.speechSynthesis.cancel()
 }
