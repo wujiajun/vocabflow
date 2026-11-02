@@ -38,6 +38,9 @@ export function MatchRound({
   const [drag, setDrag] = useState<{ id: number; dx: number; dy: number; over: number | null } | null>(null)
   const press = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null)
   const swallowClick = useRef(false)
+  // A touch drag is answered when the finger has left the screen: the browsers that only allow a voice or
+  // a sound from a press count that moment (touchend), not the earlier pointerup.
+  const deferred = useRef<(() => void) | null>(null)
   const trayRef = useRef<HTMLDivElement>(null)
   const doneRef = useRef<HTMLHeadingElement>(null)
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -128,8 +131,20 @@ export function MatchRound({
     const target = cardAt(event.clientX, event.clientY)
     setDrag(null)
     if (target !== null && !matched.has(target)) {
-      attempt(current.id, target)
+      if (event.pointerType === 'touch') {
+        deferred.current = () => attempt(current.id, target)
+        // Should the touchend never come, the answer is still given.
+        setTimeout(answerDeferred, 150)
+      } else {
+        attempt(current.id, target)
+      }
     }
+  }
+
+  function answerDeferred() {
+    const answer = deferred.current
+    deferred.current = null
+    answer?.()
   }
 
   function cancelChip() {
@@ -237,6 +252,7 @@ export function MatchRound({
                   key={pair.id}
                   onClick={() => chooseChip(pair.id)}
                   onPointerCancel={cancelChip}
+                onTouchEnd={answerDeferred}
                   onPointerDown={(event) => pressChip(event, pair.id)}
                   onPointerMove={moveChip}
                   onPointerUp={releaseChip}

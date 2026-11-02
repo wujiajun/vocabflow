@@ -164,9 +164,8 @@ test('a right match says the word aloud; a wrong one turns the meaning and the w
   // A right answer clears the red at once.
   expect(screen.getByRole('button', { name: meaning(words[1]) })).not.toHaveAttribute('data-wrong')
 
-  // Without sound effects a wrong answer is only red.
-  await browserUser.click(screen.getByRole('checkbox', { name: 'Sound effects' }))
-  expect(window.localStorage.getItem('vocabflow.gameSound')).toBe('off')
+  // Without sound effects (a choice in Settings) a wrong answer is only red.
+  window.localStorage.setItem('vocabflow.gameSound', 'off')
   await browserUser.click(chip('budget'))
   await browserUser.click(screen.getByRole('button', { name: meaning(words[2]) }))
   expect(buzzes).toHaveLength(1)
@@ -214,6 +213,8 @@ test('a word dragged onto its meaning is placed, and one dropped on the wrong me
     fireEvent(chip, pointerEvent('pointerdown', 100, 100))
     fireEvent(chip, pointerEvent('pointermove', 100, 160))
     fireEvent(chip, pointerEvent('pointerup', 100, 160))
+    // The answer is given as the finger leaves the screen, which is what lets a phone speak and buzz.
+    fireEvent.touchEnd(chip)
     await waitFor(() => expect(swallowedClicks()).toBeDefined())
   }
 
