@@ -43,6 +43,14 @@ html {
   }
 }
 
+/* Holding a finger on a link makes iOS show its menu (Open, Add to Reading List, Copy Link, Share) and
+   a preview of the address. In an app that is noise, and a slow tap on a word in the list brings it up. */
+@layer base {
+  a {
+    -webkit-touch-callout: none;
+  }
+}
+
 /* The matching game: a wrong drop shakes the word, a right one pops into place. Only for people who
    have not asked for less motion (the classes carry the motion- prefix). */
 @theme {
