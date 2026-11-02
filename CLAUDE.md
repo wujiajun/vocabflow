@@ -15,6 +15,10 @@ Repository rules, quality gates, and architecture constraints live in `AGENTS.md
 
 `main` is protected by a GitHub ruleset: never commit to it directly. Make a short-lived branch per task, push it, and open a pull request; the `backend` and `frontend` CI checks must pass before it can merge. Claude may push branches, open PRs with `gh` and handle CI on its own, but must wait for the user to say so before merging. Syncing `main` and deleting merged branches afterwards is fine. Force pushes, history rewrites, ruleset changes and tags still need asking first.
 
+## Releases
+
+`CHANGELOG.md` is the record of each version; the number is `version` in `frontend/package.json` (and the lockfile) and `<version>` in `backend/pom.xml`, which must match, and the app shows it at the bottom of Settings. A release is one pull request that bumps both and adds the changelog entry; the tag `vX.Y.Z` goes on the merge commit afterwards, and tags still need the user's word.
+
 ## Commands
 
 There is no root build. Run from `backend/` or `frontend/`.

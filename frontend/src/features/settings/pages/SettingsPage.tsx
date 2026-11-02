@@ -192,6 +192,9 @@ export function SettingsPage() {
         </label>
         <p className="mt-2 text-sm leading-6 text-slate-600">These choices are kept in this browser only.</p>
       </section>
+
+      {/* Which release this browser is running, to tell against CHANGELOG.md. */}
+      <p className="mt-4 text-xs text-slate-600">VocabFlow {__APP_VERSION__}</p>
     </div>
   )
 }
