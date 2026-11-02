@@ -6,6 +6,7 @@ import { WriteReading } from '../../reading/components/WriteReading'
 import { formatLearningStatus } from '../../vocabulary/components/formatVocabulary'
 import { useStudyMore } from '../hooks/useStudy'
 import type { StudyQueue } from '../types/study'
+import { minPairs } from './matching'
 
 // Shown when no card is due: the day is complete, a learning step is still to come, or there is
 // nothing to study yet.
@@ -113,6 +114,14 @@ export function StudyComplete({
           >
             {more.isPending ? 'Adding words…' : 'Study more new words'}
           </button>
+        ) : null}
+        {queue.studiedToday.length >= minPairs ? (
+          <Link
+            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            to="/app/study/review"
+          >
+            Quick review game
+          </Link>
         ) : null}
         <Link
           className="rounded-lg border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
