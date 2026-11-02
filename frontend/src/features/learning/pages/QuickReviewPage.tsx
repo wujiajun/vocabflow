@@ -27,7 +27,8 @@ export function QuickReviewPage() {
   const [game, setGame] = useState(0)
 
   return (
-    <div>
+    // The page gives every screen a generous top margin; on a phone this one needs the height.
+    <div className="-mt-4 sm:mt-0">
       <div className="flex items-baseline justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Quick review</h1>
         {backLink}

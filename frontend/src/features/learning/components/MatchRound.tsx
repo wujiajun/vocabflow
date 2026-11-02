@@ -194,7 +194,7 @@ export function MatchRound({
       <div className="sticky bottom-0 z-10 -mx-3 mt-2 rounded-b-2xl border-t border-slate-200 bg-white/95 px-3 pt-2 pb-1 backdrop-blur sm:-mx-7 sm:px-7">
         <p
           aria-live="polite"
-          className={`min-h-5 text-sm ${wrong ? 'font-semibold text-rose-700' : 'text-slate-600'}`}
+          className={`mb-2 min-h-5 text-sm ${wrong ? 'font-semibold text-rose-700' : 'text-slate-600'}`}
           role="status"
         >
           {message}
