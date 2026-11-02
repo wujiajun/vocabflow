@@ -84,6 +84,8 @@ test('showing the answer reads the word aloud once, unless that is turned off', 
   })
   const browserUser = userEvent.setup()
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+  // Reading as the card appears is on by default; this test is about Show answer alone.
+  window.localStorage.setItem('vocabflow.speakOnCard', 'off')
 
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'overwhelmed' })
@@ -99,6 +101,27 @@ test('showing the answer reads the word aloud once, unless that is turned off', 
   await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
   expect(speech.spoken).toHaveLength(1)
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
+})
+
+test('the word is read as its card appears unless that is turned off', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })),
+  })
+  window.localStorage.removeItem('vocabflow.speakOnCard')
+
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+  await waitFor(() => expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed']))
+
+  cleanup()
+  window.localStorage.setItem('vocabflow.speakOnCard', 'off')
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'overwhelmed' })
+  expect(speech.spoken).toHaveLength(1)
+  window.localStorage.removeItem('vocabflow.speakOnCard')
 })
 
 test('the word can be read as its card appears, and again on Show answer when both are chosen', async () => {

@@ -7,6 +7,11 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ## [Unreleased]
 
+### Changed
+
+- Reading the word aloud as a card appears is now on by default, like reading it on Show answer. The choice is still
+  kept per browser, so a new browser starts with both on.
+
 ### Fixed
 
 - Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
