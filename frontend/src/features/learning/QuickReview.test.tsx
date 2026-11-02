@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { expectNoAxeViolations } from '../../test/axe'
+import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 import type { StudiedWord } from './types/study'
 
@@ -111,6 +112,78 @@ test('tapping a word and then its meaning places it, a wrong meaning shakes it b
 
   await browserUser.click(screen.getByRole('button', { name: 'Play again' }))
   expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
+})
+
+// Stands in for the browser's audio, which jsdom does not have: counts the sounds started.
+function installAudio() {
+  const started: number[] = []
+  class FakeAudioContext {
+    currentTime = 0
+    state = 'running'
+    destination = {}
+    resume = vi.fn()
+    createOscillator() {
+      return {
+        type: '',
+        frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+        connect: vi.fn(),
+        start: () => started.push(1),
+        stop: vi.fn(),
+      }
+    }
+    createGain() {
+      return { gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() }, connect: vi.fn() }
+    }
+  }
+  vi.stubGlobal('AudioContext', FakeAudioContext)
+  return started
+}
+
+test('a right match says the word aloud; a wrong one turns the meaning and the word red and buzzes, until the sound is switched off', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const buzzes = installAudio()
+  window.localStorage.removeItem('vocabflow.gameSound')
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/review')
+  await screen.findByRole('heading', { name: 'Round 1 of 1' })
+  const chip = (term: string) => within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: term })
+
+  await browserUser.click(chip('cope'))
+  await browserUser.click(screen.getByRole('button', { name: meaning(words[1]) }))
+
+  expect(buzzes).toHaveLength(1)
+  expect(speech.spoken).toHaveLength(0)
+  expect(screen.getByRole('button', { name: meaning(words[1]) })).toHaveAttribute('data-wrong', 'true')
+  expect(chip('cope')).toHaveClass('bg-rose-100')
+  expect(screen.getByRole('status')).toHaveClass('text-rose-700')
+
+  await browserUser.click(chip('cope'))
+  await browserUser.click(screen.getByRole('button', { name: meaning(words[0]) }))
+  expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['cope'])
+  // A right answer clears the red at once.
+  expect(screen.getByRole('button', { name: meaning(words[1]) })).not.toHaveAttribute('data-wrong')
+
+  // Without sound effects a wrong answer is only red.
+  await browserUser.click(screen.getByRole('checkbox', { name: 'Sound effects' }))
+  expect(window.localStorage.getItem('vocabflow.gameSound')).toBe('off')
+  await browserUser.click(chip('budget'))
+  await browserUser.click(screen.getByRole('button', { name: meaning(words[2]) }))
+  expect(buzzes).toHaveLength(1)
+  window.localStorage.removeItem('vocabflow.gameSound')
+})
+
+test('the red goes away by itself', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/review')
+  await screen.findByRole('heading', { name: 'Round 1 of 1' })
+
+  await browserUser.click(within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: 'cope' }))
+  await browserUser.click(screen.getByRole('button', { name: meaning(words[1]) }))
+  expect(screen.getByRole('button', { name: meaning(words[1]) })).toHaveAttribute('data-wrong', 'true')
+
+  await waitFor(() => expect(screen.getByRole('button', { name: meaning(words[1]) })).not.toHaveAttribute('data-wrong'), { timeout: 2000 })
 })
 
 test('choosing a meaning before a word asks for a word first', async () => {

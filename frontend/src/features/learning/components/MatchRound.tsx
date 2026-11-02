@@ -1,4 +1,6 @@
 import { type PointerEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
+import { playWrong } from '../../../shared/sound/effects'
 import { type MatchPair, shuffle } from './matching'
 
 export interface RoundResult {
@@ -7,6 +9,9 @@ export interface RoundResult {
   firstTry: number
   missed: string[]
 }
+
+// How long a wrong answer stays red.
+const wrongMs = 900
 
 // How far a finger or mouse must move before a press counts as a drag rather than a tap.
 const dragDistance = 6
@@ -27,13 +32,15 @@ export function MatchRound({
   const [matched, setMatched] = useState<ReadonlySet<number>>(new Set())
   const [missed, setMissed] = useState<ReadonlySet<number>>(new Set())
   const [selected, setSelected] = useState<number | null>(null)
-  const [shaking, setShaking] = useState<number | null>(null)
+  // The word and the meaning of the last wrong answer, red for a moment.
+  const [wrong, setWrong] = useState<{ wordId: number; cardId: number } | null>(null)
   const [message, setMessage] = useState('')
   const [drag, setDrag] = useState<{ id: number; dx: number; dy: number; over: number | null } | null>(null)
   const press = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null)
   const swallowClick = useRef(false)
   const trayRef = useRef<HTMLDivElement>(null)
   const doneRef = useRef<HTMLHeadingElement>(null)
+  const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const done = matched.size === pairs.length
   const remaining = chips.filter((pair) => !matched.has(pair.id))
 
@@ -47,16 +54,26 @@ export function MatchRound({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matched.size])
 
+  useEffect(() => () => clearTimeout(wrongTimer.current), [])
+
+  // Called from a press or a drop, which is where the browser lets a sound or a voice start.
   function attempt(wordId: number, cardId: number) {
     const word = pairs.find((pair) => pair.id === wordId)
     setSelected(null)
     if (wordId === cardId) {
       setMatched((current) => new Set(current).add(wordId))
+      setWrong(null)
       setMessage(`Correct: ${word?.term}.`)
+      if (word && isSpeechSupported()) {
+        speakText(word.term, { onStart: () => {}, onEnd: () => {} })
+      }
     } else {
       setMissed((current) => new Set(current).add(wordId))
-      setShaking(wordId)
+      setWrong({ wordId, cardId })
+      clearTimeout(wrongTimer.current)
+      wrongTimer.current = setTimeout(() => setWrong(null), wrongMs)
       setMessage('Not that one. Try another meaning.')
+      playWrong()
     }
   }
 
@@ -154,9 +171,14 @@ export function MatchRound({
               ) : (
                 <button
                   className={`w-full rounded-xl border-2 border-dashed px-4 py-3 text-left text-sm leading-6 text-slate-800 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                    drag?.over === pair.id ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300 bg-white hover:bg-slate-50'
+                    wrong?.cardId === pair.id
+                      ? 'border-solid border-rose-600 bg-rose-100 text-rose-900'
+                      : drag?.over === pair.id
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-slate-300 bg-white hover:bg-slate-50'
                   }`}
                   data-card-id={pair.id}
+                  data-wrong={wrong?.cardId === pair.id || undefined}
                   onClick={() => chooseCard(pair.id)}
                   type="button"
                 >
@@ -168,7 +190,11 @@ export function MatchRound({
         })}
       </ul>
 
-      <p aria-live="polite" className="mt-3 min-h-5 text-sm text-slate-600" role="status">
+      <p
+        aria-live="polite"
+        className={`mt-3 min-h-5 text-sm ${wrong ? 'font-semibold text-rose-700' : 'text-slate-600'}`}
+        role="status"
+      >
         {message}
       </p>
 
@@ -199,12 +225,15 @@ export function MatchRound({
               <button
                 aria-pressed={selected === pair.id}
                 className={`relative cursor-grab touch-none rounded-full border px-4 py-2 text-base font-semibold select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                  selected === pair.id ? 'border-indigo-700 bg-indigo-700 text-white' : 'border-indigo-300 bg-white text-indigo-900'
+                  wrong?.wordId === pair.id
+                    ? 'border-rose-600 bg-rose-100 text-rose-900'
+                    : selected === pair.id
+                      ? 'border-indigo-700 bg-indigo-700 text-white'
+                      : 'border-indigo-300 bg-white text-indigo-900'
                 } ${dragging ? 'z-20 cursor-grabbing shadow-lg' : 'motion-safe:transition-transform'} ${
-                  shaking === pair.id ? 'motion-safe:animate-shake' : ''
+                  wrong?.wordId === pair.id ? 'motion-safe:animate-shake' : ''
                 }`}
                 key={pair.id}
-                onAnimationEnd={() => setShaking(null)}
                 onClick={() => chooseChip(pair.id)}
                 onPointerCancel={cancelChip}
                 onPointerDown={(event) => pressChip(event, pair.id)}
