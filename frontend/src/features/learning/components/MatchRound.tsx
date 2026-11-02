@@ -156,21 +156,21 @@ export function MatchRound({
 
   return (
     <div>
-      <p className="text-sm text-slate-600">Drag each word onto its meaning, or tap a word and then a meaning.</p>
+      <p className="text-xs text-slate-600">Drag each word onto its meaning, or tap a word and then a meaning.</p>
 
-      <ul aria-label="Meanings" className="mt-4 space-y-2">
+      <ul aria-label="Meanings" className="mt-2 space-y-1.5">
         {pairs.map((pair) => {
           const placed = matched.has(pair.id)
           return (
             <li key={pair.id}>
               {placed ? (
-                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 motion-safe:animate-pop">
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 motion-safe:animate-pop">
                   <p className="text-base font-bold text-emerald-900">{pair.term}</p>
-                  <p className="mt-0.5 text-sm text-emerald-900">{pair.definition}</p>
+                  <p className="text-sm leading-5 text-emerald-900">{pair.definition}</p>
                 </div>
               ) : (
                 <button
-                  className={`w-full rounded-xl border-2 border-dashed px-4 py-3 text-left text-sm leading-6 text-slate-800 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                  className={`w-full rounded-xl border-2 border-dashed px-3 py-2 text-left text-sm leading-5 text-slate-800 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                     wrong?.cardId === pair.id
                       ? 'border-solid border-rose-600 bg-rose-100 text-rose-900'
                       : drag?.over === pair.id
@@ -190,64 +190,66 @@ export function MatchRound({
         })}
       </ul>
 
-      <p
-        aria-live="polite"
-        className={`mt-3 min-h-5 text-sm ${wrong ? 'font-semibold text-rose-700' : 'text-slate-600'}`}
-        role="status"
-      >
-        {message}
-      </p>
-
-      {done ? (
-        <div className="mt-3 rounded-xl bg-indigo-50 px-4 py-4">
-          <h3 className="text-lg font-bold tracking-tight outline-none" ref={doneRef} tabIndex={-1}>
-            {missed.size === 0 ? 'All matched on the first try!' : 'All matched!'}
-          </h3>
-          <button
-            className="mt-3 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            onClick={() =>
-              onContinue({
-                total: pairs.length,
-                firstTry: pairs.length - missed.size,
-                missed: pairs.filter((pair) => missed.has(pair.id)).map((pair) => pair.term),
-              })
-            }
-            type="button"
-          >
-            {continueLabel}
-          </button>
-        </div>
-      ) : (
-        <div aria-label="Words" className="mt-3 flex flex-wrap gap-2" ref={trayRef} role="group">
-          {remaining.map((pair) => {
-            const dragging = drag?.id === pair.id
-            return (
-              <button
-                aria-pressed={selected === pair.id}
-                className={`relative cursor-grab touch-none rounded-full border px-4 py-2 text-base font-semibold select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
-                  wrong?.wordId === pair.id
-                    ? 'border-rose-600 bg-rose-100 text-rose-900'
-                    : selected === pair.id
-                      ? 'border-indigo-700 bg-indigo-700 text-white'
-                      : 'border-indigo-300 bg-white text-indigo-900'
-                } ${dragging ? 'z-20 cursor-grabbing shadow-lg' : 'motion-safe:transition-transform'} ${
-                  wrong?.wordId === pair.id ? 'motion-safe:animate-shake' : ''
-                }`}
-                key={pair.id}
-                onClick={() => chooseChip(pair.id)}
-                onPointerCancel={cancelChip}
-                onPointerDown={(event) => pressChip(event, pair.id)}
-                onPointerMove={moveChip}
-                onPointerUp={releaseChip}
-                style={dragging ? { transform: `translate(${drag.dx}px, ${drag.dy}px) scale(1.08)` } : undefined}
-                type="button"
-              >
-                {pair.term}
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {/* Stays at the bottom of the screen, so the words are in reach however tall the meanings are. */}
+      <div className="sticky bottom-0 z-10 -mx-3 mt-2 rounded-b-2xl border-t border-slate-200 bg-white/95 px-3 pt-2 pb-1 backdrop-blur sm:-mx-7 sm:px-7">
+        <p
+          aria-live="polite"
+          className={`min-h-5 text-sm ${wrong ? 'font-semibold text-rose-700' : 'text-slate-600'}`}
+          role="status"
+        >
+          {message}
+        </p>
+        {done ? (
+          <div className="rounded-xl bg-indigo-50 px-4 py-3">
+            <h3 className="text-lg font-bold tracking-tight outline-none" ref={doneRef} tabIndex={-1}>
+              {missed.size === 0 ? 'All matched on the first try!' : 'All matched!'}
+            </h3>
+            <button
+              className="mt-3 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              onClick={() =>
+                onContinue({
+                  total: pairs.length,
+                  firstTry: pairs.length - missed.size,
+                  missed: pairs.filter((pair) => missed.has(pair.id)).map((pair) => pair.term),
+                })
+              }
+              type="button"
+            >
+              {continueLabel}
+            </button>
+          </div>
+        ) : (
+          <div aria-label="Words" className="flex flex-wrap gap-2 pb-1" ref={trayRef} role="group">
+            {remaining.map((pair) => {
+              const dragging = drag?.id === pair.id
+              return (
+                <button
+                  aria-pressed={selected === pair.id}
+                  className={`relative cursor-grab touch-none rounded-full border px-4 py-2 text-base font-semibold select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                    wrong?.wordId === pair.id
+                      ? 'border-rose-600 bg-rose-100 text-rose-900'
+                      : selected === pair.id
+                        ? 'border-indigo-700 bg-indigo-700 text-white'
+                        : 'border-indigo-300 bg-white text-indigo-900'
+                  } ${dragging ? 'z-20 cursor-grabbing shadow-lg' : 'motion-safe:transition-transform'} ${
+                    wrong?.wordId === pair.id ? 'motion-safe:animate-shake' : ''
+                  }`}
+                  key={pair.id}
+                  onClick={() => chooseChip(pair.id)}
+                  onPointerCancel={cancelChip}
+                  onPointerDown={(event) => pressChip(event, pair.id)}
+                  onPointerMove={moveChip}
+                  onPointerUp={releaseChip}
+                  style={dragging ? { transform: `translate(${drag.dx}px, ${drag.dy}px) scale(1.08)` } : undefined}
+                  type="button"
+                >
+                  {pair.term}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

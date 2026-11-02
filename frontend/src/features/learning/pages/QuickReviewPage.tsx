@@ -28,9 +28,11 @@ export function QuickReviewPage() {
 
   return (
     <div>
-      {backLink}
-      <h1 className="mt-3 text-3xl font-bold tracking-tight">Quick review</h1>
-      <div className="mt-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Quick review</h1>
+        {backLink}
+      </div>
+      <div className="mt-3">
         {queue.isPending ? (
           <p className="text-sm text-slate-600" role="status">
             Loading today’s words…
@@ -98,23 +100,23 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
   }
 
   return (
-    <>
-      <SoundSwitch />
-      <section aria-label={`Round ${round + 1} of ${rounds.length}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-slate-600 uppercase">
+    <section aria-label={`Round ${round + 1} of ${rounds.length}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-7">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
           Round {round + 1} of {rounds.length}
         </h2>
-        <MatchRound
-          continueLabel={round + 1 < rounds.length ? 'Next round' : 'See results'}
-          key={round}
-          onContinue={(result) => {
-            setResults((current) => [...current, result])
-            setRound((current) => current + 1)
-          }}
-          pairs={rounds[round]}
-        />
-      </section>
-    </>
+        <SoundSwitch />
+      </div>
+      <MatchRound
+        continueLabel={round + 1 < rounds.length ? 'Next round' : 'See results'}
+        key={round}
+        onContinue={(result) => {
+          setResults((current) => [...current, result])
+          setRound((current) => current + 1)
+        }}
+        pairs={rounds[round]}
+      />
+    </section>
   )
 }
 
@@ -123,10 +125,10 @@ function SoundSwitch() {
   const [on, setOn] = useState(getGameSound)
 
   return (
-    <label className="mb-3 flex w-fit items-center gap-2 text-sm text-slate-700">
+    <label className="flex w-fit items-center gap-2 text-sm text-slate-700">
       <input
         checked={on}
-        className="size-5 accent-indigo-700"
+        className="size-4 accent-indigo-700"
         onChange={(event) => {
           setOn(event.target.checked)
           setGameSound(event.target.checked)

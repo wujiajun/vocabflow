@@ -11,6 +11,8 @@ export interface MatchPair {
 export const roundSize = 5
 export const maxPairs = 10
 export const minPairs = 5
+// Characters: about two lines on a phone.
+const shortMeaning = 90
 
 export function shuffle<T>(items: readonly T[], random: () => number = Math.random): T[] {
   const result = [...items]
@@ -63,7 +65,11 @@ export function buildPairs(entries: readonly VocabularyEntry[], random: () => nu
       continue
     }
 
-    const definition = maskTerm(usable[Math.floor(random() * usable.length)], [entry.term, entry.baseForm])
+    // A long meaning makes a tall card, and five of them push the words off a phone's screen, so a short
+    // one is taken when the word has one.
+    const short = usable.filter((definition) => definition.length <= shortMeaning)
+    const choices = short.length > 0 ? short : usable
+    const definition = maskTerm(choices[Math.floor(random() * choices.length)], [entry.term, entry.baseForm])
     if (taken.has(definition.toLowerCase())) {
       continue
     }

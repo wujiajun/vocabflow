@@ -56,6 +56,15 @@ test('each word gets one of its meanings, and words without one or with a repeat
   ])
 })
 
+test('a short meaning is taken over a long one, and a long one still plays when it is all there is', () => {
+  const long = 'A very long and winding explanation of what this word means, going on well past two lines of a phone screen.'
+  const entries = [entry(1, 'lead', [long, 'To show the way.']), entry(2, 'cope', [long.replace('winding', 'twisting')])]
+
+  const pairs = buildPairs(entries, () => 0.99)
+
+  expect(pairs.map((pair) => pair.definition)).toEqual(['To show the way.', long.replace('winding', 'twisting')])
+})
+
 test('a word with only the single definition field still plays', () => {
   const plain = entry(1, 'cope', [], { definition: 'To deal with trouble.' })
   expect(buildPairs([plain])).toEqual([{ id: 1, term: 'cope', definition: 'To deal with trouble.' }])
