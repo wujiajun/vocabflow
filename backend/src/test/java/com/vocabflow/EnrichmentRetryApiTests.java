@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -53,6 +54,7 @@ class EnrichmentRetryApiTests {
 
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
+  @Autowired JdbcTemplate jdbc;
 
   @BeforeEach
   void providerWorks() {
@@ -121,12 +123,15 @@ class EnrichmentRetryApiTests {
   @Test
   void aFailedWordCanBeRemovedWithItsPlaceInTheDailyPlanAndAddedAgainAfterwards() throws Exception {
     String owner = token("remove-owner@example.com");
-    providerDown.set(true);
     long id = add(owner, "typo");
     long kept = add(owner, "another typo");
-    // The plan is stored with both words in it.
+    // The plan is stored with both words in it; a word only enters a plan once its content is
+    // ready, so one that failed afterwards stands for a word in a plan stored earlier.
     mvc.perform(get("/api/v1/learning/daily-plan").header("Authorization", "Bearer " + owner))
         .andExpect(jsonPath("$.newItems.length()").value(2));
+    jdbc.update(
+        "UPDATE vocabulary_items SET enrichment_status = 'FAILED' WHERE normalized_term = ?",
+        "typo");
 
     mvc.perform(delete("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
         .andExpect(status().isNoContent());
@@ -141,7 +146,6 @@ class EnrichmentRetryApiTests {
     mvc.perform(delete("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + owner))
         .andExpect(status().isNotFound());
 
-    providerDown.set(false);
     long again = add(owner, "typo");
     mvc.perform(get("/api/v1/vocabulary/" + again).header("Authorization", "Bearer " + owner))
         .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"));
@@ -187,6 +191,38 @@ class EnrichmentRetryApiTests {
     mvc.perform(delete("/api/v1/vocabulary/" + failed)).andExpect(status().isUnauthorized());
     mvc.perform(get("/api/v1/vocabulary/" + failed).header("Authorization", "Bearer " + owner))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void aWordJoinsTheDailyPlanOnlyOnceItsContentIsReady() throws Exception {
+    String owner = token("plan-ready-owner@example.com");
+    long ready = add(owner, "ready");
+    providerDown.set(true);
+    long waiting = add(owner, "waiting");
+    providerDown.set(false);
+
+    // The failed word is not learnable yet, so a plan created now leaves it out.
+    mvc.perform(
+            get("/api/v1/learning/daily-plan")
+                .queryParam("date", "2026-09-01")
+                .header("Authorization", "Bearer " + owner))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.newItems.length()").value(1))
+        .andExpect(jsonPath("$.newItems[0].term").value("ready"))
+        .andExpect(jsonPath("$.newItems[0].userVocabularyId").value(ready));
+
+    // Once the retry completes, the same day's plan takes the word in at its end.
+    mvc.perform(
+            post("/api/v1/vocabulary/" + waiting + "/enrichment/retry")
+                .header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"));
+    mvc.perform(
+            get("/api/v1/learning/daily-plan")
+                .queryParam("date", "2026-09-01")
+                .header("Authorization", "Bearer " + owner))
+        .andExpect(jsonPath("$.newItems.length()").value(2))
+        .andExpect(jsonPath("$.newItems[0].userVocabularyId").value(ready))
+        .andExpect(jsonPath("$.newItems[1].userVocabularyId").value(waiting));
   }
 
   private long add(String token, String term) throws Exception {

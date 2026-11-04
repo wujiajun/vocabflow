@@ -170,6 +170,14 @@ class MysqlPersistenceIT extends MysqlIntegrationTest {
     userVocabularies.saveAndFlush(newest);
     userVocabularies.saveAndFlush(oldest);
     userVocabularies.saveAndFlush(other);
+    // Words whose content is not ready are older than the rest but must never be offered.
+    for (String status : List.of("PENDING", "PROCESSING", "FAILED")) {
+      VocabularyItemEntity unready = vocabularyItem("unready " + status.toLowerCase());
+      unready.enrichmentStatus = status;
+      UserVocabularyEntity entry = userVocabulary(user.id, vocabularyItems.saveAndFlush(unready));
+      entry.createdAt = Instant.parse("2025-12-01T00:00:00Z");
+      userVocabularies.saveAndFlush(entry);
+    }
 
     List<LearningVocabulary> candidates = learningVocabulary.findNewVocabularyForUser(user.id, 2);
     assertThat(candidates)
