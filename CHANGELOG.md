@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [Unreleased]
+
+### Changed
+
+- On the Study page the total no longer sits alone on a line of its own under the legend on a phone: it is now "31
+  words" at the end of the progress bar.
+
 ## [1.2.0] - 2026-11-03
 
 Words are stored under their base word, and only words with their details ready are studied.
