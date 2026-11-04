@@ -15,7 +15,7 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 ### Fixed
 
 - The backend image could not be built from a fresh clone of the repository (it copied the `.mvn` folder, which is
-  not in Git). The wrapper now downloads Maven during the build.
+  not in Git). The build now installs curl and lets the wrapper download Maven.
 - Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
   Chrome could then drop the word spoken in that click. It now runs on touch only.
 - Chrome on a computer also dropped a word spoken right after stopping another (a card read aloud, then Show answer):
