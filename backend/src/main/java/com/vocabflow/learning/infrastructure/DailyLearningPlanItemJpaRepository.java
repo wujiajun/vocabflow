@@ -7,6 +7,15 @@ import org.springframework.data.repository.query.Param;
 
 public interface DailyLearningPlanItemJpaRepository
     extends JpaRepository<DailyLearningPlanItemEntity, Long> {
+  @Query(
+      """
+      select count(i) > 0 from DailyLearningPlanItemEntity i
+       where i.userVocabularyId = :userVocabularyId
+         and i.plan.id in (select p.id from DailyLearningPlanEntity p where p.userId = :userId)
+      """)
+  boolean existsForWord(
+      @Param("userId") long userId, @Param("userVocabularyId") long userVocabularyId);
+
   @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query(
       """

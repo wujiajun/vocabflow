@@ -4,8 +4,9 @@ import java.util.List;
 
 /**
  * The single-value fields hold the first sense, so a list can show one summary line per word.
- * {@code baseForm} is the word this one is an inflected form of ({@code leases} of {@code lease}),
- * or null when the text is itself the word to learn. {@code term} is the text with the capitals a
+ * {@code baseForm} is the word this one only inflects ({@code leases} of {@code lease}), with
+ * senses written for that word; it is null when the text is itself the word to learn or has a
+ * meaning of its own ({@code tired}, {@code glasses}). {@code term} is the text with the capitals a
  * dictionary uses, or null to leave the stored one as it is.
  */
 public record EnrichmentResult(

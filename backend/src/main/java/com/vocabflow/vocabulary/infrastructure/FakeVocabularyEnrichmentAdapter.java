@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
     havingValue = "fake",
     matchIfMissing = true)
 public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProvider {
+  // Texts that only inflect another word, with that word, so tests can tell them apart.
+  private static final Map<String, String> INFLECTED =
+      Map.of("walked", "walk", "parcels", "parcel", "trucks", "truck");
+
   @Override
   public String source() {
     return "fake";
@@ -68,6 +72,17 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
           "To understand or solve something.",
           List.of("I need to figure out this problem."),
           List.of("figure out how", "figure it out"));
+    String base = INFLECTED.get(n);
+    if (base != null)
+      return new EnrichmentResult(
+              VocabularyType.WORD,
+              null,
+              "noun",
+              "A development definition for '" + base + "'.",
+              List.of("I encountered '" + base + "' in a sentence."),
+              List.of(base + " usage"))
+          .withBaseForm(base)
+          .withTerm(t.value());
     boolean phrase = n.contains(" ");
     return new EnrichmentResult(
         phrase ? VocabularyType.PHRASE : VocabularyType.WORD,

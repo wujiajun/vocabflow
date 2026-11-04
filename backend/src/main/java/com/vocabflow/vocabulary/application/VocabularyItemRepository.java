@@ -27,6 +27,16 @@ public interface VocabularyItemRepository {
 
   void markCompleted(long id, EnrichmentResult result, String source, Instant at);
 
+  /**
+   * Completes an item whose text only inflects {@code result.baseForm()}, so that it becomes that
+   * word instead, in one transaction: the item is renamed when no item of that word exists, and
+   * otherwise every user's entry moves to the existing completed one and this item is deleted.
+   * Returns false, having changed nothing, when it cannot be done safely: a user has already
+   * studied it or holds the base word, or the base item is not completed. The caller then completes
+   * it as typed.
+   */
+  boolean completeAsBaseForm(long id, EnrichmentResult result, String source, Instant at);
+
   void markFailed(long id, String reason);
 
   /** Fails the item because the text is a misspelling of {@code suggestion}. */

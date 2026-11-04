@@ -8,6 +8,9 @@ public interface StudyRecords {
   /** Whether the user has ever rated the word. */
   boolean hasHistory(long userId, long userVocabularyId);
 
+  /** Whether the word has been rated or sits in any stored daily plan. */
+  boolean isInUse(long userId, long userVocabularyId);
+
   /**
    * Takes the word out of every stored daily plan that lists it; the other items keep their order.
    */

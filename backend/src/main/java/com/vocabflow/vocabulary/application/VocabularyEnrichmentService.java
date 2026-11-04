@@ -71,7 +71,9 @@ public class VocabularyEnrichmentService {
       }
       VocabularyItem item = items.findById(itemId).orElseThrow();
       EnrichmentResult result = provider.enrich(item.term());
-      items.markCompleted(itemId, result, provider.source(), Instant.now());
+      if (!completedAsBaseForm(itemId, result)) {
+        items.markCompleted(itemId, result, provider.source(), Instant.now());
+      }
     } catch (MisspelledTermException exception) {
       items.markMisspelled(itemId, exception.suggestion(), MISSPELLED_REASON);
     } catch (EnrichmentRejectedException exception) {
@@ -81,6 +83,26 @@ public class VocabularyEnrichmentService {
       // The class name only: provider messages can echo request details.
       log.warn("Enrichment of item {} failed: {}", itemId, exception.getClass().getSimpleName());
       items.markFailed(itemId, FAILED_REASON);
+    }
+  }
+
+  /**
+   * A text that only inflects another word (its reply names a base form and says it has no meaning
+   * of its own) is stored as that word. Never fatal: if it cannot be done, the item is completed as
+   * typed, with its "Form of" note.
+   */
+  private boolean completedAsBaseForm(long itemId, EnrichmentResult result) {
+    if (result.baseForm() == null) {
+      return false;
+    }
+    try {
+      return items.completeAsBaseForm(itemId, result, provider.source(), Instant.now());
+    } catch (RuntimeException exception) {
+      log.warn(
+          "Item {} stays as typed, not its base form: {}",
+          itemId,
+          exception.getClass().getSimpleName());
+      return false;
     }
   }
 

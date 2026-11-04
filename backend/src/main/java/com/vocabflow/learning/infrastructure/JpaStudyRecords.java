@@ -25,6 +25,12 @@ public class JpaStudyRecords implements StudyRecords {
   }
 
   @Override
+  public boolean isInUse(long userId, long userVocabularyId) {
+    return hasHistory(userId, userVocabularyId)
+        || planItems.existsForWord(userId, userVocabularyId);
+  }
+
+  @Override
   public void removeFromPlans(long userId, long userVocabularyId) {
     planItems.deleteForWord(userId, userVocabularyId);
   }
