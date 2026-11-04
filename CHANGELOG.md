@@ -7,6 +7,10 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ## [Unreleased]
 
+### Added
+
+- On a word's detail page each example sentence has a speaker button that reads it aloud (a press again stops it).
+
 ### Changed
 
 - On the Study page the total no longer sits alone on a line of its own under the legend on a phone: it is now "31

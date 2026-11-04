@@ -1,10 +1,21 @@
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import type { VocabularySense } from '../types/vocabulary'
+import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { TappableText } from './TappableText'
 
 // Shows a word's meanings, one at a time when it has several. Follows the ARIA tabs pattern: Tab
 // reaches the selected tab, and the arrow keys, Home and End move between tabs.
-export function SenseTabs({ senses, headingLevel }: { senses: VocabularySense[]; headingLevel: 'h2' | 'h3' }) {
+// `speakExamples` puts a play button beside each example sentence. The words of a sentence are already
+// taps that offer to add them, so the sentence itself cannot be the press target.
+export function SenseTabs({
+  senses,
+  headingLevel,
+  speakExamples = false,
+}: {
+  senses: VocabularySense[]
+  headingLevel: 'h2' | 'h3'
+  speakExamples?: boolean
+}) {
   const [selected, setSelected] = useState(0)
   const id = useId()
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([])
@@ -13,7 +24,7 @@ export function SenseTabs({ senses, headingLevel }: { senses: VocabularySense[];
     return null
   }
   if (senses.length === 1) {
-    return <SenseContent headingLevel={headingLevel} sense={senses[0]} />
+    return <SenseContent headingLevel={headingLevel} sense={senses[0]} speakExamples={speakExamples} />
   }
 
   const current = Math.min(selected, senses.length - 1)
@@ -61,20 +72,28 @@ export function SenseTabs({ senses, headingLevel }: { senses: VocabularySense[];
         ))}
       </div>
       <div aria-labelledby={`${id}-tab-${current}`} className="mt-4" id={`${id}-panel`} role="tabpanel">
-        <SenseContent headingLevel={headingLevel} sense={senses[current]} />
+        <SenseContent headingLevel={headingLevel} sense={senses[current]} speakExamples={speakExamples} />
       </div>
     </div>
   )
 }
 
-function SenseContent({ sense, headingLevel }: { sense: VocabularySense; headingLevel: 'h2' | 'h3' }) {
+function SenseContent({
+  sense,
+  headingLevel,
+  speakExamples,
+}: {
+  sense: VocabularySense
+  headingLevel: 'h2' | 'h3'
+  speakExamples: boolean
+}) {
   return (
     <div>
       {sense.phonetic ? <p className="text-sm text-slate-600">{sense.phonetic}</p> : null}
       <p className="mt-2 leading-7 text-slate-800">
         <TappableText text={sense.definition} />
       </p>
-      <SenseList headingLevel={headingLevel} items={sense.examples} tappable title="Examples" />
+      <SenseList headingLevel={headingLevel} items={sense.examples} speakable={speakExamples} tappable title="Examples" />
       <SenseList headingLevel={headingLevel} items={sense.collocations} title="Collocations" />
     </div>
   )
@@ -84,11 +103,13 @@ function SenseList({
   title,
   items,
   tappable = false,
+  speakable = false,
   headingLevel: Heading,
 }: {
   title: string
   items: string[] | null
   tappable?: boolean
+  speakable?: boolean
   headingLevel: 'h2' | 'h3'
 }) {
   if (!items || items.length === 0) {
@@ -100,7 +121,20 @@ function SenseList({
       <Heading className="text-sm font-semibold tracking-wide text-slate-600 uppercase">{title}</Heading>
       <ul className="mt-2 list-disc space-y-1.5 pl-5 text-slate-800">
         {items.map((item) => (
-          <li key={item}>{tappable ? <TappableText text={item} /> : item}</li>
+          <li key={item}>
+            {speakable ? (
+              <div className="flex items-start gap-1">
+                <span className="min-w-0 flex-1">{tappable ? <TappableText text={item} /> : item}</span>
+                <span className="-my-2 shrink-0">
+                  <PronounceButton term={item} />
+                </span>
+              </div>
+            ) : tappable ? (
+              <TappableText text={item} />
+            ) : (
+              item
+            )}
+          </li>
         ))}
       </ul>
     </section>
