@@ -5,15 +5,33 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
-## [Unreleased]
+## [1.2.0] - 2026-11-03
+
+Words are stored under their base word, and only words with their details ready are studied.
 
 ### Changed
 
+- A word that only inflects another one, such as a plural or a past tense (`trucks`, `walked`), is now saved as that
+  word (`truck`, `walk`) once its details arrive, instead of staying under the typed form with a "Form of …" note.
+  Claude says, for each such word, whether the form has a meaning of its own that the base word does not give
+  (`tired`, `glasses`, `admired`); those stay as typed, and so does any word it is unsure about. A word also stays as
+  typed, with its note, when you already hold the base word, the base word is still being filled in, or the word has
+  already been studied.
+- A word enters the daily plan only once its details are ready. One still waiting for them, or one that failed, is left
+  out and joins the day's plan when it is ready, instead of showing up as a card with nothing on it.
 - Reading the word aloud as a card appears is now on by default, like reading it on Show answer. The choice is still
   kept per browser, so a new browser starts with both on.
 
+### Added
+
+- A word saved under another name than you typed shows "you added …" in the list and on its page, for as long as the
+  browser stays open. After a reload the note is gone.
+
 ### Fixed
 
+- Typing while a word was being added ("Adding…") glued the new text onto the word being saved (`walkedlease`) or
+  wiped it; in the bottom "Add a word" panel it also cancelled the confirmation of the word being saved. Both fields
+  are now locked while the word is sent.
 - The backend image could not be built from a fresh clone of the repository (it copied the `.mvn` folder, which is
   not in Git). The build now installs curl and lets the wrapper download Maven.
 - Reading the word aloud on a computer (Chrome): the silent warm-up for iPhone ran on the first mouse click too, and
