@@ -42,6 +42,13 @@ class ClaudeVocabularyEnrichmentAdapterTest {
         // The reason comes before the verdict it explains.
         .andExpect(jsonPath("$.output_config.format.schema.required[2]").value("ownMeaningReason"))
         .andExpect(jsonPath("$.output_config.format.schema.required[3]").value("ownMeaning"))
+        // The frequency is decided before the definition is written.
+        .andExpect(
+            jsonPath("$.output_config.format.schema.properties.senses.items.required[2]")
+                .value("frequency"))
+        .andExpect(
+            jsonPath("$.output_config.format.schema.properties.senses.items.required[4]")
+                .value("definition"))
         .andRespond(withSuccess(reply(entry()), MediaType.APPLICATION_JSON));
 
     EnrichmentResult result = adapter.enrich(RESUME);
@@ -57,6 +64,68 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     assertThat(second.examples()).containsExactly("The meeting will resume.");
     assertThat(second.collocations()).containsExactly("resume work");
     assertThat(adapter.source()).isEqualTo("claude:claude-haiku-5-5");
+  }
+
+  @Test
+  void meaningsAreOrderedByFrequencyAndATieKeepsTheModelsOrder() {
+    Map<String, Object> entry = entry();
+    entry.put(
+        "senses",
+        List.of(
+            rated("noun", "rare", 2, "Rare."),
+            rated("noun", "tie one", 4, "First of a tie."),
+            rated("verb", "top", 5, "Top."),
+            rated("noun", "tie two", 4, "Second of a tie.")));
+
+    assertThat(parse(entry).senses())
+        .extracting(VocabularySense::definition)
+        .containsExactly("Top.", "First of a tie.", "Second of a tie.", "Rare.");
+  }
+
+  @Test
+  void aMeaningRatedOneIsLeftOutUnlessItIsTheOnlyOne() {
+    Map<String, Object> entry = entry();
+    entry.put(
+        "senses",
+        List.of(rated("noun", "common", 4, "Common."), rated("noun", "hardly", 1, "Hardly ever.")));
+    assertThat(parse(entry).senses())
+        .extracting(VocabularySense::definition)
+        .containsExactly("Common.");
+
+    entry.put("senses", List.of(rated("noun", "only", 1, "Only meaning.")));
+    assertThat(parse(entry).senses())
+        .extracting(VocabularySense::definition)
+        .containsExactly("Only meaning.");
+  }
+
+  @Test
+  void aFrequencyOutsideOneToFiveIsBroughtIntoRangeAndTheSummaryFollowsTheOrder() {
+    Map<String, Object> entry = entry();
+    entry.put(
+        "senses",
+        List.of(
+            rated("noun", "low", 0, "Zero counts as one."),
+            rated("verb", "high", 9, "Nine counts as five.")));
+
+    EnrichmentResult result = parse(entry);
+
+    assertThat(result.senses())
+        .extracting(VocabularySense::definition)
+        .containsExactly("Nine counts as five.");
+    assertThat(result.definition()).isEqualTo("Nine counts as five.");
+    assertThat(result.partOfSpeech()).isEqualTo("verb");
+  }
+
+  @Test
+  void refusesAMeaningWithoutAWholeNumberFrequency() {
+    for (Object bad : new Object[] {"often", 2.5}) {
+      Map<String, Object> sense = sense("noun", "x");
+      sense.put("frequency", bad);
+      assertRejected(sense);
+    }
+    Map<String, Object> missing = sense("noun", "x");
+    missing.remove("frequency");
+    assertRejected(missing);
   }
 
   @Test
@@ -313,6 +382,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> first = new HashMap<>();
     first.put("partOfSpeech", "noun");
     first.put("label", "document");
+    first.put("frequency", 5);
     first.put("phonetic", "/ˈrezəmeɪ/");
     first.put("definition", "A document listing your experience.");
     first.put("examples", List.of("Send me your resume."));
@@ -320,6 +390,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> second = new HashMap<>();
     second.put("partOfSpeech", "verb");
     second.put("label", "start again");
+    second.put("frequency", 3);
     second.put("phonetic", "/rɪˈzuːm/");
     second.put("definition", "To begin again.");
     second.put("examples", List.of("The meeting will resume."));
@@ -335,10 +406,19 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     return entry;
   }
 
+  private static Map<String, Object> rated(
+      String partOfSpeech, String label, int frequency, String definition) {
+    Map<String, Object> sense = sense(partOfSpeech, label);
+    sense.put("frequency", frequency);
+    sense.put("definition", definition);
+    return sense;
+  }
+
   private static Map<String, Object> sense(String partOfSpeech, String label) {
     Map<String, Object> sense = new HashMap<>();
     sense.put("partOfSpeech", partOfSpeech);
     sense.put("label", label);
+    sense.put("frequency", 3);
     sense.put("phonetic", "/x/");
     sense.put("definition", "A definition.");
     sense.put("examples", List.of("An example."));

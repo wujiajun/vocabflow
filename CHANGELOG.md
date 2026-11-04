@@ -13,6 +13,9 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Changed
 
+- Claude now rates each meaning of a word from 1 (hardly ever met) to 5 (almost every day) and the meanings are
+  listed by that rating, highest first; a meaning rated 1 is left out unless it is the only one. The rating is not
+  stored.
 - Claude is now asked to list a word's meanings by how often people meet each one, not by dictionary order or the
   oldest sense (`manifest` listed the cargo list first). On 24 test words it put the right meaning first in about 92% of
   replies, against about 87% before; `lead` and `mean` are still often wrong. Words already saved keep their order.
