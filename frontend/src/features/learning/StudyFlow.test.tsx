@@ -466,7 +466,18 @@ test('shows the three groups as a bar in proportion, with their counts and the t
   expect(legend).toHaveTextContent('Studied 2')
   expect(legend).toHaveTextContent('Learning 8')
   expect(legend).toHaveTextContent('Not started 10')
-  expect(legend).toHaveTextContent('Total 20')
+  // The total is at the end of the bar, not a line of its own in the legend.
+  expect(legend).toHaveTextContent('20 words')
+  expect(legend).not.toHaveTextContent('Total')
+})
+
+test('says "1 word" at the end of the bar when the study holds a single word', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ notStartedCount: 1 })) })
+
+  renderApp('/app/study')
+
+  const region = await screen.findByRole('region', { name: 'Study progress' })
+  expect(region).toHaveTextContent(/1 word(?!s)/)
 })
 
 test('shows no bar when this study holds no words', async () => {
