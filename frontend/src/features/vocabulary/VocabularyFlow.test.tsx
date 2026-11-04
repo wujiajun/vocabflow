@@ -189,6 +189,73 @@ test('adds a trimmed term, clears the input and refreshes the list', async () =>
   expect(JSON.parse(post?.[1]?.body as string)).toEqual({ term: 'figure out' })
 })
 
+test('says what was typed when the word is saved under another name, in the list and on its page', async () => {
+  // Added as "walked"; by the time the list is read, the server has saved it as "walk".
+  const walk = entry({ id: 9, term: 'walk', type: 'WORD', definition: 'To move on foot.' })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([walk])),
+    'POST /api/v1/vocabulary': () => jsonResponse(entry({ id: 9, term: 'walked', enrichmentStatus: 'PENDING' })),
+    'GET /api/v1/vocabulary/9': () => jsonResponse(walk),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  await browserUser.type(await screen.findByLabelText('New word or phrase'), 'walked')
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+
+  const item = await screen.findByRole('listitem')
+  expect(item).toHaveTextContent('walk')
+  expect(item).toHaveTextContent('you added “walked”')
+
+  await browserUser.click(within(item).getByRole('link'))
+  expect(await screen.findByRole('heading', { name: 'walk' })).toBeInTheDocument()
+  expect(screen.getByText('You added')).toHaveTextContent('You added “walked”')
+})
+
+test('says nothing when the saved word is the one typed, only in other capitals', async () => {
+  const walk = entry({ id: 9, term: 'walk', type: 'WORD', definition: 'To move on foot.' })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([walk])),
+    'POST /api/v1/vocabulary': () => jsonResponse(entry({ id: 9, term: 'WALK', enrichmentStatus: 'PENDING' })),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  await browserUser.type(await screen.findByLabelText('New word or phrase'), 'WALK')
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+
+  expect(await screen.findByRole('listitem')).not.toHaveTextContent('you added')
+})
+
+test('leaves the form-of note to explain a word that stays as typed', async () => {
+  const leases = entry({ id: 9, term: 'leases', baseForm: 'lease', type: 'WORD', definition: 'A contract to rent.' })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([leases])),
+    'POST /api/v1/vocabulary': () => jsonResponse(entry({ id: 9, term: 'Leases', enrichmentStatus: 'PENDING' })),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  await browserUser.type(await screen.findByLabelText('New word or phrase'), 'Leases')
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+
+  const item = await screen.findByRole('listitem')
+  expect(item).toHaveTextContent('form of lease')
+  expect(item).not.toHaveTextContent('you added')
+})
+
+test('does not know what a word from an earlier visit was typed as', async () => {
+  const walk = entry({ id: 9, term: 'walk', type: 'WORD', definition: 'To move on foot.' })
+  stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([walk])) })
+
+  renderApp('/app/vocabulary')
+
+  expect(await screen.findByRole('listitem')).not.toHaveTextContent('you added')
+})
+
 test('does not send blank or over-long terms', async () => {
   const fetchMock = stubApi({ ...signedIn(), 'GET /api/v1/vocabulary': () => jsonResponse(page([])) })
   const browserUser = userEvent.setup()
