@@ -9,7 +9,7 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Added
 
-- On a word's detail page each example sentence has a speaker button that reads it aloud (a press again stops it).
+- On a word's detail page each example sentence has a speaker button that reads it aloud (a press again stops it). The same buttons are on the back of a study card.
 
 ### Changed
 
