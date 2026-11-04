@@ -39,6 +39,9 @@ class ClaudeVocabularyEnrichmentAdapterTest {
         .andExpect(jsonPath("$.messages[0].content").value("<term>resume</term>"))
         .andExpect(jsonPath("$.output_config.format.type").value("json_schema"))
         .andExpect(jsonPath("$.output_config.format.schema.required[0]").value("term"))
+        // The reason comes before the verdict it explains.
+        .andExpect(jsonPath("$.output_config.format.schema.required[2]").value("ownMeaningReason"))
+        .andExpect(jsonPath("$.output_config.format.schema.required[3]").value("ownMeaning"))
         .andRespond(withSuccess(reply(entry()), MediaType.APPLICATION_JSON));
 
     EnrichmentResult result = adapter.enrich(RESUME);
@@ -119,6 +122,23 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     EnrichmentResult result = adapter.enrich(new VocabularyTerm("resumes"));
 
     assertThat(result.baseForm()).isEqualTo("Resume");
+  }
+
+  @Test
+  void noBaseFormForAFormThatHasAMeaningOfItsOwn() {
+    Map<String, Object> entry = entry();
+    entry.put("baseForm", "resumes");
+    entry.put("ownMeaning", true);
+
+    assertThat(parse(entry).baseForm()).isNull();
+  }
+
+  @Test
+  void refusesAReplyWithoutTheOwnMeaningFlag() {
+    Map<String, Object> entry = entry();
+    entry.remove("ownMeaning");
+
+    assertThatThrownBy(() -> parse(entry)).isInstanceOf(EnrichmentRejectedException.class);
   }
 
   @Test
@@ -307,6 +327,8 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> entry = new HashMap<>();
     entry.put("term", "resume");
     entry.put("baseForm", "");
+    entry.put("ownMeaningReason", "");
+    entry.put("ownMeaning", false);
     entry.put("misspelled", false);
     entry.put("type", "WORD");
     entry.put("senses", List.of(first, second));

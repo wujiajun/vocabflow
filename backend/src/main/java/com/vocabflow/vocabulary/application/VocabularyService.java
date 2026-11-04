@@ -34,18 +34,26 @@ public class VocabularyService {
 
   // Deliberately not @Transactional: the adapters catch duplicate-key errors from saveIfAbsent, and
   // inside one shared transaction that poisons the session and hides the winner's committed row.
-  // Enrichment runs in the background, so the returned item is as it was when it was saved.
+  // Enrichment runs in the background, so the returned item is as it was when it was saved. The
+  // entry is saved before enrichment is scheduled, because a finished enrichment may turn the item
+  // into its base word and must find this user's entry among the holders.
   public UserVocabulary add(long userId, String rawTerm) {
     VocabularyTerm term = new VocabularyTerm(rawTerm);
     VocabularyItem item =
         items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term));
-    scheduleIfUnfinished(item, userId);
     if (userItems.existsByUserIdAndVocabularyItemId(userId, item.id())) {
+      scheduleIfUnfinished(item, userId);
       throw new ConflictException("This vocabulary is already in your list");
     }
-    return userItems
-        .saveIfAbsent(new UserVocabulary(0, userId, item, LearningStatus.NEW, Instant.now()))
-        .orElseThrow(() -> new ConflictException("This vocabulary is already in your list"));
+    UserVocabulary saved =
+        userItems
+            .saveIfAbsent(new UserVocabulary(0, userId, item, LearningStatus.NEW, Instant.now()))
+            .orElse(null);
+    scheduleIfUnfinished(item, userId);
+    if (saved == null) {
+      throw new ConflictException("This vocabulary is already in your list");
+    }
+    return saved;
   }
 
   private VocabularyItem create(VocabularyTerm term) {

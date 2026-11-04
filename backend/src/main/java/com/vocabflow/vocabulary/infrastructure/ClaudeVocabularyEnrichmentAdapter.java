@@ -9,6 +9,7 @@ import com.vocabflow.vocabulary.application.VocabularyEnrichmentProvider;
 import com.vocabflow.vocabulary.domain.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,19 +53,31 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       for ordinary words and phrases, capitals only for proper nouns and acronyms, such as \
       "Toronto" or "NASA", and for brand names written that way, such as "iPhone". Keep every letter \
       and space as given and change only capitals. Describe that text and nothing else.
-      - baseForm: if the text is an inflected form of a word, that word: the singular of a plural \
-      noun, the base verb for a past tense, -ing or third-person form, the plain form of a \
-      comparative or superlative. Then write the senses for the base word, because that is what the \
-      learner needs to learn. Use an empty string when the text is already a base form or a \
-      phrase, or when the inflected form has a meaning of its own that the base word lacks or is \
-      the form a dictionary lists as a word in its own right, such as "glasses" for spectacles, \
-      "customs" at the border, or "tired" as an adjective. Then describe the text as given.
+      - baseForm: if the text is an inflected form of another word, that word: the singular of a \
+      plural noun, the base verb for a past tense, a past participle, an -ing or third-person \
+      form, the plain form of a comparative or superlative. Use an empty string when the text is \
+      already a base form or a phrase.
+      - ownMeaningReason: one short sentence that names the deciding fact for ownMeaning, such as \
+      the other dictionary entry that the form has, or that it only adds a plural. Use an empty \
+      string when baseForm is empty.
+      - ownMeaning: true when this exact form has a meaning or use of its own that the base word \
+      does not give, so that a learner who knows the base word would still not understand the \
+      form. This is the case when a standard learner's dictionary (Oxford, Merriam-Webster) lists \
+      the form itself as a word in its own right or as a separate sense: an adjective made from a \
+      participle ("worried", "relaxed"), a noun made from an -ing form ("building", "painting"), \
+      a plural with its own meaning ("clothes", "arms" as weapons, "damages" as money owed), or a \
+      form that is also a different word ("found" as to establish). Use false when the form only \
+      adds grammar, and a learner who knows the base word understands it fully, such as "dogs", \
+      "walked", "taller", "swam" and "men". Use false as well when baseForm is empty. Judge the \
+      form on its own, not the base word. If you are unsure, use true.
       - misspelled: true only if the text is clearly a misspelling or typing slip of a different \
       word. Then baseForm is the correctly spelled word and the senses describe that word. Use \
       false for a real word, a name, a technical term, an informal word, and a spelling that is \
       correct in Canadian or American English.
       - type: WORD, PHRASE, PHRASAL_VERB, IDIOM or EXPRESSION.
-      - senses, each with:
+      - senses: when baseForm is set and ownMeaning is false, write the senses for the base word, \
+      because that is what the learner needs to learn. Otherwise describe the text as given. Each \
+      sense has:
         - partOfSpeech: for example noun, verb, adjective, phrasal verb, idiom.
         - label: one to three plain English words that tell this meaning from the others, for \
       example "document" or "start again".
@@ -101,30 +114,34 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
           "additionalProperties",
           false);
 
-  private static final Map<String, Object> SCHEMA =
-      Map.of(
-          "type",
-          "object",
-          "properties",
-          Map.of(
-              "term",
-              Map.of("type", "string"),
-              "baseForm",
-              Map.of("type", "string"),
-              "misspelled",
-              Map.of("type", "boolean"),
-              "type",
-              Map.of(
-                  "type",
-                  "string",
-                  "enum",
-                  Arrays.stream(VocabularyType.values()).map(Enum::name).toList()),
-              "senses",
-              Map.of("type", "array", "items", SENSE_SCHEMA)),
-          "required",
-          List.of("term", "baseForm", "misspelled", "type", "senses"),
-          "additionalProperties",
-          false);
+  // Ordered: the reason comes before the verdict it explains, so the model reasons first.
+  private static final Map<String, Object> SCHEMA = schema();
+
+  private static Map<String, Object> schema() {
+    Map<String, Object> properties = new LinkedHashMap<>();
+    properties.put("term", Map.of("type", "string"));
+    properties.put("baseForm", Map.of("type", "string"));
+    properties.put("ownMeaningReason", Map.of("type", "string"));
+    properties.put("ownMeaning", Map.of("type", "boolean"));
+    properties.put("misspelled", Map.of("type", "boolean"));
+    properties.put(
+        "type",
+        Map.of(
+            "type",
+            "string",
+            "enum",
+            Arrays.stream(VocabularyType.values()).map(Enum::name).toList()));
+    properties.put("senses", Map.of("type", "array", "items", SENSE_SCHEMA));
+    return Map.of(
+        "type",
+        "object",
+        "properties",
+        properties,
+        "required",
+        List.copyOf(properties.keySet()),
+        "additionalProperties",
+        false);
+  }
 
   private final RestClient client;
   private final String model;
@@ -206,7 +223,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       throw new EnrichmentRejectedException("Model reply describes a different term");
     }
     if (flag(entry, "misspelled")) {
-      String suggestion = baseForm(entry, term);
+      String suggestion = namedBase(entry, term);
       if (suggestion == null) {
         throw new EnrichmentRejectedException("Model reply marks a misspelling without a spelling");
       }
@@ -226,8 +243,11 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     for (JsonNode sense : senses) {
       parsed.add(sense(sense));
     }
+    // The base form is kept only for a form that adds nothing of its own. A form with a meaning
+    // of its own is described as typed, with no base form; one that is unsure is treated so too.
+    boolean ownMeaning = flag(entry, "ownMeaning");
     return EnrichmentResult.ofSenses(type, parsed)
-        .withBaseForm(baseForm(entry, term))
+        .withBaseForm(ownMeaning ? null : namedBase(entry, term))
         .withTerm(new VocabularyTerm(text(entry, "term")).value());
   }
 
@@ -240,7 +260,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
   }
 
   // Null when the model found nothing to reduce, or named the text itself.
-  private static String baseForm(JsonNode entry, VocabularyTerm term) {
+  private static String namedBase(JsonNode entry, VocabularyTerm term) {
     String replied = text(entry, "baseForm");
     if (replied.isBlank() || new VocabularyTerm(replied).normalized().equals(term.normalized())) {
       return null;

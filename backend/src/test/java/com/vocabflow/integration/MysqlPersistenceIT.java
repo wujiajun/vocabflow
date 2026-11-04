@@ -7,6 +7,7 @@ import com.vocabflow.identity.application.UserRepository;
 import com.vocabflow.identity.domain.*;
 import com.vocabflow.identity.infrastructure.UserEntity;
 import com.vocabflow.learning.domain.*;
+import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.domain.*;
 import com.vocabflow.vocabulary.infrastructure.UserVocabularyEntity;
 import com.vocabflow.vocabulary.infrastructure.VocabularyItemEntity;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 
 class MysqlPersistenceIT extends MysqlIntegrationTest {
   @Autowired private UserRepository userRepository;
+  @Autowired private VocabularyItemRepository itemPort;
 
   @Test
   void persistsUserThroughApplicationRepositoryPort() {
@@ -250,6 +252,45 @@ class MysqlPersistenceIT extends MysqlIntegrationTest {
     user.dailyGoal = 10;
     user.createdAt = Instant.parse("2026-01-01T00:00:00Z");
     return user;
+  }
+
+  @Test
+  void anInflectedItemBecomesItsBaseWordOnMysql() {
+    UserEntity first = users.saveAndFlush(user("base-first@example.com"));
+    UserEntity second = users.saveAndFlush(user("base-second@example.com"));
+    VocabularyItemEntity base = vocabularyItems.saveAndFlush(vocabularyItem("wallet"));
+    VocabularyItemEntity inflected = vocabularyItems.saveAndFlush(vocabularyItem("wallets"));
+    VocabularyItemEntity renamed = vocabularyItems.saveAndFlush(vocabularyItem("coats"));
+    userVocabularies.saveAndFlush(userVocabulary(first.id, base));
+    UserVocabularyEntity moving =
+        userVocabularies.saveAndFlush(userVocabulary(second.id, inflected));
+    UserVocabularyEntity staying =
+        userVocabularies.saveAndFlush(userVocabulary(second.id, renamed));
+    EnrichmentResult wallet = result().withBaseForm("wallet");
+    EnrichmentResult coat = result().withBaseForm("Coat");
+
+    assertThat(itemPort.completeAsBaseForm(inflected.id, wallet, "fake", Instant.now())).isTrue();
+    assertThat(itemPort.completeAsBaseForm(renamed.id, coat, "fake", Instant.now())).isTrue();
+
+    // The entry moved to the existing item, and the leftover item is gone.
+    assertThat(userVocabularies.findById(moving.id).orElseThrow().item.id).isEqualTo(base.id);
+    assertThat(vocabularyItems.findById(inflected.id)).isEmpty();
+    // With no item of that word, the item itself became the word.
+    VocabularyItemEntity coatItem = vocabularyItems.findById(renamed.id).orElseThrow();
+    assertThat(coatItem.term).isEqualTo("Coat");
+    assertThat(coatItem.normalizedTerm).isEqualTo("coat");
+    assertThat(coatItem.baseForm).isNull();
+    assertThat(userVocabularies.findById(staying.id).orElseThrow().item.id).isEqualTo(renamed.id);
+  }
+
+  private EnrichmentResult result() {
+    return new EnrichmentResult(
+        VocabularyType.WORD,
+        null,
+        "noun",
+        "A definition.",
+        List.of("An example."),
+        List.of("a collocation"));
   }
 
   private VocabularyItemEntity vocabularyItem(String term) {

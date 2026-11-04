@@ -1,6 +1,7 @@
 package com.vocabflow.vocabulary.infrastructure;
 
 import com.vocabflow.shared.infrastructure.JsonSupport;
+import com.vocabflow.vocabulary.application.StudyRecords;
 import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.domain.*;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -11,13 +12,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemRepository {
   private final VocabularyItemJpaRepository items;
+  private final UserVocabularyJpaRepository userVocabularies;
+  private final StudyRecords studyRecords;
 
-  public JpaVocabularyItemRepositoryAdapter(VocabularyItemJpaRepository items) {
+  public JpaVocabularyItemRepositoryAdapter(
+      VocabularyItemJpaRepository items,
+      UserVocabularyJpaRepository userVocabularies,
+      StudyRecords studyRecords) {
     this.items = items;
+    this.userVocabularies = userVocabularies;
+    this.studyRecords = studyRecords;
   }
 
   @Override
@@ -58,6 +67,60 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
   @Override
   public void markCompleted(long id, EnrichmentResult result, String source, Instant at) {
     VocabularyItemEntity entity = items.findById(id).orElseThrow();
+    fill(entity, result, source, at);
+    entity.baseForm = result.baseForm();
+    // Only the capitals can differ: the lookup key stays as it was.
+    if (result.term() != null) {
+      entity.term = result.term();
+    }
+    items.save(entity);
+  }
+
+  // Not read-only and not shared with a caller's transaction: a failure here (for example a
+  // duplicate key when another thread just created the base word) rolls back everything, and the
+  // caller then completes the item as typed.
+  @Override
+  @Transactional
+  public boolean completeAsBaseForm(long id, EnrichmentResult result, String source, Instant at) {
+    VocabularyTerm base = new VocabularyTerm(result.baseForm());
+    VocabularyItemEntity entity = items.findById(id).orElseThrow();
+    if (base.normalized().equals(entity.normalizedTerm)) {
+      return false;
+    }
+    List<UserVocabularyEntity> holders = userVocabularies.findByItem_Id(id);
+    for (UserVocabularyEntity holder : holders) {
+      if (studyRecords.isInUse(holder.userId, holder.id)) {
+        return false;
+      }
+    }
+    Optional<VocabularyItemEntity> existing = items.findByNormalizedTerm(base.normalized());
+    if (existing.isEmpty()) {
+      fill(entity, result, source, at);
+      entity.term = base.value();
+      entity.normalizedTerm = base.normalized();
+      entity.baseForm = null;
+      items.saveAndFlush(entity);
+      return true;
+    }
+    VocabularyItemEntity target = existing.get();
+    if (!EnrichmentStatus.COMPLETED.name().equals(target.enrichmentStatus)) {
+      return false;
+    }
+    for (UserVocabularyEntity holder : holders) {
+      if (userVocabularies.existsByUserIdAndItem_Id(holder.userId, target.id)) {
+        return false;
+      }
+    }
+    for (UserVocabularyEntity holder : holders) {
+      holder.item = target;
+      userVocabularies.saveAndFlush(holder);
+    }
+    items.deleteIfUnused(id);
+    return true;
+  }
+
+  private void fill(
+      VocabularyItemEntity entity, EnrichmentResult result, String source, Instant at) {
     entity.type = result.type() == null ? null : result.type().name();
     entity.phonetic = result.phonetic();
     entity.partOfSpeech = result.partOfSpeech();
@@ -65,17 +128,11 @@ public class JpaVocabularyItemRepositoryAdapter implements VocabularyItemReposit
     entity.examples = JsonSupport.write(result.examples());
     entity.collocations = JsonSupport.write(result.collocations());
     entity.senses = VocabularySenseJson.write(result.senses());
-    entity.baseForm = result.baseForm();
     entity.spellingSuggestion = null;
-    // Only the capitals can differ: the lookup key stays as it was.
-    if (result.term() != null) {
-      entity.term = result.term();
-    }
     entity.enrichmentStatus = EnrichmentStatus.COMPLETED.name();
     entity.failureReason = null;
     entity.enrichedAt = at;
     entity.enrichmentSource = source;
-    items.save(entity);
   }
 
   @Override

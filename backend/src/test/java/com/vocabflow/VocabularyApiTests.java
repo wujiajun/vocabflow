@@ -165,8 +165,20 @@ class VocabularyApiTests {
   @Test
   void showsWhichWordAnInflectedWordComesFromOnTheListAndTheStudyCard() throws Exception {
     String token = token("baseform@example.com");
+    // Already holding "lease", the word is not turned into it: the entry stays as typed, with a
+    // note.
+    long lease = add(token, "lease");
     long leases = add(token, "leases");
     long resume = add(token, "resume");
+    // The oldest word comes first on the study card.
+    jdbc.update(
+        "UPDATE user_vocabularies SET created_at = ? WHERE id = ?",
+        java.sql.Timestamp.from(java.time.Instant.parse("2020-01-01T00:00:00Z")),
+        leases);
+    jdbc.update(
+        "UPDATE user_vocabularies SET created_at = ? WHERE id = ?",
+        java.sql.Timestamp.from(java.time.Instant.parse("2030-01-01T00:00:00Z")),
+        lease);
 
     mvc.perform(get("/api/v1/vocabulary/" + leases).header("Authorization", "Bearer " + token))
         .andExpect(jsonPath("$.term").value("leases"))
@@ -181,8 +193,52 @@ class VocabularyApiTests {
   }
 
   @Test
+  void aWordThatOnlyInflectsAnotherIsStoredAsThatWord() throws Exception {
+    String token = token("inflected@example.com");
+    long id = add(token, "walked");
+
+    mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.term").value("walk"))
+        .andExpect(jsonPath("$.baseForm").isEmpty())
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"))
+        .andExpect(jsonPath("$.definition").value("A development definition for 'walk'."));
+    // It is the base word now, so typing the base word is a duplicate.
+    mvc.perform(
+            post("/api/v1/vocabulary")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"term\":\"walk\"}"))
+        .andExpect(status().isConflict());
+    mvc.perform(
+            get("/api/v1/learning/study-queue?date=2027-01-05")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$.nextCard.term").value("walk"))
+        .andExpect(jsonPath("$.nextCard.baseForm").isEmpty());
+  }
+
+  @Test
+  void anotherUsersEntryMovesToTheExistingBaseWordWithoutTouchingTheFirstUsers() throws Exception {
+    String first = token("base-owner@example.com");
+    String second = token("base-follower@example.com");
+    long firstParcel = add(first, "parcel");
+    long secondEntry = add(second, "parcels");
+
+    mvc.perform(
+            get("/api/v1/vocabulary/" + secondEntry).header("Authorization", "Bearer " + second))
+        .andExpect(jsonPath("$.term").value("parcel"))
+        .andExpect(jsonPath("$.baseForm").isEmpty())
+        .andExpect(jsonPath("$.enrichmentStatus").value("COMPLETED"));
+    mvc.perform(get("/api/v1/vocabulary/" + firstParcel).header("Authorization", "Bearer " + first))
+        .andExpect(jsonPath("$.term").value("parcel"));
+    mvc.perform(
+            get("/api/v1/vocabulary?page=0&size=10").header("Authorization", "Bearer " + second))
+        .andExpect(jsonPath("$.content.length()").value(1));
+  }
+
+  @Test
   void showsAWordWithTheCapitalsADictionaryUsesWhateverWasTyped() throws Exception {
     String token = token("capitals@example.com");
+    add(token, "lease");
     long id = add(token, "LEASES");
 
     mvc.perform(get("/api/v1/vocabulary/" + id).header("Authorization", "Bearer " + token))
