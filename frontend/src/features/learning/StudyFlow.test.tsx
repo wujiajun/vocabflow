@@ -697,3 +697,26 @@ function card(overrides: Partial<StudyCard> = {}): StudyCard {
     ...overrides,
   }
 }
+
+test('after the answer is shown, an example sentence can be read aloud', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const lead = card({
+    term: 'lead',
+    senses: [{ partOfSpeech: 'verb', label: null, phonetic: null, definition: 'To show the way.', examples: ['Lead us.'], collocations: [] }],
+  })
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: lead })),
+  })
+  const browserUser = userEvent.setup()
+  window.localStorage.setItem('vocabflow.speakOnCard', 'off')
+  window.localStorage.setItem('vocabflow.speakOnAnswer', 'off')
+
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+  await browserUser.click(screen.getByRole('button', { name: 'Play pronunciation of Lead us.' }))
+
+  expect(speech.lastUtterance()).toMatchObject({ text: 'Lead us.', lang: 'en-US' })
+  window.localStorage.removeItem('vocabflow.speakOnCard')
+  window.localStorage.removeItem('vocabflow.speakOnAnswer')
+})

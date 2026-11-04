@@ -106,7 +106,7 @@ export function StudyCardView({
           <div className="mt-4 outline-none" ref={answerRef} tabIndex={-1}>
             <BaseFormNote baseForm={card.baseForm} className="mb-1" />
             {kind ? <p className="mb-2 text-sm text-slate-600">{kind}</p> : null}
-            <SenseTabs headingLevel="h3" senses={card.senses} />
+            <SenseTabs headingLevel="h3" senses={card.senses} speakExamples />
           </div>
 
           {review.isError ? (
