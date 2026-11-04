@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router'
 import { backState } from '../../../shared/navigation'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { useTypedAs } from '../hooks/useVocabulary'
 import type { VocabularyEntry } from '../types/vocabulary'
 import { EnrichmentBadge } from './EnrichmentBadge'
 import { describeKind } from './formatVocabulary'
@@ -9,6 +10,7 @@ export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
   const severalMeanings = entry.senses.length > 1
   const kind = describeKind(entry.type, severalMeanings ? null : entry.partOfSpeech)
   const location = useLocation()
+  const typedAs = useTypedAs(entry)
 
   return (
     <li className="flex items-center rounded-xl border border-slate-200 bg-white pr-2 transition focus-within:border-indigo-300 hover:border-indigo-300 hover:bg-indigo-50/40">
@@ -20,6 +22,7 @@ export function VocabularyListItem({ entry }: { entry: VocabularyEntry }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-base font-semibold text-slate-950 [overflow-wrap:anywhere]">{entry.term}</span>
           {entry.baseForm ? <span className="text-sm text-slate-600">form of {entry.baseForm}</span> : null}
+          {typedAs ? <span className="text-sm text-slate-600">you added “{typedAs}”</span> : null}
           {kind ? <span className="text-sm text-slate-600">{kind}</span> : null}
           {severalMeanings ? <span className="text-sm text-slate-600">{entry.senses.length} meanings</span> : null}
           <EnrichmentBadge status={entry.enrichmentStatus} />
