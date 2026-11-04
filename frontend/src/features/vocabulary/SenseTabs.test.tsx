@@ -1,10 +1,14 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
+import { installSpeechSynthesis, voice } from '../../test/speech'
 import { SenseTabs } from './components/SenseTabs'
 import type { VocabularySense } from './types/vocabulary'
 
-afterEach(() => cleanup())
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 function sense(partOfSpeech: string | null, label: string | null, definition: string): VocabularySense {
   return { partOfSpeech, label, phonetic: `/${definition}/`, definition, examples: [`${definition} example`], collocations: [`${definition} combination`] }
@@ -81,4 +85,22 @@ test('uses the heading level the page needs', () => {
   render(<SenseTabs headingLevel="h3" senses={senses} />)
 
   expect(screen.getByRole('heading', { level: 3, name: 'Examples' })).toBeInTheDocument()
+})
+
+test('an example can be read aloud when the page asks for it, and collocations cannot', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const browserUser = userEvent.setup()
+  render(<SenseTabs headingLevel="h2" senses={[sense('noun', null, 'only')]} speakExamples />)
+
+  expect(screen.getAllByRole('button')).toHaveLength(1)
+  await browserUser.click(screen.getByRole('button', { name: 'Play pronunciation of only example' }))
+
+  expect(speech.lastUtterance()).toMatchObject({ text: 'only example', lang: 'en-US' })
+})
+
+test('has no read-aloud buttons unless the page asks for them', () => {
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  render(<SenseTabs headingLevel="h3" senses={[sense('noun', null, 'only')]} />)
+
+  expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })

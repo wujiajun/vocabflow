@@ -91,7 +91,7 @@ export function VocabularyDetailPage() {
         ) : null}
         <div className="mt-6">
           {entry.senses.length > 0 ? (
-            <SenseTabs headingLevel="h2" key={entry.id} senses={entry.senses} />
+            <SenseTabs headingLevel="h2" key={entry.id} senses={entry.senses} speakExamples />
           ) : (
             <p className="leading-7 text-slate-800">Definition not available yet.</p>
           )}
