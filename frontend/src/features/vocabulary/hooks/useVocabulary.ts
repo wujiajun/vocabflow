@@ -11,6 +11,9 @@ const vocabularyKeys = {
   lists: () => [...vocabularyKeys.all, 'list'] as const,
   list: (page: number, filter: string) => [...vocabularyKeys.lists(), page, vocabularyPageSize, filter] as const,
   detail: (id: number) => [...vocabularyKeys.all, 'detail', id] as const,
+  // What the user typed when they added the entry, kept in the cache so that it goes with the
+  // session. The server may save the word under another name once its details arrive.
+  typed: (id: number) => [...vocabularyKeys.all, 'typed', id] as const,
 }
 
 export function useVocabularyList(page: number, filter = '') {
@@ -52,13 +55,33 @@ export function useAddVocabulary() {
 
   return useMutation({
     mutationFn: (request: CreateVocabularyRequest) => createVocabulary(request),
-    onSuccess: (entry) => {
+    onSuccess: (entry, request) => {
+      queryClient.setQueryData(vocabularyKeys.typed(entry.id), request.term)
       // An unfinished entry is seeded as already stale, so opening its page reads the server again
       // instead of showing this snapshot for the whole stale time.
       queryClient.setQueryData(vocabularyKeys.detail(entry.id), entry, entryIsUnfinished(entry) ? { updatedAt: 0 } : undefined)
       return queryClient.invalidateQueries({ queryKey: vocabularyKeys.lists() })
     },
   })
+}
+
+/**
+ * What the user typed, when the entry ended up under another name (typed "walked", saved as
+ * "walk"), so the list and the page can say so. Only for an entry added in this session, and not
+ * when the entry already says it is a form of another word.
+ */
+export function useTypedAs(entry: Pick<VocabularyEntry, 'id' | 'term' | 'baseForm'>): string | null {
+  const queryClient = useQueryClient()
+  const typed = queryClient.getQueryData<string>(vocabularyKeys.typed(entry.id))
+  if (!typed || entry.baseForm || sameWord(typed, entry.term)) {
+    return null
+  }
+  return typed
+}
+
+function sameWord(first: string, second: string) {
+  const normal = (text: string) => text.trim().replace(/\s+/g, ' ').toLowerCase()
+  return normal(first) === normal(second)
 }
 
 export function useRetryEnrichment() {

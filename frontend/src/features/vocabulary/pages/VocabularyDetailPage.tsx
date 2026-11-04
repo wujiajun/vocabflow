@@ -8,6 +8,7 @@ import { useVoiceAccent } from '../../../shared/speech/usePronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentPanel } from '../components/EnrichmentPanel'
 import { BaseFormNote } from '../components/BaseFormNote'
+import { TypedAsNote } from '../components/TypedAsNote'
 import { SenseTabs } from '../components/SenseTabs'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
 import { useVocabularyDetail } from '../hooks/useVocabulary'
@@ -74,6 +75,7 @@ export function VocabularyDetailPage() {
           <PronounceButton term={entry.term} />
         </div>
         <BaseFormNote baseForm={entry.baseForm} className="mt-1" />
+        <TypedAsNote className="mt-1" entry={entry} />
         <EnrichmentPanel
           entry={entry}
           onCheckAgain={() => void detail.refetch()}
