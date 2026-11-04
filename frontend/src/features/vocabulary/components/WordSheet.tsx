@@ -86,6 +86,10 @@ export function WordSheet({ initialWord, onClose }: { initialWord: string; onClo
                 autoComplete="off"
                 className="block min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-950 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200"
                 id={`${id}-term`}
+                // Locked, not disabled (a disabled field drops focus), while the word is sent: text typed
+                // now would be added to the word being saved, and a change would also cancel its
+                // confirmation.
+                readOnly={add.isPending}
                 onChange={(event) => {
                   setTerm(event.target.value)
                   setValidationError(undefined)

@@ -190,6 +190,39 @@ test('the panel can be edited before adding', async () => {
   expect(requests).toEqual([{ term: 'rented out' }])
 })
 
+test('typing while a word is being added changes nothing, and the word is still confirmed', async () => {
+  const requests: string[] = []
+  let finish = () => {}
+  stubApi(
+    routes({
+      'POST /api/v1/vocabulary': async ({ init }) => {
+        requests.push(JSON.parse(String(init.body)).term)
+        await new Promise<void>((resolve) => (finish = resolve))
+        return jsonResponse(added('walked'), 201)
+      },
+      'GET /api/v1/vocabulary': () => jsonResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }),
+    }),
+  )
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await screen.findByText('rent')
+
+  await browserUser.click(screen.getByRole('button', { name: 'Add a word' }))
+  const field = screen.getByRole('textbox', { name: 'Add a word or phrase' })
+  await browserUser.type(field, 'walked')
+  await browserUser.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }))
+  expect(await screen.findByRole('button', { name: 'Adding…' })).toBeInTheDocument()
+
+  // The next word cannot be glued onto the one being saved.
+  await browserUser.type(field, 'lease{Enter}')
+  expect(field).toHaveValue('walked')
+  expect(field).toHaveFocus()
+
+  finish()
+  expect(await screen.findByText('Added “walked” to your list.')).toBeInTheDocument()
+  expect(requests).toEqual(['walked'])
+})
+
 test('“Add a word” opens an empty field by keyboard, and Escape closes it and gives focus back', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()

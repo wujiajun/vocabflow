@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -254,6 +254,34 @@ test('does not know what a word from an earlier visit was typed as', async () =>
   renderApp('/app/vocabulary')
 
   expect(await screen.findByRole('listitem')).not.toHaveTextContent('you added')
+})
+
+test('typing while a word is being added changes nothing, so nothing typed is lost or glued on', async () => {
+  const requests: string[] = []
+  let finish = () => {}
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/vocabulary': () => jsonResponse(page([])),
+    'POST /api/v1/vocabulary': async ({ init }) => {
+      requests.push(JSON.parse(String(init.body)).term)
+      await new Promise<void>((resolve) => (finish = resolve))
+      return jsonResponse(figureOut)
+    },
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  const input = await screen.findByLabelText('New word or phrase')
+  await browserUser.type(input, 'figure out')
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+  expect(await screen.findByRole('button', { name: 'Adding…' })).toBeInTheDocument()
+
+  await browserUser.type(input, 'lease')
+  expect(input).toHaveValue('figure out')
+
+  finish()
+  await waitFor(() => expect(input).toHaveValue(''))
+  expect(requests).toEqual(['figure out'])
 })
 
 test('does not send blank or over-long terms', async () => {
