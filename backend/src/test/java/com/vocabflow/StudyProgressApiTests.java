@@ -215,6 +215,8 @@ class StudyProgressApiTests {
     String token = token("progress-details@example.com", 5);
     add(token, "details waiting term");
     add(token, "details ready term");
+    // Both words are in the stored plan when one of them loses its details.
+    assertThat(plan(token, DAY).path("newItems")).hasSize(2);
     jdbc.update(
         "UPDATE vocabulary_items SET enrichment_status = 'FAILED' WHERE normalized_term = ?",
         "details waiting term");

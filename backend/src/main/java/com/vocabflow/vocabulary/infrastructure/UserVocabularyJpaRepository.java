@@ -10,8 +10,9 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
 
   Page<UserVocabularyEntity> findByUserIdOrderByCreatedAtDesc(Long uid, Pageable p);
 
-  List<UserVocabularyEntity> findByUserIdAndLearningStatusOrderByCreatedAtAscIdAsc(
-      Long userId, String learningStatus, Pageable pageable);
+  List<UserVocabularyEntity>
+      findByUserIdAndLearningStatusAndItem_EnrichmentStatusOrderByCreatedAtAscIdAsc(
+          Long userId, String learningStatus, String enrichmentStatus, Pageable pageable);
 
   @Query(
       """

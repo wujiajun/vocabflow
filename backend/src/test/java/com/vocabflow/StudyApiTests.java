@@ -254,6 +254,8 @@ class StudyApiTests {
     String token = token("study-unavailable@example.com", 10);
     long waiting = add(token, "details not ready");
     long ready = add(token, "details ready");
+    // Both words are in the stored plan when one of them loses its details.
+    assertThat(plan(token, DAY_ONE).path("newItems")).hasSize(2);
     jdbc.update(
         "UPDATE vocabulary_items SET enrichment_status = 'PENDING' WHERE normalized_term = ?",
         "details not ready");

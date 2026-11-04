@@ -23,8 +23,11 @@ public class JpaLearningVocabularyQuery implements LearningVocabularyQuery {
   @Transactional(readOnly = true)
   public List<LearningVocabulary> findNewVocabularyForUser(long userId, int limit) {
     return userVocabularies
-        .findByUserIdAndLearningStatusOrderByCreatedAtAscIdAsc(
-            userId, LearningStatus.NEW.name(), PageRequest.of(0, limit))
+        .findByUserIdAndLearningStatusAndItem_EnrichmentStatusOrderByCreatedAtAscIdAsc(
+            userId,
+            LearningStatus.NEW.name(),
+            EnrichmentStatus.COMPLETED.name(),
+            PageRequest.of(0, limit))
         .stream()
         .map(this::map)
         .toList();
