@@ -13,6 +13,9 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Changed
 
+- Claude is now asked to list a word's meanings by how often people meet each one, not by dictionary order or the
+  oldest sense (`manifest` listed the cargo list first). On 24 test words it put the right meaning first in about 92% of
+  replies, against about 87% before; `lead` and `mean` are still often wrong. Words already saved keep their order.
 - On the Study page the total no longer sits alone on a line of its own under the legend on a phone: it is now "31
   words" at the end of the progress bar.
 
