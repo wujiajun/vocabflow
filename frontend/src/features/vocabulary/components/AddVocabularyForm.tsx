@@ -61,6 +61,9 @@ export function AddVocabularyForm({ onAdded }: { onAdded: () => void }) {
           aria-describedby={error ? 'new-vocabulary-term-error' : undefined}
           aria-invalid={error ? true : undefined}
           id="new-vocabulary-term"
+          // Locked, not disabled (a disabled field drops focus), while the word is sent: text typed
+          // now would be cleared again as soon as the word is added.
+          readOnly={addVocabulary.isPending}
           onChange={(event) => {
             setTerm(event.target.value)
             setAnnouncement('')
