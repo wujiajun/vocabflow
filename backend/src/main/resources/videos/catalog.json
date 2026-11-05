@@ -40,7 +40,7 @@
         },
         {
           "id": "T3AJ29_2IX8",
-          "title": "Lesson 6: Where Is the Gym",
+          "title": "Lesson 6: Where Is the Gym?",
           "channel": "VOA Learning English",
           "durationSeconds": 442
         },
@@ -1181,34 +1181,10 @@
       "clbMax": 8,
       "videos": [
         {
-          "id": "B_CxyglDW8Y",
-          "title": "'Human Emotions 2' (31 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1835
-        },
-        {
-          "id": "WMokf0EgTcA",
-          "title": "'Wellbeing' (30 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1830
-        },
-        {
-          "id": "m9LyXOBmQvo",
-          "title": "'Business & Work 2' (30 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1828
-        },
-        {
           "id": "2FrA6kHzVQ4",
-          "title": "'Art & Culture' (31 min)",
+          "title": "Art & Culture (31 min)",
           "channel": "BBC Learning English",
           "durationSeconds": 1831
-        },
-        {
-          "id": "6OHmXessf9A",
-          "title": "Work 2 (30 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1830
         },
         {
           "id": "9DXq7SRkD54",
@@ -1217,34 +1193,22 @@
           "durationSeconds": 1831
         },
         {
-          "id": "U7UxHEzTjxY",
-          "title": "Money (30 min)",
+          "id": "m9LyXOBmQvo",
+          "title": "Business & Work 2 (30 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1830
+          "durationSeconds": 1828
         },
         {
-          "id": "Ytpek_usCyM",
-          "title": "Money 2 (31 min)",
+          "id": "U_Oz1wLKCDg",
+          "title": "Communication (31 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1832
+          "durationSeconds": 1845
         },
         {
-          "id": "hRqLoEmGWXg",
-          "title": "Health (31 min)",
+          "id": "Jf1n0-GOXZc",
+          "title": "Culture and customs (30 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1831
-        },
-        {
-          "id": "IozMTwnat3o",
-          "title": "Health 2 (30 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1801
-        },
-        {
-          "id": "ErU1rjN-cEU",
-          "title": "Food and health (31 min)",
-          "channel": "BBC Learning English",
-          "durationSeconds": 1831
+          "durationSeconds": 1817
         },
         {
           "id": "RxDUhWAreCg",
@@ -1259,22 +1223,58 @@
           "durationSeconds": 1839
         },
         {
-          "id": "Jf1n0-GOXZc",
-          "title": "Culture and customs (30 min)",
+          "id": "ErU1rjN-cEU",
+          "title": "Food and health (31 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1817
+          "durationSeconds": 1831
         },
         {
-          "id": "U_Oz1wLKCDg",
-          "title": "Communication (31 min)",
+          "id": "hRqLoEmGWXg",
+          "title": "Health (31 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1845
+          "durationSeconds": 1831
+        },
+        {
+          "id": "IozMTwnat3o",
+          "title": "Health 2 (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1801
+        },
+        {
+          "id": "B_CxyglDW8Y",
+          "title": "Human Emotions 2 (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1835
+        },
+        {
+          "id": "U7UxHEzTjxY",
+          "title": "Money (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
+        },
+        {
+          "id": "Ytpek_usCyM",
+          "title": "Money 2 (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1832
         },
         {
           "id": "EVXMiy4LCYE",
           "title": "Transport (31 min)",
           "channel": "BBC Learning English",
           "durationSeconds": 1832
+        },
+        {
+          "id": "WMokf0EgTcA",
+          "title": "Wellbeing (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
+        },
+        {
+          "id": "6OHmXessf9A",
+          "title": "Work 2 (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
         },
         {
           "id": "V2eW5jGQe8I",
