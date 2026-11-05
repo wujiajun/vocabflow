@@ -55,6 +55,9 @@ Return:
   - collocations: 3 to 5 common word combinations that use the word in this meaning and part of speech only. Leave out any that belong to another meaning.
   - synonyms: only words or short phrases that a learner could swap in for the text in this meaning and part of speech in most sentences without changing what is said, the closest first, at most 4. Use only simple, everyday words that a learner at about CLB 4 to 5 (roughly the 2,000 most common English words) already knows. A word that is harder, rarer, more formal or more academic than that is worse than none, because the point is to explain the text with words the learner can already read: when no such word fits, use an empty array. Fewer is better: leave out any that is only roughly related, narrower, broader or a different register, and use an empty array when nothing fits well, which is normal and often right.
   - antonyms: only a direct opposite that a thesaurus lists for this meaning and part of speech, at most 3. Use an empty array otherwise, as for most nouns, phrases and idioms, and for any meaning where the opposite depends on the sentence: never stretch to fill the list. Use only simple, everyday words that a learner at about CLB 4 to 5 (roughly the 2,000 most common English words) already knows.
+  - scene: one short, vivid sentence in very simple everyday English that makes the learner picture a concrete situation showing exactly this meaning and no other, so that the picture brings the meaning back to mind.
+  - emoji: 1 to 3 emoji that show the scene as a picture. Use an empty string when no emoji shows this meaning clearly, which is normal for abstract words: never use an emoji that only loosely fits.
+  - parts: on the first meaning only (an empty string on the others), and only when the text is a word the learner knows plus a common prefix or suffix, such as "re- (again) + play" or "open + -ness (state of being)": one short line naming each part and the idea they make together. Use an empty string for anything else. Never use Latin or Greek roots, and never invent how a word is built.
 If the input is not a real English word or phrase, return the best entry you can for the text as written."""
 
 SCHEMA = {
@@ -79,8 +82,11 @@ SCHEMA = {
                     "collocations": {"type": "array", "items": {"type": "string"}},
                     "synonyms": {"type": "array", "items": {"type": "string"}},
                     "antonyms": {"type": "array", "items": {"type": "string"}},
+                    "scene": {"type": "string"},
+                    "emoji": {"type": "string"},
+                    "parts": {"type": "string"},
                 },
-                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations", "synonyms", "antonyms"],
+                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations", "synonyms", "antonyms", "scene", "emoji", "parts"],
                 "additionalProperties": False,
             },
         },
@@ -144,6 +150,7 @@ def show(word, reply):
         print(f"   {sense['definition']}")
         print(f"   e.g. {sense['examples'][0] if sense['examples'] else '(none)'}")
         print(f"   with: {', '.join(sense['collocations'])}")
+        print(f"   hook: {sense['emoji'] or '-'}  {sense['scene']}  [{sense['parts'] or '-'}]")
         print(f"   same: {', '.join(sense['synonyms']) or '-'}   |   opposite: {', '.join(sense['antonyms']) or '-'}")
 
 

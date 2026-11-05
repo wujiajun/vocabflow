@@ -29,7 +29,10 @@ public class VocabularyController {
       List<String> examples,
       List<String> collocations,
       List<String> synonyms,
-      List<String> antonyms) {}
+      List<String> antonyms,
+      String scene,
+      String emoji,
+      String parts) {}
 
   record Item(
       long id,
@@ -72,7 +75,10 @@ public class VocabularyController {
                         sense.examples(),
                         sense.collocations(),
                         sense.synonyms(),
-                        sense.antonyms()))
+                        sense.antonyms(),
+                        sense.scene(),
+                        sense.emoji(),
+                        sense.parts()))
             .toList(),
         item.baseForm(),
         item.spellingSuggestion(),

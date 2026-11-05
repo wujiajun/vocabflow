@@ -37,7 +37,10 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   List.of("Please send me your resume."),
                   List.of("update a resume"),
                   List.of("CV"),
-                  List.of()),
+                  List.of(),
+                  "You hand a paper with your work history to a manager.",
+                  "📄🙋",
+                  null),
               new VocabularySense(
                   "verb",
                   "start again",
@@ -46,7 +49,10 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   List.of("The meeting will resume after lunch."),
                   List.of("resume work"),
                   List.of("restart", "continue"),
-                  List.of("stop", "suspend"))));
+                  List.of("stop", "suspend"),
+                  "The talk stopped for lunch, and now the speaker starts again.",
+                  "▶️",
+                  null)));
     if (n.equals("recieve")) throw new MisspelledTermException("receive");
     if (n.equals("leases"))
       return new EnrichmentResult(

@@ -29,6 +29,31 @@ test('lists the synonyms and antonyms of the shown meaning, and nothing when it 
   expect(within(within(panel).getByRole('heading', { name: 'Opposites' }).closest('section')!).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['stop'])
 })
 
+test('shows the memory hook under the definition, with the word parts from whichever meaning has them', async () => {
+  const browserUser = userEvent.setup()
+  const first: VocabularySense = { ...sense('adjective', 'frank', 'first'), scene: 'Ana tells her coworker everything.', emoji: '🗣️', parts: 'open + -ness (state of being)' }
+  const second: VocabularySense = { ...sense('noun', 'access', 'second'), scene: 'The doors have no locks.', emoji: '' }
+  render(<SenseTabs headingLevel="h2" senses={[first, second]} />)
+
+  const hook = screen.getByRole('heading', { name: 'Memory hook' }).closest('section')!
+  expect(hook).toHaveTextContent('🗣️')
+  expect(hook).toHaveTextContent('Ana tells her coworker everything.')
+  expect(hook).toHaveTextContent('Word parts: open + -ness (state of being)')
+
+  await browserUser.click(screen.getByRole('tab', { name: 'noun · access' }))
+
+  const next = screen.getByRole('heading', { name: 'Memory hook' }).closest('section')!
+  expect(next).toHaveTextContent('The doors have no locks.')
+  expect(next).not.toHaveTextContent('🗣️')
+  expect(next).toHaveTextContent('Word parts: open + -ness (state of being)')
+})
+
+test('a meaning with no hook and no word parts shows no hook card', () => {
+  render(<SenseTabs headingLevel="h2" senses={[sense('noun', 'document', 'first')]} />)
+
+  expect(screen.queryByRole('heading', { name: 'Memory hook' })).not.toBeInTheDocument()
+})
+
 const senses = [sense('noun', 'document', 'first'), sense('verb', 'start again', 'second'), sense('noun', 'third one', 'third')]
 
 test('shows only the first meaning at the start, linked to its tab', () => {

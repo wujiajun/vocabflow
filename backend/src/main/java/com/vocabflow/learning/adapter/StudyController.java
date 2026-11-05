@@ -43,7 +43,10 @@ public class StudyController {
       List<String> examples,
       List<String> collocations,
       List<String> synonyms,
-      List<String> antonyms) {}
+      List<String> antonyms,
+      String scene,
+      String emoji,
+      String parts) {}
 
   record Card(
       long userVocabularyId,
@@ -149,7 +152,10 @@ public class StudyController {
                         sense.examples(),
                         sense.collocations(),
                         sense.synonyms(),
-                        sense.antonyms()))
+                        sense.antonyms(),
+                        sense.scene(),
+                        sense.emoji(),
+                        sense.parts()))
             .toList(),
         content.baseForm(),
         next.card().state().name(),

@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import type { VocabularySense } from '../types/vocabulary'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { MemoryHook } from './MemoryHook'
 import { TappablePhrase } from './TappablePhrase'
 import { TappableText } from './TappableText'
 
@@ -18,6 +19,8 @@ export function SenseTabs({
   speakExamples?: boolean
 }) {
   const [selected, setSelected] = useState(0)
+  // How the word is built is written once, on one meaning, and belongs to all of them.
+  const parts = senses.find((sense) => sense.parts)?.parts
   const id = useId()
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -25,7 +28,7 @@ export function SenseTabs({
     return null
   }
   if (senses.length === 1) {
-    return <SenseContent headingLevel={headingLevel} sense={senses[0]} speakExamples={speakExamples} />
+    return <SenseContent headingLevel={headingLevel} parts={parts} sense={senses[0]} speakExamples={speakExamples} />
   }
 
   const current = Math.min(selected, senses.length - 1)
@@ -73,7 +76,7 @@ export function SenseTabs({
         ))}
       </div>
       <div aria-labelledby={`${id}-tab-${current}`} className="mt-4" id={`${id}-panel`} role="tabpanel">
-        <SenseContent headingLevel={headingLevel} sense={senses[current]} speakExamples={speakExamples} />
+        <SenseContent headingLevel={headingLevel} parts={parts} sense={senses[current]} speakExamples={speakExamples} />
       </div>
     </div>
   )
@@ -81,10 +84,12 @@ export function SenseTabs({
 
 function SenseContent({
   sense,
+  parts,
   headingLevel,
   speakExamples,
 }: {
   sense: VocabularySense
+  parts: string | null | undefined
   headingLevel: 'h2' | 'h3'
   speakExamples: boolean
 }) {
@@ -94,6 +99,7 @@ function SenseContent({
       <p className="mt-2 leading-7 text-slate-800">
         <TappableText text={sense.definition} />
       </p>
+      <MemoryHook headingLevel={headingLevel} parts={parts} sense={sense} speak={speakExamples} />
       <SenseList headingLevel={headingLevel} items={sense.examples} speakable={speakExamples} tappable title="Examples" />
       <SenseWords headingLevel={headingLevel} items={sense.synonyms} title="Similar words" />
       <SenseWords headingLevel={headingLevel} items={sense.antonyms} title="Opposites" />

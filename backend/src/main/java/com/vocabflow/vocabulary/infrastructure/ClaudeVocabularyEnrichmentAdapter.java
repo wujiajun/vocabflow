@@ -103,43 +103,47 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       speech, at most 3. Use an empty array otherwise, as for most nouns, phrases and idioms, and \
       for any meaning where the opposite depends on the sentence: never stretch to fill the list. \
       The same simple-words rule applies.
+        - scene: one short, vivid sentence in very simple everyday English that makes the learner \
+      picture a concrete situation showing exactly this meaning and no other, so that the picture \
+      brings the meaning back to mind.
+        - emoji: 1 to 3 emoji that show the scene as a picture. Use an empty string when no emoji \
+      shows this meaning clearly, which is normal for abstract words: never use an emoji that only \
+      loosely fits.
+        - parts: on the first meaning only (an empty string on the others), and only when the text is \
+      a word the learner knows plus a common prefix or suffix, such as "re- (again) + play" or \
+      "open + -ness (state of being)": one short line naming each part and the idea they make \
+      together. Use an empty string for anything else. Never use Latin or Greek roots, and never \
+      invent how a word is built.
       If the input is not a real English word or phrase, return the best entry you can for the \
       text as written.""";
 
-  private static final Map<String, Object> SENSE_SCHEMA =
-      Map.of(
-          "type",
-          "object",
-          "properties",
-          Map.of(
-              "partOfSpeech",
-              Map.of("type", "string"),
-              "label",
-              Map.of("type", "string"),
-              "phonetic",
-              Map.of("type", "string"),
-              "definition",
-              Map.of("type", "string"),
-              "examples",
-              Map.of("type", "array", "items", Map.of("type", "string")),
-              "collocations",
-              Map.of("type", "array", "items", Map.of("type", "string")),
-              "synonyms",
-              Map.of("type", "array", "items", Map.of("type", "string")),
-              "antonyms",
-              Map.of("type", "array", "items", Map.of("type", "string"))),
-          "required",
-          List.of(
-              "partOfSpeech",
-              "label",
-              "phonetic",
-              "definition",
-              "examples",
-              "collocations",
-              "synonyms",
-              "antonyms"),
-          "additionalProperties",
-          false);
+  private static final Map<String, Object> SENSE_SCHEMA = senseSchema();
+
+  private static Map<String, Object> senseSchema() {
+    Map<String, Object> text = Map.of("type", "string");
+    Map<String, Object> list = Map.of("type", "array", "items", text);
+    Map<String, Object> properties = new LinkedHashMap<>();
+    properties.put("partOfSpeech", text);
+    properties.put("label", text);
+    properties.put("phonetic", text);
+    properties.put("definition", text);
+    properties.put("examples", list);
+    properties.put("collocations", list);
+    properties.put("synonyms", list);
+    properties.put("antonyms", list);
+    properties.put("scene", text);
+    properties.put("emoji", text);
+    properties.put("parts", text);
+    return Map.of(
+        "type",
+        "object",
+        "properties",
+        properties,
+        "required",
+        List.copyOf(properties.keySet()),
+        "additionalProperties",
+        false);
+  }
 
   // Ordered: the reason comes before the verdict it explains, so the model reasons first.
   private static final Map<String, Object> SCHEMA = schema();
@@ -311,7 +315,10 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
         strings(sense, "examples", 1, 5, 300),
         strings(sense, "collocations", 0, 8, 100),
         strings(sense, "synonyms", 0, 6, 60),
-        strings(sense, "antonyms", 0, 5, 60));
+        strings(sense, "antonyms", 0, 5, 60),
+        optional(sense, "scene", 300),
+        optional(sense, "emoji", 40),
+        optional(sense, "parts", 200));
   }
 
   private static String text(JsonNode node, String field) {
@@ -320,6 +327,13 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       throw new EnrichmentRejectedException("Model reply is missing " + field);
     }
     return value.asText().strip();
+  }
+
+  // The memory hook is a help, so a blank one is stored as none, but a missing field is a bad
+  // reply.
+  private static String optional(JsonNode node, String field, int max) {
+    String value = text(node, field);
+    return value.isEmpty() ? null : bounded(value, field, max);
   }
 
   private static String required(JsonNode node, String field) {

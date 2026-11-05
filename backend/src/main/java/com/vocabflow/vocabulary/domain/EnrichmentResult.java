@@ -53,7 +53,10 @@ public record EnrichmentResult(
                 examples,
                 collocations,
                 List.of(),
-                List.of())));
+                List.of(),
+                null,
+                null,
+                null)));
   }
 
   public EnrichmentResult withBaseForm(String baseForm) {
