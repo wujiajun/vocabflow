@@ -11,6 +11,10 @@ export interface VocabularySense {
   definition: string
   examples: string[] | null
   collocations: string[] | null
+  // Words that mean about the same, and the opposite, in this meaning. Empty for a word saved before
+  // they existed, so older test data may leave them out.
+  synonyms?: string[] | null
+  antonyms?: string[] | null
 }
 
 export interface VocabularyEntry {

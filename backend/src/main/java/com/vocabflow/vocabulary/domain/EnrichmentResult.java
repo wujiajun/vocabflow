@@ -45,7 +45,15 @@ public record EnrichmentResult(
         examples,
         collocations,
         List.of(
-            new VocabularySense(partOfSpeech, null, phonetic, definition, examples, collocations)));
+            new VocabularySense(
+                partOfSpeech,
+                null,
+                phonetic,
+                definition,
+                examples,
+                collocations,
+                List.of(),
+                List.of())));
   }
 
   public EnrichmentResult withBaseForm(String baseForm) {

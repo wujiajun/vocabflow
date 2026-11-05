@@ -35,14 +35,18 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   "/ˈrezəmeɪ/",
                   "A short document listing your education and work experience.",
                   List.of("Please send me your resume."),
-                  List.of("update a resume")),
+                  List.of("update a resume"),
+                  List.of("CV"),
+                  List.of()),
               new VocabularySense(
                   "verb",
                   "start again",
                   "/rɪˈzuːm/",
                   "To begin again after stopping.",
                   List.of("The meeting will resume after lunch."),
-                  List.of("resume work"))));
+                  List.of("resume work"),
+                  List.of("restart", "continue"),
+                  List.of("stop", "suspend"))));
     if (n.equals("recieve")) throw new MisspelledTermException("receive");
     if (n.equals("leases"))
       return new EnrichmentResult(

@@ -2,14 +2,25 @@ package com.vocabflow.vocabulary.domain;
 
 import java.util.List;
 
-/** One meaning of a word. {@code label} tells it from the word's other meanings. */
+/**
+ * One meaning of a word. {@code label} tells it from the word's other meanings. {@code synonyms}
+ * and {@code antonyms} belong to this meaning only and are never null, since a word stored before
+ * they existed has none.
+ */
 public record VocabularySense(
     String partOfSpeech,
     String label,
     String phonetic,
     String definition,
     List<String> examples,
-    List<String> collocations) {
+    List<String> collocations,
+    List<String> synonyms,
+    List<String> antonyms) {
+
+  public VocabularySense {
+    synonyms = synonyms == null ? List.of() : synonyms;
+    antonyms = antonyms == null ? List.of() : antonyms;
+  }
 
   /** The senses to show: the stored ones, or a single one made from an older one-meaning entry. */
   public static List<VocabularySense> orSingle(
@@ -25,6 +36,14 @@ public record VocabularySense(
     return definition == null
         ? List.of()
         : List.of(
-            new VocabularySense(partOfSpeech, null, phonetic, definition, examples, collocations));
+            new VocabularySense(
+                partOfSpeech,
+                null,
+                phonetic,
+                definition,
+                examples,
+                collocations,
+                List.of(),
+                List.of()));
   }
 }

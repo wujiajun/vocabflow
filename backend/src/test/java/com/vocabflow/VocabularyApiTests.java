@@ -144,6 +144,9 @@ class VocabularyApiTests {
         .andExpect(jsonPath("$.senses[0].label").value("document"))
         .andExpect(jsonPath("$.senses[1].partOfSpeech").value("verb"))
         .andExpect(jsonPath("$.senses[1].phonetic").value("/rɪˈzuːm/"))
+        .andExpect(jsonPath("$.senses[1].synonyms[0]").value("restart"))
+        .andExpect(jsonPath("$.senses[1].antonyms[0]").value("stop"))
+        .andExpect(jsonPath("$.senses[0].antonyms").isEmpty())
         .andExpect(jsonPath("$.definition").value(org.hamcrest.Matchers.startsWith("A short")));
     mvc.perform(get("/api/v1/vocabulary/" + other).header("Authorization", "Bearer " + token))
         .andExpect(jsonPath("$.senses.length()").value(1));
