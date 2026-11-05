@@ -191,6 +191,9 @@ function Question({
   const playTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const answered = picked !== null
   const right = picked === question.correct
+  // The score and the streak move the moment an answer is given, not when Next is pressed.
+  const shownScore = score + (answered && right ? 1 : 0)
+  const shownStreak = answered ? (right ? streak + 1 : 0) : streak
 
   function play() {
     setPlaying(true)
@@ -239,13 +242,13 @@ function Question({
           Question {number} of {total}
         </h2>
         <p className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          {streak >= 2 ? (
-            <span aria-label={`${streak} in a row`} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 motion-safe:animate-pop">
-              🔥 {streak}
+          {shownStreak >= 2 ? (
+            <span aria-label={`${shownStreak} in a row`} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 motion-safe:animate-pop">
+              🔥 {shownStreak}
             </span>
           ) : null}
-          <span aria-label={`${score} right so far`} className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-indigo-900">
-            ⭐ {score}
+          <span aria-label={`${shownScore} right so far`} className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-indigo-900">
+            ⭐ {shownScore}
           </span>
         </p>
       </div>

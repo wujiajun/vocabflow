@@ -102,6 +102,8 @@ test('says each word aloud after a press, takes a pick, shows the word, and sums
     // The first question is answered wrongly on purpose.
     await browserUser.click(question === 1 ? options.find((option) => option !== right)! : right)
     expect(screen.getByRole('status')).toHaveTextContent(`${question === 1 ? 'Not quite.' : 'Correct!'} The word was “${heard}”.`)
+    // The score moves as soon as the answer is given: nothing for the wrong first one, then 1, 2, 3, 4.
+    expect(screen.getByLabelText(`${question - 1} right so far`)).toBeInTheDocument()
     await browserUser.click(screen.getByRole('button', { name: question === 5 ? 'See results' : 'Next' }))
   }
 
