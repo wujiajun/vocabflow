@@ -798,7 +798,7 @@ test('a card that starts with the sound hides the word, says it, and gives the w
   expect(screen.queryByText('😵📚')).not.toBeInTheDocument()
   // Said as the card appears even though reading on appearing is off; once more on request.
   expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed'])
-  await browserUser.click(screen.getByRole('button', { name: 'Hear the word again' }))
+  await browserUser.click(screen.getByRole('button', { name: 'Hear it again' }))
   expect(speech.spoken).toHaveLength(2)
 
   // Hints come one at a time, the picture and then the scene with the word hidden.
@@ -806,9 +806,10 @@ test('a card that starts with the sound hides the word, says it, and gives the w
   await browserUser.click(screen.getByRole('button', { name: 'Show a hint' }))
   expect(screen.getByText('😵📚')).toBeInTheDocument()
   expect(screen.queryByText(/huge pile/)).not.toBeInTheDocument()
-  await browserUser.click(screen.getByRole('button', { name: 'Show another hint' }))
+  await browserUser.click(screen.getByRole('button', { name: 'Another hint' }))
   expect(screen.getByText('A student sits under a huge pile of books and feels _____.')).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /hint/ })).not.toBeInTheDocument()
+  // The button stays, so the row does not change shape, but says there are no more.
+  expect(screen.getByRole('button', { name: 'No hints left' })).toHaveAttribute('aria-disabled', 'true')
 
   await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
   expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
