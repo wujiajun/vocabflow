@@ -12,6 +12,13 @@ import type { Rating, StudyCard } from '../types/study'
 import { formatInterval } from './formatInterval'
 import { maskTerm } from './matching'
 
+// The two small actions on a card that is asked from a picture or a sound sit in one row, the same
+// height and width, so they line up on a phone.
+const actionButton =
+  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700'
+const tintedAction = `${actionButton} border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100`
+const plainAction = `${actionButton} border-slate-300 bg-white text-slate-800 hover:bg-slate-50 aria-disabled:cursor-default aria-disabled:border-slate-200 aria-disabled:text-slate-400 aria-disabled:hover:bg-white`
+
 const ratingLabels: Record<Rating, string> = { AGAIN: 'Again', HARD: 'Hard', GOOD: 'Good', EASY: 'Easy' }
 
 const ratingStyles: Record<Rating, string> = {
@@ -121,36 +128,44 @@ export function StudyCardView({
           <h2 className="text-xl font-bold tracking-tight outline-none" ref={termRef} tabIndex={-1}>
             Listen: what does this word mean?
           </h2>
-          <button
-            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            onClick={() => speakText(card.term, { onStart: () => {}, onEnd: () => {} })}
-            type="button"
-          >
-            <svg aria-hidden="true" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="20">
-              <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-              <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-              <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-            </svg>
-            Hear the word again
-          </button>
+          <div className={`mt-4 grid gap-3 ${hintSteps > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <button className={tintedAction} onClick={() => speakText(card.term, { onStart: () => {}, onEnd: () => {} })} type="button">
+              <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+              </svg>
+              Hear it again
+            </button>
+            {hintSteps > 0 ? (
+              <button
+                aria-disabled={soundHints >= hintSteps}
+                className={plainAction}
+                onClick={() => {
+                  if (soundHints < hintSteps) {
+                    setSoundHints((current) => current + 1)
+                  }
+                }}
+                type="button"
+              >
+                <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+                  <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                  <path d="M9 18h6" />
+                  <path d="M10 22h4" />
+                </svg>
+                {soundHints === 0 ? 'Show a hint' : soundHints < hintSteps ? 'Another hint' : 'No hints left'}
+              </button>
+            ) : null}
+          </div>
           {soundHints > 0 && cue ? (
-            <div className="mt-3 outline-none" ref={soundHintRef} tabIndex={-1}>
-              {cue.emoji ? <p className="text-5xl leading-none">{cue.emoji}</p> : null}
+            <div className="mt-4 rounded-xl bg-indigo-50 px-4 py-3 outline-none" ref={soundHintRef} tabIndex={-1}>
+              {cue.emoji ? <p className="text-4xl leading-none">{cue.emoji}</p> : null}
               {cue.scene && soundHints >= (cue.emoji ? 2 : 1) ? (
-                <p className="mt-3 rounded-xl bg-indigo-50 px-4 py-3 text-lg leading-7 font-medium text-indigo-950">
+                <p className={`${cue.emoji ? 'mt-3 ' : ''}text-lg leading-7 font-medium text-indigo-950`}>
                   {maskTerm(cue.scene, [card.term, card.baseForm])}
                 </p>
               ) : null}
             </div>
-          ) : null}
-          {soundHints < hintSteps ? (
-            <button
-              className="mt-3 ml-2 min-h-11 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-              onClick={() => setSoundHints((current) => current + 1)}
-              type="button"
-            >
-              {soundHints === 0 ? 'Show a hint' : 'Show another hint'}
-            </button>
           ) : null}
         </div>
       ) : cueing ? (
@@ -165,11 +180,7 @@ export function StudyCardView({
             </p>
           ) : null}
           {cue.scene && cue.emoji && !hintShown ? (
-            <button
-              className="mt-3 min-h-11 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-              onClick={() => setHintShown(true)}
-              type="button"
-            >
+            <button className={`mt-4 ${tintedAction}`} onClick={() => setHintShown(true)} type="button">
               Show a hint
             </button>
           ) : null}
