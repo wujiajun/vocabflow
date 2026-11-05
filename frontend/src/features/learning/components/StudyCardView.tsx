@@ -116,7 +116,7 @@ export function StudyCardView({
           ) : null}
           {cue.scene && cue.emoji && !hintShown ? (
             <button
-              className="mt-3 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              className="mt-3 min-h-11 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
               onClick={() => setHintShown(true)}
               type="button"
             >
