@@ -9,6 +9,8 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Added
 
+- A study card whose word has a memory hook now asks "Which word is this?" with the picture (emoji) first; "Show a hint" gives the scene with the word hidden, and "Show answer" gives the word and meanings. The word is not read aloud until the answer. A switch in Settings (on this device, on by default) goes back to showing the word first; a word without a hook is unchanged.
+- A "Fill in the blank" exercise next to the quick review game on the study-complete page: today's words come back as an example sentence with the word left out, with its meaning (and picture) as the clue. Practice only; it never changes the review schedule.
 - A "Memory hook" card under the definition of each meaning of a new word, to help remember it: emoji that show a scene, the scene in one plain sentence (its words are tappable and it can be read aloud), and, when the word is a known word plus a common prefix or suffix, how it is built ("open + -ness"). Any part the model cannot give well is left out. Words saved before this have none yet.
 - Tapping a collocation, a synonym or an antonym offers to add the whole phrase ("sign a lease") instead of one word of it; before, collocations could not be tapped at all.
 - Each meaning of a new word now lists a few synonyms ("Similar words") and antonyms ("Opposites") when it has them, on the detail page and the back of a study card; their words can be tapped to add them. Only fitting ones are listed: a meaning with no good synonym or no real opposite shows nothing for it.
