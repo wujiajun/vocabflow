@@ -97,14 +97,15 @@ test('a word in an example works too, and a capital that only starts the sentenc
   expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('signed')
 })
 
-test('words in the combinations are plain text', async () => {
+test('a combination is offered whole, not one word at a time', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/vocabulary/7')
 
   await browserUser.click(await screen.findByText('sign a lease'))
 
-  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('sign a lease')
+  expect(screen.getByText('sign a lease')).toHaveAttribute('data-selected', 'true')
 })
 
 test('tapping another word replaces the one in the panel', async () => {
