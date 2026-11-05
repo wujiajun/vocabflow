@@ -3,6 +3,8 @@ import { AuthLoadingState, ProtectedRoute, PublicOnlyRoute } from '../../feature
 import { LoginPage } from '../../features/auth/pages/LoginPage'
 import { RegisterPage } from '../../features/auth/pages/RegisterPage'
 import { useAuth } from '../../features/auth/hooks/useAuth'
+import { AlbumPage } from '../../features/videos/pages/AlbumPage'
+import { VideosPage } from '../../features/videos/pages/VideosPage'
 import { ReadingListPage } from '../../features/reading/pages/ReadingListPage'
 import { ReadingPassagePage } from '../../features/reading/pages/ReadingPassagePage'
 import { ReadingWritingPage } from '../../features/reading/pages/ReadingWritingPage'
@@ -47,6 +49,8 @@ export function AppRouter() {
         <Route path="vocabulary" element={<VocabularyPage />} />
         <Route path="vocabulary/:id" element={<VocabularyDetailPage />} />
         <Route path="reading" element={<ReadingListPage />} />
+        <Route path="reading/videos" element={<VideosPage />} />
+        <Route path="reading/videos/:albumId" element={<AlbumPage />} />
         <Route path="reading/writing" element={<ReadingWritingPage />} />
         <Route path="reading/:id" element={<ReadingPassagePage />} />
         <Route path="study" element={<StudyPage />} />
