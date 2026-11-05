@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BackLink } from '../../../shared/BackLink'
-import { playWrong } from '../../../shared/sound/effects'
+import { playRight, playWrong } from '../../../shared/sound/effects'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -95,14 +95,26 @@ interface Answered {
   seconds: number
 }
 
+const letters = ['A', 'B', 'C', 'D']
+
+function Speaker({ size }: { size: number }) {
+  return (
+    <svg aria-hidden="true" fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width={size}>
+      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+    </svg>
+  )
+}
+
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [questions] = useState(() => buildListenQuestions(entries))
   const [started, setStarted] = useState(false)
   const [position, setPosition] = useState(0)
   const [answers, setAnswers] = useState<Answered[]>([])
 
-  // Words that share a meaning count once, so four words studied can still be too few to choose between.
   if (questions.length < minListenQuestions) {
+    // Words that share a meaning count once, so four words studied can still be too few to choose between.
     return (
       <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
         Today’s words do not have {minListenQuestions} different meanings to choose between yet. Study a few more words and try again.
@@ -113,11 +125,15 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
   // Speech may start only from a press, so the first word waits for this one.
   if (!started) {
     return (
-      <section aria-label="Start" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-        <p className="text-sm leading-6 text-slate-700">
+      <section aria-label="Start" className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
+        <p aria-hidden="true" className="text-6xl leading-none">
+          🎧
+        </p>
+        <h2 className="mt-4 text-xl font-bold tracking-tight">Ready to listen?</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-700">
           You will hear {questions.length} of today’s words, one at a time. Pick the meaning you hear as fast as you can.
         </p>
-        <button className={`mt-4 ${primaryButton}`} onClick={() => setStarted(true)} type="button">
+        <button className={`mt-5 w-full sm:w-auto sm:px-10 ${primaryButton}`} onClick={() => setStarted(true)} type="button">
           Start
         </button>
       </section>
@@ -126,6 +142,11 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
 
   if (position >= questions.length) {
     return <Summary answers={answers} onAgain={onAgain} />
+  }
+
+  let streak = 0
+  for (let index = answers.length - 1; index >= 0 && answers[index].right; index -= 1) {
+    streak += 1
   }
 
   return (
@@ -138,13 +159,11 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
         setPosition((current) => current + 1)
       }}
       question={questions[position]}
+      score={answers.filter((answer) => answer.right).length}
+      streak={streak}
       total={questions.length}
     />
   )
-}
-
-function say(term: string) {
-  speakText(term, { onStart: () => {}, onEnd: () => {} })
 }
 
 function Question({
@@ -152,95 +171,172 @@ function Question({
   number,
   total,
   last,
+  score,
+  streak,
   onDone,
 }: {
   question: ListenQuestion
   number: number
   total: number
   last: boolean
+  score: number
+  streak: number
   onDone: (answer: Answered) => void
 }) {
   const [picked, setPicked] = useState<number | null>(null)
+  const [playing, setPlaying] = useState(false)
   const shownAt = useRef(Date.now())
   const seconds = useRef(0)
   const nextRef = useRef<HTMLButtonElement>(null)
+  const playTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const answered = picked !== null
+  const right = picked === question.correct
+
+  function play() {
+    setPlaying(true)
+    // Some browsers never report the end of a word, so the glow does not outlast a few seconds.
+    clearTimeout(playTimer.current)
+    playTimer.current = setTimeout(() => setPlaying(false), 3000)
+    speakText(question.term, {
+      onStart: () => setPlaying(true),
+      onEnd: () => {
+        clearTimeout(playTimer.current)
+        setPlaying(false)
+      },
+    })
+  }
 
   // Mounted by a press (Start or Next), where the browser lets a voice begin.
   useEffect(() => {
-    say(question.term)
+    play()
+    return () => clearTimeout(playTimer.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (picked !== null) {
+    if (answered) {
       nextRef.current?.focus()
     }
-  }, [picked])
+  }, [answered])
 
   function pick(index: number) {
-    if (picked !== null) {
+    if (answered) {
       return
     }
     seconds.current = (Date.now() - shownAt.current) / 1000
     setPicked(index)
-    if (index !== question.correct) {
+    if (index === question.correct) {
+      playRight()
+    } else {
       playWrong()
     }
   }
 
   return (
     <section aria-label={`Question ${number} of ${total}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-      <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
-        Question {number} of {total}
-      </h2>
-      <p className="mt-3 text-lg font-medium text-slate-900">What does the word you heard mean?</p>
-      <button
-        className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-        onClick={() => say(question.term)}
-        type="button"
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+          Question {number} of {total}
+        </h2>
+        <p className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          {streak >= 2 ? (
+            <span aria-label={`${streak} in a row`} className="rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 motion-safe:animate-pop">
+              🔥 {streak}
+            </span>
+          ) : null}
+          <span aria-label={`${score} right so far`} className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-indigo-900">
+            ⭐ {score}
+          </span>
+        </p>
+      </div>
+      <div
+        aria-label="Progress"
+        aria-valuemax={total}
+        aria-valuemin={0}
+        aria-valuenow={number - 1}
+        className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"
+        role="progressbar"
       >
-        Hear it again
-      </button>
+        <div className="h-full rounded-full bg-indigo-600 transition-all duration-500" style={{ width: `${((number - 1 + (answered ? 1 : 0)) / total) * 100}%` }} />
+      </div>
 
-      <div aria-label="Meanings" className="mt-4 flex flex-col gap-2" role="group">
+      <div className="mt-6 flex flex-col items-center">
+        <div className="relative">
+          {playing ? <span aria-hidden="true" className="absolute inset-0 rounded-full bg-indigo-300 opacity-60 motion-safe:animate-ping" /> : null}
+          <button
+            aria-label="Hear it again"
+            className="relative flex size-24 items-center justify-center rounded-full bg-indigo-700 text-white shadow-lg transition hover:bg-indigo-800 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-700"
+            onClick={play}
+            type="button"
+          >
+            <Speaker size={40} />
+          </button>
+        </div>
+        <p aria-hidden="true" className="mt-2 text-sm font-medium text-slate-600">
+          Hear it again
+        </p>
+        <p className="mt-4 text-center text-lg font-semibold text-slate-900">What does the word you heard mean?</p>
+      </div>
+
+      <div aria-label="Meanings" className="mt-4 flex flex-col gap-2.5" role="group">
         {question.options.map((option, index) => {
-          const state =
-            picked === null
-              ? 'border-slate-300 hover:bg-slate-50 active:bg-slate-100'
-              : index === question.correct
-                ? 'border-emerald-400 bg-emerald-50 text-emerald-950'
-                : index === picked
-                  ? 'border-rose-400 bg-rose-50 text-rose-950'
-                  : 'border-slate-200 text-slate-500'
+          const isCorrect = index === question.correct
+          const isWrongPick = answered && index === picked && !isCorrect
+          const state = !answered
+            ? 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 active:bg-indigo-100'
+            : isCorrect
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-950 motion-safe:animate-pop'
+              : isWrongPick
+                ? 'border-rose-500 bg-rose-50 text-rose-950 motion-safe:animate-shake'
+                : 'border-slate-200 bg-white text-slate-400'
           return (
             <button
-              aria-disabled={picked !== null}
-              className={`min-h-11 rounded-lg border px-4 py-3 text-left text-sm leading-6 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${state}`}
+              aria-disabled={answered}
+              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 px-3 py-3 text-left text-sm leading-6 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${state}`}
               key={index}
               onClick={() => pick(index)}
               type="button"
             >
-              {option}
+              <span
+                aria-hidden="true"
+                className={`flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                  answered && isCorrect ? 'bg-emerald-500 text-white' : isWrongPick ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {answered && isCorrect ? '✓' : isWrongPick ? '✕' : letters[index]}
+              </span>
+              <span className="min-w-0 flex-1">{option}</span>
             </button>
           )
         })}
       </div>
 
-      {picked !== null ? (
-        <div className="mt-4">
-          <p className={`text-sm font-semibold ${picked === question.correct ? 'text-emerald-800' : 'text-rose-800'}`} role="status">
-            {picked === question.correct ? 'Correct!' : 'Not quite.'} The word was “{question.term}”.
-          </p>
-          <button
-            className={`mt-3 ${primaryButton}`}
-            onClick={() => onDone({ term: question.term, right: picked === question.correct, seconds: seconds.current })}
-            ref={nextRef}
-            type="button"
-          >
-            {last ? 'See results' : 'Next'}
-          </button>
-        </div>
-      ) : null}
+      {/* Stays at the bottom of the screen, so the result and Next are in reach however tall the options are. */}
+      <div
+        className={`sticky bottom-0 z-10 -mx-4 mt-5 -mb-4 rounded-b-2xl border-t px-4 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 ${
+          !answered ? 'border-slate-200 bg-white/95' : right ? 'border-emerald-200 bg-emerald-50/95' : 'border-rose-200 bg-rose-50/95'
+        }`}
+      >
+        <p
+          className={`text-sm font-semibold ${!answered ? 'font-normal text-slate-600' : right ? 'text-emerald-900' : 'text-rose-900'}`}
+          role="status"
+        >
+          {!answered ? 'Pick the meaning of the word you heard.' : `${right ? 'Correct!' : 'Not quite.'} The word was “${question.term}”.`}
+        </p>
+        {answered ? (
+          <>
+            {right ? <p className="text-xs text-emerald-900">⚡ {seconds.current.toFixed(1)} seconds</p> : null}
+            <button
+              className={`mt-2 w-full ${primaryButton}`}
+              onClick={() => onDone({ term: question.term, right, seconds: seconds.current })}
+              ref={nextRef}
+              type="button"
+            >
+              {last ? 'See results' : 'Next'}
+            </button>
+          </>
+        ) : null}
+      </div>
     </section>
   )
 }
@@ -250,20 +346,26 @@ function Summary({ answers, onAgain }: { answers: Answered[]; onAgain: () => voi
   const missed = answers.filter((answer) => !answer.right).map((answer) => answer.term)
   const average = right.length > 0 ? right.reduce((sum, answer) => sum + answer.seconds, 0) / right.length : null
   const slowest = [...right].sort((first, second) => second.seconds - first.seconds)[0]
+  const share = answers.length > 0 ? right.length / answers.length : 0
+  const stars = share >= 0.9 ? 3 : share >= 0.6 ? 2 : 1
 
   return (
-    <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-      <h2 className="text-xl font-bold tracking-tight">
+    <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-8">
+      <p aria-hidden="true" className="text-4xl tracking-widest motion-safe:animate-pop">
+        {'⭐'.repeat(stars)}
+        <span className="opacity-25">{'⭐'.repeat(3 - stars)}</span>
+      </p>
+      <h2 className="mt-3 text-xl font-bold tracking-tight">
         {right.length === answers.length ? 'Perfect!' : 'Nicely done!'} {right.length} of {answers.length} right
       </h2>
       {average !== null ? (
         <p className="mt-2 text-sm text-slate-700">
-          The right answers took {average.toFixed(1)} seconds on average
+          ⚡ The right answers took {average.toFixed(1)} seconds on average
           {slowest && right.length > 1 ? `; the slowest was “${slowest.term}”, ${slowest.seconds.toFixed(1)} seconds` : ''}.
         </p>
       ) : null}
       {missed.length > 0 ? <p className="mt-2 text-sm text-slate-700">Worth another look: {missed.join(', ')}.</p> : null}
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <button className={primaryButton} onClick={onAgain} type="button">
           Play again
         </button>

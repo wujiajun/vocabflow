@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -87,12 +87,18 @@ test('says each word aloud after a press, takes a pick, shows the word, and sums
     await screen.findByRole('region', { name: `Question ${question} of 5` })
     const heard = speech.lastUtterance().text
     const id = words.indexOf(heard) + 1
-    const options = screen.getAllByRole('button').filter((button) => /^Number \d means _____\.$/.test(button.textContent ?? ''))
+    const meanings = within(screen.getByRole('group', { name: 'Meanings' }))
+    const options = meanings.getAllByRole('button')
     expect(options).toHaveLength(4)
     // Each meaning has its own word hidden, so the word is not given away before the answer.
     expect(screen.queryByText(new RegExp(`“${heard}”`))).not.toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveAttribute('aria-valuenow', String(question - 1))
+    // Two right answers in a row show a streak, here on the fourth question (the first was wrong).
+    if (question === 4) {
+      expect(screen.getByLabelText('2 in a row')).toBeInTheDocument()
+    }
 
-    const right = options.find((option) => option.textContent === `Number ${id} means _____.`)!
+    const right = meanings.getByRole('button', { name: `Number ${id} means _____.` })
     // The first question is answered wrongly on purpose.
     await browserUser.click(question === 1 ? options.find((option) => option !== right)! : right)
     expect(screen.getByRole('status')).toHaveTextContent(`${question === 1 ? 'Not quite.' : 'Correct!'} The word was “${heard}”.`)
