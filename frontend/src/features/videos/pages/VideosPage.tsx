@@ -8,7 +8,7 @@ import { useAlbums } from '../hooks/useVideos'
 import { bandFromParam, clbNumber, fitsLevel, levelBands, overlapsBand } from '../videoLevels'
 
 const chipClass =
-  'rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 aria-[current]:border-indigo-700 aria-[current]:bg-indigo-700 aria-[current]:text-white'
+  'inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 aria-[current]:border-indigo-700 aria-[current]:bg-indigo-700 aria-[current]:text-white'
 
 // Albums of English lessons on YouTube. By default only the albums that suit the learner's own CLB
 // level are shown; "all levels" shows every album, with a filter by level band.
