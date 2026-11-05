@@ -1,0 +1,250 @@
+{
+  "albums": [
+    {
+      "id": "voa-lle-1",
+      "title": "Let's Learn English, Level 1",
+      "source": "VOA Learning English",
+      "description": "A beginner video course: Anna and Pete in Washington, D.C. Short lessons with speaking and pronunciation practice.",
+      "clbMin": 1,
+      "clbMax": 3,
+      "videos": [
+        {
+          "id": "WR9_nsLyaEY",
+          "title": "Let's Learn English Lesson 1 - Welcome!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 230
+        },
+        {
+          "id": "IEA9LMy-N3M",
+          "title": "Let's Learn English Lesson 3: I'm Here!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "Z5PF-vJdUdc",
+          "title": "Let's Learn English Lesson 4: What is it?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 322
+        },
+        {
+          "id": "cFjmd4ghQis",
+          "title": "Pronunciation Practice Lesson 3",
+          "channel": "VOA Learning English",
+          "durationSeconds": 30
+        }
+      ]
+    },
+    {
+      "id": "voa-lle-2",
+      "title": "Let's Learn English, Level 2",
+      "source": "VOA Learning English",
+      "description": "The second beginner course: longer lessons about everyday situations.",
+      "clbMin": 3,
+      "clbMax": 5,
+      "videos": [
+        {
+          "id": "a7X5ftOnp74",
+          "title": "Let's Learn English Level 2 Lesson 3: He Said - She Said",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "OR0d7fb_Ls0",
+          "title": "Let's Learn English Level 2 Lesson 4: Run Away With the Circus!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 313
+        }
+      ]
+    },
+    {
+      "id": "voa-grammar",
+      "title": "Everyday Grammar and English in a Minute",
+      "source": "VOA Learning English",
+      "description": "Short captioned videos on grammar and everyday expressions.",
+      "clbMin": 4,
+      "clbMax": 6,
+      "videos": [
+        {
+          "id": "VOhvrOSAYWU",
+          "title": "Everyday Grammar: The Simple Past",
+          "channel": "VOA Learning English",
+          "durationSeconds": 137
+        },
+        {
+          "id": "4dcpxo55m_s",
+          "title": "Everyday Grammar: The Simple Future",
+          "channel": "VOA Learning English",
+          "durationSeconds": 132
+        },
+        {
+          "id": "54JqAfH0MJc",
+          "title": "Everyday Grammar: Be About To",
+          "channel": "VOA Learning English",
+          "durationSeconds": 117
+        },
+        {
+          "id": "b_ka3-253h0",
+          "title": "English in a Minute: No Brainer",
+          "channel": "VOA Learning English",
+          "durationSeconds": 60
+        }
+      ]
+    },
+    {
+      "id": "bbc-6-minute-grammar",
+      "title": "6 Minute Grammar",
+      "source": "BBC Learning English",
+      "description": "Short grammar lessons with clear examples.",
+      "clbMin": 4,
+      "clbMax": 6,
+      "videos": [
+        {
+          "id": "j9b1CNN_rFU",
+          "title": "Asking Questions - 6 Minute Grammar",
+          "channel": "BBC Learning English",
+          "durationSeconds": 359
+        },
+        {
+          "id": "xFsYrTIndhI",
+          "title": "Present Simple and Present Continuous - 6 Minute Grammar",
+          "channel": "BBC Learning English",
+          "durationSeconds": 360
+        }
+      ]
+    },
+    {
+      "id": "bob-the-canadian",
+      "title": "Learn English with Bob the Canadian",
+      "source": "Learn English with Bob the Canadian",
+      "description": "A Canadian teacher: relaxed lessons about words, culture and life in Canada.",
+      "clbMin": 4,
+      "clbMax": 6,
+      "videos": [
+        {
+          "id": "7fm_XSLk6CE",
+          "title": "Wednesdays with Bob #242: A Skiff of Snow",
+          "channel": "Learn English with Bob the Canadian",
+          "durationSeconds": 183
+        }
+      ]
+    },
+    {
+      "id": "vanessa",
+      "title": "Speak English With Vanessa",
+      "source": "Speak English With Vanessa",
+      "description": "Real conversations and lessons about daily life, work and big changes.",
+      "clbMin": 5,
+      "clbMax": 8,
+      "videos": [
+        {
+          "id": "s_nwSnW4q6I",
+          "title": "Real English Conversation: Big Life Changes",
+          "channel": "Speak English With Vanessa",
+          "durationSeconds": 1154
+        },
+        {
+          "id": "oh0oj-kjgMI",
+          "title": "English Conversation Lesson: Work, Jobs, and Daily Life",
+          "channel": "Speak English With Vanessa",
+          "durationSeconds": 2092
+        },
+        {
+          "id": "q72o7f_yzis",
+          "title": "Real Life ENGLISH Around the City",
+          "channel": "Speak English With Vanessa",
+          "durationSeconds": 1872
+        },
+        {
+          "id": "Poe_zqMKD4U",
+          "title": "Advanced English Conversation Lesson",
+          "channel": "Speak English With Vanessa",
+          "durationSeconds": 2919
+        }
+      ]
+    },
+    {
+      "id": "bbc-english-we-speak",
+      "title": "The English We Speak",
+      "source": "BBC Learning English",
+      "description": "Short videos that explain expressions used in everyday spoken English.",
+      "clbMin": 6,
+      "clbMax": 7,
+      "videos": [
+        {
+          "id": "JAUAzf8zBog",
+          "title": "Have a pop: The English We Speak",
+          "channel": "BBC Learning English",
+          "durationSeconds": 147
+        },
+        {
+          "id": "H-_2iKiXAkw",
+          "title": "You do you: The English We Speak",
+          "channel": "BBC Learning English",
+          "durationSeconds": 138
+        }
+      ]
+    },
+    {
+      "id": "bbc-6-minute-english",
+      "title": "6 Minute English",
+      "source": "BBC Learning English",
+      "description": "Themed listening collections with new vocabulary, about 30 minutes each.",
+      "clbMin": 6,
+      "clbMax": 8,
+      "videos": [
+        {
+          "id": "B_CxyglDW8Y",
+          "title": "BOX SET: 6 Minute English - 'Human Emotions 2' English mega-class! 30 minutes of new vocabulary!",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1834
+        },
+        {
+          "id": "WMokf0EgTcA",
+          "title": "BOX SET: 6 Minute English - 'Wellbeing' English mega-class! 30 minutes of new vocabulary!",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1829
+        },
+        {
+          "id": "m9LyXOBmQvo",
+          "title": "BOX SET: 6 Minute English - 'Business & Work 2' English mega-class! 30 minutes of new vocabulary!",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1828
+        },
+        {
+          "id": "2FrA6kHzVQ4",
+          "title": "BOX SET: 6 Minute English - 'Art & Culture' English mega-class! Thirty minutes of new vocabulary!",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1831
+        }
+      ]
+    },
+    {
+      "id": "ted",
+      "title": "TED Talks",
+      "source": "TED",
+      "description": "Talks by speakers for advanced listening practice. Turn on the captions.",
+      "clbMin": 8,
+      "clbMax": 12,
+      "videos": [
+        {
+          "id": "iG9CE55wbtY",
+          "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+          "channel": "TED",
+          "durationSeconds": 1203
+        },
+        {
+          "id": "qp0HIF3SfI4",
+          "title": "How Great Leaders Inspire Action | Simon Sinek | TED",
+          "channel": "TED",
+          "durationSeconds": 1115
+        },
+        {
+          "id": "iCvmsMzlF7o",
+          "title": "The Power of Vulnerability | Brené Brown | TED",
+          "channel": "TED",
+          "durationSeconds": 1250
+        }
+      ]
+    }
+  ]
+}

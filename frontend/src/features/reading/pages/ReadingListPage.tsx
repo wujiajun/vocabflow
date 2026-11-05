@@ -5,6 +5,7 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { Pagination } from '../../vocabulary/components/Pagination'
 import { pageFromParam, paramFromPage } from '../../vocabulary/hooks/pageParam'
 import { ReadingFilters } from '../components/ReadingFilters'
+import { ReadingSwitch } from '../components/ReadingSwitch'
 import { ReadingListItem } from '../components/ReadingListItem'
 import { filterFromParam, filterQuery } from '../hooks/readingFilter'
 import { useReadingList } from '../hooks/useReading'
@@ -39,7 +40,8 @@ export function ReadingListPage() {
   return (
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Reading</h1>
-      <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">
+      <ReadingSwitch current="passages" />
+      <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
         Passages from the words you studied. Write one from the Study page when a day’s study is complete.
       </p>
       <section aria-label="Reading passages" className="mt-4 outline-none sm:mt-6" ref={resultsRef} tabIndex={-1}>

@@ -4,8 +4,11 @@
 }
 
 :80 {
+	# YouTube is allowed for the video albums only: its player script, the pictures of the videos, and the
+	# player frame (the privacy-friendly domain). The frame carries its own referrer policy, because the
+	# policy below sends no referrer and the player refuses to start without one.
 	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://www.youtube.com; style-src 'self'; img-src 'self' data: https://i.ytimg.com; connect-src 'self'; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		Referrer-Policy no-referrer
 		-Server
