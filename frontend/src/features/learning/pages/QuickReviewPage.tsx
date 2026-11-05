@@ -46,6 +46,15 @@ export function QuickReviewPage() {
   )
 }
 
+// Words that share a meaning count once, so five words studied can still be too few to match.
+function NoDistinctMeanings() {
+  return (
+    <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+      Today’s words do not have {minPairs} different meanings to match yet. Study a few more words and try again.
+    </p>
+  )
+}
+
 function NotEnough() {
   return (
     <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
@@ -84,5 +93,5 @@ function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => v
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [pairs] = useState(() => buildPairs(shuffle(entries)))
 
-  return <PairGame minimum={minPairs} notEnough={<NotEnough />} onAgain={onAgain} pairs={pairs} />
+  return <PairGame minimum={minPairs} notEnough={<NoDistinctMeanings />} onAgain={onAgain} pairs={pairs} />
 }
