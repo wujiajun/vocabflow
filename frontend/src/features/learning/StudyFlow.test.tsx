@@ -738,6 +738,7 @@ const hooked = () =>
   })
 
 test('a word with a memory hook is asked as a picture first, and the hint and the word come on request', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
   window.localStorage.removeItem('vocabflow.recallFirst')
   stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
   const browserUser = userEvent.setup()
@@ -766,6 +767,7 @@ test('the picture first can be turned off, and a word without a hook shows the w
   cleanup()
   vi.unstubAllGlobals()
 
+  window.localStorage.removeItem('vocabflow.cardStart')
   window.localStorage.removeItem('vocabflow.recallFirst')
   stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
   renderApp('/app/study')
@@ -773,6 +775,7 @@ test('the picture first can be turned off, and a word without a hook shows the w
 })
 
 test('the word is not read aloud while it is still the thing to recall', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
   window.localStorage.removeItem('vocabflow.recallFirst')
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
@@ -780,4 +783,45 @@ test('the word is not read aloud while it is still the thing to recall', async (
   await screen.findByRole('heading', { name: 'Which word is this?' })
 
   expect(speech.spoken).toHaveLength(0)
+})
+
+test('a card that starts with the sound hides the word, says it, and gives the word with the answer', async () => {
+  window.localStorage.setItem('vocabflow.cardStart', 'sound')
+  window.localStorage.setItem('vocabflow.speakOnCard', 'off')
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study')
+
+  expect(await screen.findByRole('heading', { name: 'Listen: what does this word mean?' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'overwhelmed' })).not.toBeInTheDocument()
+  expect(screen.queryByText('😵📚')).not.toBeInTheDocument()
+  // Said as the card appears even though reading on appearing is off; once more on request.
+  expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['overwhelmed'])
+  await browserUser.click(screen.getByRole('button', { name: 'Hear the word again' }))
+  expect(speech.spoken).toHaveLength(2)
+
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  window.localStorage.removeItem('vocabflow.cardStart')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
+})
+
+test('the sound-first choice shows the word where the device cannot speak', async () => {
+  window.localStorage.setItem('vocabflow.cardStart', 'sound')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  renderApp('/app/study')
+
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  window.localStorage.removeItem('vocabflow.cardStart')
+})
+
+test('an earlier choice to turn the picture off still shows the word first', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
+  window.localStorage.setItem('vocabflow.recallFirst', 'off')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  renderApp('/app/study')
+
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  window.localStorage.removeItem('vocabflow.recallFirst')
 })

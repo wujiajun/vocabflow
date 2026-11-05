@@ -1,6 +1,7 @@
 import { useContext, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { backState } from '../../../shared/navigation'
+import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { WriteReading } from '../../reading/components/WriteReading'
 import { formatLearningStatus } from '../../vocabulary/components/formatVocabulary'
@@ -8,6 +9,7 @@ import { WordTapContext } from '../../vocabulary/components/wordTapContext'
 import { useStudyMore } from '../hooks/useStudy'
 import type { StudyQueue } from '../types/study'
 import { minQuestions } from './cloze'
+import { minListenQuestions } from './listening'
 import { minPairs } from './matching'
 
 // Shown when no card is due: the day is complete, a learning step is still to come, or there is
@@ -134,6 +136,15 @@ export function StudyComplete({
             to="/app/study/fill"
           >
             Fill in the blank
+          </Link>
+        ) : null}
+        {queue.studiedToday.length >= minListenQuestions && isSpeechSupported() ? (
+          <Link
+            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            state={backState('/app/study', 'Back to study')}
+            to="/app/study/listen"
+          >
+            Listen and choose
           </Link>
         ) : null}
         {/* Only when there is nothing more to study: with words waiting, "Study more" is the way on. The

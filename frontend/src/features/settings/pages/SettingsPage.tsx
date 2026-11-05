@@ -1,6 +1,6 @@
 import { type FormEvent, memo, useState } from 'react'
 import { getGameSound, setGameSound } from '../../../shared/sound/effects'
-import { getRecallFirst, setRecallFirst } from '../../../shared/recallFirst'
+import { type CardStart, getCardStart, setCardStart } from '../../../shared/cardStart'
 import { getSpeakOnAnswer, getSpeakOnCard, setSpeakOnAnswer, setSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
@@ -21,7 +21,7 @@ export function SettingsPage() {
   // An empty text is the device's own zone.
   const [timeZone, setTimeZone] = useState(auth.user?.timeZone ?? '')
   const [speakOnCard, setSpeakOnCardState] = useState(getSpeakOnCard)
-  const [recallFirst, setRecallFirstState] = useState(getRecallFirst)
+  const [cardStart, setCardStartState] = useState<CardStart>(getCardStart)
   const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
   const [gameSound, setGameSoundState] = useState(getGameSound)
   const [validationError, setValidationError] = useState<string>()
@@ -146,21 +146,34 @@ export function SettingsPage() {
 
       <section aria-label="On this device" className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-7">
         <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
-        <label className="mt-3 flex items-center gap-3 text-sm font-medium text-slate-800">
-          <input
-            aria-describedby="settings-recall-hint"
-            checked={recallFirst}
-            className="size-5 shrink-0 accent-indigo-700"
-            onChange={(event) => {
-              setRecallFirstState(event.target.checked)
-              setRecallFirst(event.target.checked)
-            }}
-            type="checkbox"
-          />
-          Show the picture first on study cards
-        </label>
-        <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-recall-hint">
-          A card whose word has a picture asks which word it is; the word comes with the answer.
+        <fieldset aria-describedby="settings-start-hint" className="mt-3">
+          <legend className="text-sm font-medium text-slate-800">How a study card starts</legend>
+          {(
+            [
+              ['word', 'Show the word'],
+              ['picture', 'Show the picture first'],
+              ['sound', 'Play the word first'],
+            ] as const
+          )
+            .filter(([value]) => value !== 'sound' || isSpeechSupported())
+            .map(([value, label]) => (
+              <label className="mt-2 flex items-center gap-3 text-sm text-slate-800" key={value}>
+                <input
+                  checked={cardStart === value}
+                  className="size-5 shrink-0 accent-indigo-700"
+                  name="card-start"
+                  onChange={() => {
+                    setCardStartState(value)
+                    setCardStart(value)
+                  }}
+                  type="radio"
+                />
+                {label}
+              </label>
+            ))}
+        </fieldset>
+        <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-start-hint">
+          With the picture, a card asks which word it is; with the sound, what the word means. Either way the word comes with the answer. A word without a picture shows the word.
         </p>
         {isSpeechSupported() ? (
           <>

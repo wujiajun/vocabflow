@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getRecallFirst } from '../../../shared/recallFirst'
+import { getCardStart } from '../../../shared/cardStart'
 import { getSpeakOnAnswer, getSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
@@ -37,11 +37,13 @@ export function StudyCardView({
 }) {
   const [revealed, setRevealed] = useState(false)
   const [hintShown, setHintShown] = useState(false)
-  // A word with a memory hook is asked as a picture first: which word is this? Without one, or with
-  // the choice off in Settings, the card shows the word as before.
-  const [recallFirst] = useState(getRecallFirst)
+  // A word with a memory hook can be asked as a picture first (which word is this?), or the word can
+  // be only heard (what does it mean?), as chosen in Settings. Without a hook, or on a device that
+  // cannot speak, the card shows the word as before.
+  const [start] = useState(getCardStart)
   const cue = card.senses.find((sense) => sense.emoji || sense.scene)
-  const cueing = recallFirst && cue !== undefined && !revealed
+  const cueing = start === 'picture' && cue !== undefined && !revealed
+  const listening = start === 'sound' && isSpeechSupported() && !revealed
   const hintRef = useRef<HTMLParagraphElement>(null)
   const review = useSubmitReview()
   const termRef = useRef<HTMLHeadingElement>(null)
@@ -76,8 +78,9 @@ export function StudyCardView({
   // card is up (a link or a rating got them here). A page opened straight on this card may stay silent
   // until the first press; the button beside the word says it again.
   useEffect(() => {
-    // Not when the word is the answer to be recalled: it is said with the answer.
-    if (!cueing && isSpeechSupported() && getSpeakOnCard()) {
+    // Not when the word is the answer to be recalled: it is said with the answer. When only heard it
+    // is always said, whatever the choice about reading the word aloud.
+    if (listening || (!cueing && isSpeechSupported() && getSpeakOnCard())) {
       speakText(card.term, { onStart: () => {}, onEnd: () => {} })
     }
     // Only on mount: a card kept after a failed save must not be read again.
@@ -103,7 +106,25 @@ export function StudyCardView({
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-      {cueing ? (
+      {listening ? (
+        <div>
+          <h2 className="text-xl font-bold tracking-tight outline-none" ref={termRef} tabIndex={-1}>
+            Listen: what does this word mean?
+          </h2>
+          <button
+            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            onClick={() => speakText(card.term, { onStart: () => {}, onEnd: () => {} })}
+            type="button"
+          >
+            <svg aria-hidden="true" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="20">
+              <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+              <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+              <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+            </svg>
+            Hear the word again
+          </button>
+        </div>
+      ) : cueing ? (
         <div>
           <h2 className="text-xl font-bold tracking-tight outline-none" ref={termRef} tabIndex={-1}>
             Which word is this?
@@ -133,7 +154,7 @@ export function StudyCardView({
         </div>
       )}
       {/* Before the answer, so it can be said aloud with the word; after it, each meaning shows its own. */}
-      {!revealed && !cueing && phonetics ? (
+      {!revealed && !cueing && !listening && phonetics ? (
         <p className="mt-1 text-base text-slate-600">
           <span className="sr-only">Pronunciation: </span>
           {phonetics}

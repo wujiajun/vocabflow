@@ -272,3 +272,25 @@ test('the finished study page links to the goal', async () => {
 
   expect(await screen.findByRole('link', { name: 'Change daily goal' })).toHaveAttribute('href', '/app/settings')
 })
+
+test('how a study card starts is chosen among the word, the picture and the sound, and kept on this device', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
+  window.localStorage.removeItem('vocabflow.recallFirst')
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+
+  renderApp('/app/settings')
+  await screen.findByLabelText('CLB level')
+  expect(screen.getByRole('radio', { name: 'Show the picture first' })).toBeChecked()
+  // Without a voice, "play the word" is not offered.
+  expect(screen.queryByRole('radio', { name: 'Play the word first' })).not.toBeInTheDocument()
+  cleanup()
+
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const browserUser = userEvent.setup()
+  renderApp('/app/settings')
+  await browserUser.click(await screen.findByRole('radio', { name: 'Play the word first' }))
+  expect(window.localStorage.getItem('vocabflow.cardStart')).toBe('sound')
+  await browserUser.click(screen.getByRole('radio', { name: 'Show the word' }))
+  expect(window.localStorage.getItem('vocabflow.cardStart')).toBe('word')
+  window.localStorage.removeItem('vocabflow.cardStart')
+})
