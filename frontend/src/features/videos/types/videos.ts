@@ -17,6 +17,8 @@ export interface AlbumVideo {
   channel: string
   durationSeconds: number
   watched: boolean
+  // Where the learner stopped, in seconds; null for a video not started (or watched).
+  positionSeconds: number | null
 }
 
 export interface AlbumDetail {

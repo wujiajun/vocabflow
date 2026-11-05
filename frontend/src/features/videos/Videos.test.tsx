@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { expectNoAxeViolations } from '../../test/axe'
 import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { playerTimings } from './components/youtubeApi'
 
 beforeEach(() => {
   clearToken()
@@ -12,6 +13,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  playerTimings.saveEveryMs = 15000
   vi.unstubAllGlobals()
   expectNoUnexpectedRequests()
 })
@@ -41,13 +43,14 @@ const fixtures: Fixture[] = [
   { id: 'upper', title: 'Upper lessons', clbMin: 6, clbMax: 8, videos: [{ id: 'CCCCCCCCC01', title: 'Debate', durationSeconds: 1834 }] },
 ]
 
-// A small stand-in for the server that remembers what was marked.
-function server(watched = new Set<string>(), seen: string[] = []) {
+// A small stand-in for the server that remembers what was marked and where each video stands. It applies
+// the rules of the real one: below ten seconds nothing is kept, and nine tenths counts as watched.
+function server(watched = new Set<string>(), seen: string[] = [], places = new Map<string, number>()) {
   const detail = (fixture: Fixture) => {
-    const videos = fixture.videos.map((video) => ({ ...video, channel: 'A channel', watched: watched.has(video.id) }))
+    const videos = fixture.videos.map((video) => ({ ...video, channel: 'A channel', watched: watched.has(video.id), positionSeconds: places.get(video.id) ?? null }))
     return { id: fixture.id, title: fixture.title, source: 'A source', description: `About ${fixture.title}.`, clbMin: fixture.clbMin, clbMax: fixture.clbMax, watchedCount: videos.filter((video) => video.watched).length, videos }
   }
-  const routes: Record<string, () => Response> = {
+  const routes: Record<string, (request: { init: RequestInit }) => Response> = {
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/videos/albums': () =>
       jsonResponse(
@@ -62,12 +65,27 @@ function server(watched = new Set<string>(), seen: string[] = []) {
     for (const video of fixture.videos) {
       routes[`PUT /api/v1/videos/${video.id}/watched`] = () => {
         watched.add(video.id)
+        places.delete(video.id)
         seen.push(`PUT ${video.id}`)
         return new Response(null, { status: 204 })
       }
       routes[`DELETE /api/v1/videos/${video.id}/watched`] = () => {
         watched.delete(video.id)
+        places.delete(video.id)
         seen.push(`DELETE ${video.id}`)
+        return new Response(null, { status: 204 })
+      }
+      routes[`PUT /api/v1/videos/${video.id}/position`] = ({ init }) => {
+        const seconds = (JSON.parse(String(init.body)) as { seconds: number }).seconds
+        seen.push(`POSITION ${video.id} ${seconds}${init.keepalive ? ' keepalive' : ''}`)
+        if (seconds >= video.durationSeconds * 0.9) {
+          watched.add(video.id)
+          places.delete(video.id)
+        } else if (seconds < 10) {
+          places.delete(video.id)
+        } else {
+          places.set(video.id, seconds)
+        }
         return new Response(null, { status: 204 })
       }
     }
@@ -75,15 +93,25 @@ function server(watched = new Set<string>(), seen: string[] = []) {
   return routes
 }
 
-// Stands in for YouTube's script: remembers the players made, so a test can end a video.
+// Stands in for YouTube's script: remembers the players made, so a test can set their clock and change their state.
+interface FakePlayerHandle {
+  events: { onStateChange: (event: { data: number }) => void }
+  time: number
+}
+
 function installYouTube() {
-  const players: { onStateChange: (event: { data: number }) => void }[] = []
+  const players: FakePlayerHandle[] = []
   class FakePlayer {
-    constructor(_frame: HTMLIFrameElement, options: { events: { onStateChange: (event: { data: number }) => void } }) {
-      players.push(options.events)
+    handle: FakePlayerHandle
+    constructor(_frame: HTMLIFrameElement, options: { events: FakePlayerHandle['events'] }) {
+      this.handle = { events: options.events, time: 0 }
+      players.push(this.handle)
+    }
+    getCurrentTime() {
+      return this.handle.time
     }
   }
-  vi.stubGlobal('YT', { Player: FakePlayer, PlayerState: { ENDED: 0 } })
+  vi.stubGlobal('YT', { Player: FakePlayer, PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2 } })
   return players
 }
 
@@ -198,9 +226,9 @@ test('playing a video opens YouTube’s player, which marks it as watched when i
   await waitFor(() => expect(players).toHaveLength(1))
 
   // Not the end yet.
-  act(() => players[0].onStateChange({ data: 1 }))
+  act(() => players[0].events.onStateChange({ data: 1 }))
   expect(seen).toEqual([])
-  act(() => players[0].onStateChange({ data: 0 }))
+  act(() => players[0].events.onStateChange({ data: 0 }))
   await waitFor(() => expect(seen).toEqual(['PUT AAAAAAAAA01']))
 
   // Opening another video closes the first, and pressing the open one closes it.
@@ -221,7 +249,7 @@ test('the video that is playing keeps its place when it ends and is marked', asy
 
   await browserUser.click(screen.getByRole('button', { name: /First steps/ }))
   await waitFor(() => expect(players).toHaveLength(1))
-  act(() => players[0].onStateChange({ data: 0 }))
+  act(() => players[0].events.onStateChange({ data: 0 }))
   expect(await screen.findByText('✓ Watched')).toBeInTheDocument()
 
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('First steps')
@@ -248,4 +276,125 @@ test('when YouTube’s script cannot load, the video still plays and the learner
 
   expect(await screen.findByText(/will not be marked as watched by itself/)).toBeInTheDocument()
   expect(screen.getByTitle('Video: First steps')).toBeInTheDocument()
+})
+
+const PLAYING = 1
+const PAUSED = 2
+
+test('a video that was started shows where the learner stopped, comes first, and opens from a little before it', async () => {
+  stubApi(server(new Set(), [], new Map([['AAAAAAAAA02', 150]])))
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByRole('heading', { name: 'Starter lessons' })
+
+  const list = screen.getByRole('list', { name: 'Short videos' })
+  expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('Second steps')
+  expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('Continue from 2:30')
+  expect(within(list).getAllByRole('listitem')[1]).not.toHaveTextContent('Continue from')
+
+  await browserUser.click(screen.getByRole('button', { name: /Second steps/ }))
+  expect(new URL(screen.getByTitle('Video: Second steps').getAttribute('src') ?? '').searchParams.get('start')).toBe('145')
+  // A video not started opens at the beginning, with no start at all.
+  await browserUser.click(screen.getByRole('button', { name: /First steps/ }))
+  expect(new URL(screen.getByTitle('Video: First steps').getAttribute('src') ?? '').searchParams.has('start')).toBe(false)
+})
+
+test('where the learner stops is saved when the video pauses and when the player is closed', async () => {
+  const players = installYouTube()
+  const seen: string[] = []
+  stubApi(server(new Set(), seen))
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByRole('heading', { name: 'Starter lessons' })
+
+  await browserUser.click(screen.getByRole('button', { name: /Second steps/ }))
+  await waitFor(() => expect(players).toHaveLength(1))
+  players[0].time = 70
+  act(() => players[0].events.onStateChange({ data: PAUSED }))
+  await waitFor(() => expect(seen).toEqual(['POSITION AAAAAAAAA02 70']))
+  expect(await screen.findByText('Continue from 1:10')).toBeInTheDocument()
+
+  // Closing the player saves the place it has reached.
+  players[0].time = 95
+  await browserUser.click(screen.getByRole('button', { name: /Second steps/ }))
+  await waitFor(() => expect(seen).toEqual(['POSITION AAAAAAAAA02 70', 'POSITION AAAAAAAAA02 95 keepalive']))
+  expect(await screen.findByText('Continue from 1:35')).toBeInTheDocument()
+})
+
+test('a video not yet started leaves no place when it is closed within its first seconds', async () => {
+  const players = installYouTube()
+  const seen: string[] = []
+  stubApi(server(new Set(), seen))
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByRole('heading', { name: 'Starter lessons' })
+
+  await browserUser.click(screen.getByRole('button', { name: /First steps/ }))
+  await waitFor(() => expect(players).toHaveLength(1))
+  players[0].time = 4
+  await browserUser.click(screen.getByRole('button', { name: /First steps/ }))
+
+  expect(seen).toEqual([])
+  expect(screen.queryByText(/Continue from/)).not.toBeInTheDocument()
+})
+
+test('while a video plays its place is saved every so often, and when the page is hidden', async () => {
+  playerTimings.saveEveryMs = 30
+  const players = installYouTube()
+  const seen: string[] = []
+  stubApi(server(new Set(), seen))
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByRole('heading', { name: 'Starter lessons' })
+  await browserUser.click(screen.getByRole('button', { name: /Second steps/ }))
+  await waitFor(() => expect(players).toHaveLength(1))
+
+  players[0].time = 20
+  act(() => players[0].events.onStateChange({ data: PLAYING }))
+  await waitFor(() => expect(seen).toContain('POSITION AAAAAAAAA02 20'))
+  // Pausing stops the clock: nothing more is saved by it after this one.
+  players[0].time = 33
+  act(() => players[0].events.onStateChange({ data: PAUSED }))
+  await waitFor(() => expect(seen).toContain('POSITION AAAAAAAAA02 33'))
+  const count = seen.length
+  players[0].time = 50
+  await new Promise((resolve) => setTimeout(resolve, 120))
+  expect(seen).toHaveLength(count)
+
+  // Hidden (the phone is locked or another app is opened): saved at once, in a way that survives the page.
+  const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  await waitFor(() => expect(seen).toContain('POSITION AAAAAAAAA02 50 keepalive'))
+  hidden.mockRestore()
+})
+
+test('a video played to nine tenths counts as watched and loses its place', async () => {
+  const players = installYouTube()
+  stubApi(server())
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByRole('heading', { name: 'Starter lessons' })
+  await browserUser.click(screen.getByRole('button', { name: /First steps/ }))
+  await waitFor(() => expect(players).toHaveLength(1))
+
+  players[0].time = 56 // of 60 seconds
+  act(() => players[0].events.onStateChange({ data: PAUSED }))
+
+  expect(await screen.findByText('✓ Watched')).toBeInTheDocument()
+  expect(screen.getByText('1 of 2 watched')).toBeInTheDocument()
+  expect(screen.queryByText(/Continue from/)).not.toBeInTheDocument()
+})
+
+test('marking a video by hand clears where the learner stopped', async () => {
+  stubApi(server(new Set(), [], new Map([['AAAAAAAAA02', 150]])))
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/videos/starter')
+  await screen.findByText('Continue from 2:30')
+
+  await browserUser.click(within(screen.getAllByRole('listitem')[0]).getByRole('button', { name: 'Mark as watched' }))
+
+  expect(await screen.findByText('✓ Watched')).toBeInTheDocument()
+  expect(screen.queryByText(/Continue from/)).not.toBeInTheDocument()
 })

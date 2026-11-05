@@ -5,8 +5,8 @@ import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { VideoRow } from '../components/VideoRow'
-import { useAlbum, useSetWatched } from '../hooks/useVideos'
-import { formatLevels, isShort } from '../videoLevels'
+import { useAlbum, useSavePosition, useSetWatched } from '../hooks/useVideos'
+import { formatLevels, isShort, minPositionSeconds } from '../videoLevels'
 
 const albumsPage = { path: '/app/reading/videos', label: 'Back to videos' }
 
@@ -21,6 +21,7 @@ export function AlbumPage() {
   const { albumId } = useParams()
   const album = useAlbum(albumId)
   const setWatched = useSetWatched(albumId)
+  const savePosition = useSavePosition(albumId)
   const [chosen, setChosen] = useState<Length>()
   const [playing, setPlaying] = useState<string | null>(null)
   usePageTitle(album.data?.title ?? 'Videos')
@@ -61,10 +62,12 @@ export function AlbumPage() {
     const short = data.videos.filter((video) => isShort(video.durationSeconds))
     const long = data.videos.filter((video) => !isShort(video.durationSeconds))
     const length: Length = chosen ?? (short.length > 0 ? 'short' : 'long')
-    // Not watched first; the album's own order is kept inside each group. The video that is open keeps its
-    // place even once it ends and is marked, so the page does not jump under the learner's thumb.
-    const placedAsWatched = (video: { id: string; watched: boolean }) => video.watched && video.id !== playing
-    const list = [...(length === 'short' ? short : long)].sort((a, b) => Number(placedAsWatched(a)) - Number(placedAsWatched(b)))
+    // Those started come first, then those not yet watched, then those watched; the album's own order is
+    // kept inside each group. The video that is open keeps its place even once it ends and is marked, so
+    // the page does not jump under the learner's thumb.
+    const rank = (video: { id: string; watched: boolean; positionSeconds: number | null }) =>
+      video.watched && video.id !== playing ? 2 : video.positionSeconds !== null || video.id === playing ? 0 : 1
+    const list = [...(length === 'short' ? short : long)].sort((a, b) => rank(a) - rank(b))
     const share = data.videos.length > 0 ? (data.watchedCount / data.videos.length) * 100 : 0
 
     return (
@@ -100,6 +103,12 @@ export function AlbumPage() {
           {list.map((video) => (
             <VideoRow
               key={video.id}
+              onPosition={(seconds, keepalive) => {
+                // Not worth a request: a video not started stays unmarked.
+                if (seconds >= minPositionSeconds || video.positionSeconds !== null) {
+                  savePosition.mutate({ videoId: video.id, seconds, keepalive })
+                }
+              }}
               onSetWatched={(watched) => setWatched.mutate({ videoId: video.id, watched })}
               onToggle={() => setPlaying((current) => (current === video.id ? null : video.id))}
               open={playing === video.id}
