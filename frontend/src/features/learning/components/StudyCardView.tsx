@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { getRecallFirst } from '../../../shared/recallFirst'
 import { getSpeakOnAnswer, getSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
@@ -9,6 +10,7 @@ import { SenseTabs } from '../../vocabulary/components/SenseTabs'
 import { useSubmitReview } from '../hooks/useStudy'
 import type { Rating, StudyCard } from '../types/study'
 import { formatInterval } from './formatInterval'
+import { maskTerm } from './matching'
 
 const ratingLabels: Record<Rating, string> = { AGAIN: 'Again', HARD: 'Hard', GOOD: 'Good', EASY: 'Easy' }
 
@@ -34,6 +36,13 @@ export function StudyCardView({
   onRate: () => void
 }) {
   const [revealed, setRevealed] = useState(false)
+  const [hintShown, setHintShown] = useState(false)
+  // A word with a memory hook is asked as a picture first: which word is this? Without one, or with
+  // the choice off in Settings, the card shows the word as before.
+  const [recallFirst] = useState(getRecallFirst)
+  const cue = card.senses.find((sense) => sense.emoji || sense.scene)
+  const cueing = recallFirst && cue !== undefined && !revealed
+  const hintRef = useRef<HTMLParagraphElement>(null)
   const review = useSubmitReview()
   const termRef = useRef<HTMLHeadingElement>(null)
   const answerRef = useRef<HTMLDivElement>(null)
@@ -57,11 +66,18 @@ export function StudyCardView({
     }
   }, [revealed])
 
+  useEffect(() => {
+    if (hintShown) {
+      hintRef.current?.focus()
+    }
+  }, [hintShown])
+
   // Browsers let speech start only once the page has been pressed, and the learner has by the time a
   // card is up (a link or a rating got them here). A page opened straight on this card may stay silent
   // until the first press; the button beside the word says it again.
   useEffect(() => {
-    if (isSpeechSupported() && getSpeakOnCard()) {
+    // Not when the word is the answer to be recalled: it is said with the answer.
+    if (!cueing && isSpeechSupported() && getSpeakOnCard()) {
       speakText(card.term, { onStart: () => {}, onEnd: () => {} })
     }
     // Only on mount: a card kept after a failed save must not be read again.
@@ -87,14 +103,37 @@ export function StudyCardView({
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 className="min-w-0 text-3xl font-bold tracking-tight outline-none [overflow-wrap:anywhere]" ref={termRef} tabIndex={-1}>
-          {card.term}
-        </h2>
-        <PronounceButton term={card.term} />
-      </div>
+      {cueing ? (
+        <div>
+          <h2 className="text-xl font-bold tracking-tight outline-none" ref={termRef} tabIndex={-1}>
+            Which word is this?
+          </h2>
+          {cue.emoji ? <p className="mt-3 text-5xl leading-none">{cue.emoji}</p> : null}
+          {cue.scene && (hintShown || !cue.emoji) ? (
+            <p className="mt-3 rounded-xl bg-indigo-50 px-4 py-3 text-lg leading-7 font-medium text-indigo-950 outline-none" ref={hintRef} tabIndex={-1}>
+              {maskTerm(cue.scene, [card.term, card.baseForm])}
+            </p>
+          ) : null}
+          {cue.scene && cue.emoji && !hintShown ? (
+            <button
+              className="mt-3 min-h-11 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              onClick={() => setHintShown(true)}
+              type="button"
+            >
+              Show a hint
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="min-w-0 text-3xl font-bold tracking-tight outline-none [overflow-wrap:anywhere]" ref={termRef} tabIndex={-1}>
+            {card.term}
+          </h2>
+          <PronounceButton term={card.term} />
+        </div>
+      )}
       {/* Before the answer, so it can be said aloud with the word; after it, each meaning shows its own. */}
-      {!revealed && phonetics ? (
+      {!revealed && !cueing && phonetics ? (
         <p className="mt-1 text-base text-slate-600">
           <span className="sr-only">Pronunciation: </span>
           {phonetics}

@@ -6,6 +6,7 @@ import { useAuth } from '../../features/auth/hooks/useAuth'
 import { ReadingListPage } from '../../features/reading/pages/ReadingListPage'
 import { ReadingPassagePage } from '../../features/reading/pages/ReadingPassagePage'
 import { ReadingWritingPage } from '../../features/reading/pages/ReadingWritingPage'
+import { FillBlankPage } from '../../features/learning/pages/FillBlankPage'
 import { QuickReviewPage } from '../../features/learning/pages/QuickReviewPage'
 import { StudyPage } from '../../features/learning/pages/StudyPage'
 import { SettingsPage } from '../../features/settings/pages/SettingsPage'
@@ -49,6 +50,7 @@ export function AppRouter() {
         <Route path="reading/:id" element={<ReadingPassagePage />} />
         <Route path="study" element={<StudyPage />} />
         <Route path="study/review" element={<QuickReviewPage />} />
+        <Route path="study/fill" element={<FillBlankPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/app/study" replace />} />
       </Route>

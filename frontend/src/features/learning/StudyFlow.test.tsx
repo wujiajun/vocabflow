@@ -720,3 +720,64 @@ test('after the answer is shown, an example sentence can be read aloud', async (
   window.localStorage.removeItem('vocabflow.speakOnCard')
   window.localStorage.removeItem('vocabflow.speakOnAnswer')
 })
+
+const hooked = () =>
+  card({
+    senses: [
+      {
+        partOfSpeech: 'adjective',
+        label: 'too much',
+        phonetic: '/x/',
+        definition: 'Feeling that there is too much to deal with.',
+        examples: ['I felt overwhelmed.'],
+        collocations: [],
+        emoji: '😵📚',
+        scene: 'A student sits under a huge pile of books and feels overwhelmed.',
+      },
+    ],
+  })
+
+test('a word with a memory hook is asked as a picture first, and the hint and the word come on request', async () => {
+  window.localStorage.removeItem('vocabflow.recallFirst')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study')
+
+  expect(await screen.findByRole('heading', { name: 'Which word is this?' })).toBeInTheDocument()
+  expect(screen.getByText('😵📚')).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'overwhelmed' })).not.toBeInTheDocument()
+  expect(screen.queryByText(/huge pile/)).not.toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('button', { name: 'Show a hint' }))
+  // The word is hidden in the hint too, so it does not give the answer away.
+  expect(screen.getByText('A student sits under a huge pile of books and feels _____.')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Which word is this?' })).not.toBeInTheDocument()
+})
+
+test('the picture first can be turned off, and a word without a hook shows the word as before', async () => {
+  window.localStorage.setItem('vocabflow.recallFirst', 'off')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  renderApp('/app/study')
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+  expect(screen.queryByText('😵📚')).not.toBeInTheDocument()
+  cleanup()
+  vi.unstubAllGlobals()
+
+  window.localStorage.removeItem('vocabflow.recallFirst')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
+  renderApp('/app/study')
+  expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
+})
+
+test('the word is not read aloud while it is still the thing to recall', async () => {
+  window.localStorage.removeItem('vocabflow.recallFirst')
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: hooked() })) })
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'Which word is this?' })
+
+  expect(speech.spoken).toHaveLength(0)
+})

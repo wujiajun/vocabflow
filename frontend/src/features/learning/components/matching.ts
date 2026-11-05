@@ -41,10 +41,25 @@ function endings(term: string) {
   return forms.join('|')
 }
 
-export function maskTerm(definition: string, terms: (string | null)[]) {
-  const wanted = [...new Set(terms.filter((term): term is string => Boolean(term?.trim())).map((term) => term.trim()))].sort(
+function wantedTerms(terms: (string | null)[]) {
+  return [...new Set(terms.filter((term): term is string => Boolean(term?.trim())).map((term) => term.trim()))].sort(
     (first, second) => second.length - first.length,
   )
+}
+
+// The first place a word (in any of its likely forms) is written in a text, as written there.
+export function findTerm(text: string, terms: (string | null)[]): { form: string; index: number } | null {
+  for (const term of wantedTerms(terms)) {
+    const match = new RegExp(`(?<![\\w])(?:${endings(term)})(?![\\w])`, 'i').exec(text)
+    if (match) {
+      return { form: match[0], index: match.index }
+    }
+  }
+  return null
+}
+
+export function maskTerm(definition: string, terms: (string | null)[]) {
+  const wanted = wantedTerms(terms)
   return wanted.reduce(
     (text, term) => text.replace(new RegExp(`(?<![\\w])(?:${endings(term)})(?![\\w])`, 'gi'), blank),
     definition,
