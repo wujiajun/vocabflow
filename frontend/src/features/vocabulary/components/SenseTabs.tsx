@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import type { VocabularySense } from '../types/vocabulary'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
+import { TappablePhrase } from './TappablePhrase'
 import { TappableText } from './TappableText'
 
 // Shows a word's meanings, one at a time when it has several. Follows the ARIA tabs pattern: Tab
@@ -96,13 +97,13 @@ function SenseContent({
       <SenseList headingLevel={headingLevel} items={sense.examples} speakable={speakExamples} tappable title="Examples" />
       <SenseWords headingLevel={headingLevel} items={sense.synonyms} title="Similar words" />
       <SenseWords headingLevel={headingLevel} items={sense.antonyms} title="Opposites" />
-      <SenseList headingLevel={headingLevel} items={sense.collocations} title="Collocations" />
+      <SenseList headingLevel={headingLevel} items={sense.collocations} phrases title="Collocations" />
     </div>
   )
 }
 
-// Synonyms and antonyms as small chips. Their words are taps that offer to add them, like the
-// words of an example, so a learner can pick up the neighbours of a word too.
+// Synonyms and antonyms as small chips. Each is a tap that offers to add the whole phrase, so a
+// learner can pick up the neighbours of a word too.
 function SenseWords({
   title,
   items,
@@ -122,7 +123,7 @@ function SenseWords({
       <ul className="mt-2 flex flex-wrap gap-2">
         {items.map((item) => (
           <li className="rounded-full bg-slate-100 px-3 py-1 text-slate-800" key={item}>
-            <TappableText text={item} />
+            <TappablePhrase text={item} />
           </li>
         ))}
       </ul>
@@ -135,12 +136,15 @@ function SenseList({
   items,
   tappable = false,
   speakable = false,
+  phrases = false,
   headingLevel: Heading,
 }: {
   title: string
   items: string[] | null
   tappable?: boolean
   speakable?: boolean
+  // Each item is added as a whole phrase, not word by word.
+  phrases?: boolean
   headingLevel: 'h2' | 'h3'
 }) {
   if (!items || items.length === 0) {
@@ -162,6 +166,8 @@ function SenseList({
               </div>
             ) : tappable ? (
               <TappableText text={item} />
+            ) : phrases ? (
+              <TappablePhrase text={item} />
             ) : (
               item
             )}
