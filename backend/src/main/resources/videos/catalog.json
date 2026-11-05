@@ -4,33 +4,463 @@
       "id": "voa-lle-1",
       "title": "Let's Learn English, Level 1",
       "source": "VOA Learning English",
-      "description": "A beginner video course: Anna and Pete in Washington, D.C. Short lessons with speaking and pronunciation practice.",
+      "description": "A beginner video course, lesson by lesson: Anna and Pete in Washington, D.C.",
       "clbMin": 1,
       "clbMax": 3,
       "videos": [
         {
           "id": "WR9_nsLyaEY",
-          "title": "Let's Learn English Lesson 1 - Welcome!",
+          "title": "Lesson 1: Welcome!",
           "channel": "VOA Learning English",
-          "durationSeconds": 230
+          "durationSeconds": 231
+        },
+        {
+          "id": "1-U7o9xjWQc",
+          "title": "Lesson 2: Hello, I'm Anna!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 240
         },
         {
           "id": "IEA9LMy-N3M",
-          "title": "Let's Learn English Lesson 3: I'm Here!",
+          "title": "Lesson 3: I'm Here!",
           "channel": "VOA Learning English",
-          "durationSeconds": 300
+          "durationSeconds": 301
         },
         {
           "id": "Z5PF-vJdUdc",
-          "title": "Let's Learn English Lesson 4: What is it?",
+          "title": "Lesson 4: What is it?",
           "channel": "VOA Learning English",
           "durationSeconds": 322
         },
         {
-          "id": "cFjmd4ghQis",
-          "title": "Pronunciation Practice Lesson 3",
+          "id": "lDaZB5BBw7M",
+          "title": "Lesson 5: Where Are You?",
           "channel": "VOA Learning English",
-          "durationSeconds": 30
+          "durationSeconds": 241
+        },
+        {
+          "id": "T3AJ29_2IX8",
+          "title": "Lesson 6: Where Is the Gym?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 442
+        },
+        {
+          "id": "Ka33lX-kbMg",
+          "title": "Lesson 7: What Are You Doing?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 474
+        },
+        {
+          "id": "sp0cwcd1fGE",
+          "title": "Lesson 8: Are You Busy?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 235
+        },
+        {
+          "id": "ZfdNbSe7Prw",
+          "title": "Lesson 9: Is It Cold?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 303
+        },
+        {
+          "id": "1Lo_ICJYxZI",
+          "title": "Lesson 10: Come Over to My Place",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "8_npDNRKGIE",
+          "title": "Lesson 11: This Is My Neighborhood",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "cyRaZA9ZD08",
+          "title": "Lesson 12: Meet My Family",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "jkutq1P7AHU",
+          "title": "Lesson 13: Happy Birthday, William Shakespeare!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "4Xn1Ysdmuvg",
+          "title": "Lesson 14: How About This?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "c6_7RYaNgdA",
+          "title": "Lesson 15: I Love People-Watching!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "91sCUUVTDV8",
+          "title": "Lesson 17: Are You Free on Friday?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "he12VfXp5Ec",
+          "title": "Lesson 18: She Always Does That",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "lgEodUvA5Po",
+          "title": "Lesson 19: When Do I Start?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "2juFXfLsSJk",
+          "title": "Lesson 20: What Can You Do?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "A9lwBqNZEh8",
+          "title": "Lesson 21: Can You Come to the Party?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "8Whu9xgm3dE",
+          "title": "Lesson 22: Next Summer...",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "DzaLlp_kG6c",
+          "title": "Lesson 23: What Do You Want?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "7BDjr0Oc6VM",
+          "title": "Lesson 24: Yesterday Was Amazing",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "bfRNAlZRiHg",
+          "title": "Lesson 25: Watch Out!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "x2SQcTFvVzw",
+          "title": "Lesson 26: This Game Is Fun!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "d_4TVWhqX4E",
+          "title": "Lesson 27",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "rn7kmGroxKs",
+          "title": "Lesson 28: I Passed It!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "_demyJmMyCo",
+          "title": "Lesson 29: A Long Time Ago",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "GnQEE0gEir0",
+          "title": "Lesson 30: Rolling on the River",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "xfMnWypEufs",
+          "title": "Lesson 31: Take Me Out to the Ball Game",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "1egFRwUFc48",
+          "title": "Lesson 32: Welcome to the Treehouse!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "GpiXMzf3FvY",
+          "title": "Lesson 33: Learning America's Sport",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "qIiGG0pwzwk",
+          "title": "Lesson 34: What Will I Do?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "6rFolPv2ntQ",
+          "title": "Lesson 35: Let's Make Dinner!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "NXYXu9Kcb7o",
+          "title": "Lesson 36: I Can Fix this!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "AGYPb0eeIs8",
+          "title": "Lesson 37: Let's Agree to Disagree",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "oPEzfd7ZKQs",
+          "title": "Lesson 38: She’s my best friend!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 305
+        },
+        {
+          "id": "FpCQfJLD4K8",
+          "title": "Lesson 39: It’s Unbelievable!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "sHVX77yDQbs",
+          "title": "Lesson 40: The Woods Are Alive",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "jCSHkjcmZvs",
+          "title": "Lesson 41: Teamwork Works Best With a Team",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "0aa78zW51so",
+          "title": "Lesson 42: I Was Minding My Own Business",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "4z_TK18v2u8",
+          "title": "Lesson 43: Time for Plan B",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "R4SVqLFBhVY",
+          "title": "Lesson 45: This Land is Your Land",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "1z7pSR1nW54",
+          "title": "Lesson 46: May I Borrow That?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "vlNqXVmMPNY",
+          "title": "Lesson 47: How Can I Help?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "Dngj5yTCQIY",
+          "title": "Lesson 48: Have You Ever...?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 300
+        },
+        {
+          "id": "qDqwN0mXm1o",
+          "title": "Lesson 49: Operation Spy",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "DGAUQIcY8FA",
+          "title": "Lesson 50: Back to School",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "GvjBCQ3KOws",
+          "title": "Lesson 51",
+          "channel": "VOA Learning English",
+          "durationSeconds": 295
+        },
+        {
+          "id": "vJPvOYb1K10",
+          "title": "Lesson 52: Taking Chances",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        }
+      ]
+    },
+    {
+      "id": "voa-practice",
+      "title": "Let's Learn English: speaking and pronunciation practice",
+      "source": "VOA Learning English",
+      "description": "Practice videos for the Let's Learn English lessons: say the lines after the speakers, and practise the sounds.",
+      "clbMin": 1,
+      "clbMax": 4,
+      "videos": [
+        {
+          "id": "EACvUFj-bTI",
+          "title": "Lesson 2 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 147
+        },
+        {
+          "id": "sxgEoiRjYtI",
+          "title": "Lesson 22 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 531
+        },
+        {
+          "id": "IlBaOlsjyrY",
+          "title": "Lesson 30 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 605
+        },
+        {
+          "id": "habxA9VA910",
+          "title": "Lesson 31 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 567
+        },
+        {
+          "id": "jnkVKJrTQhI",
+          "title": "Lesson 37 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 203
+        },
+        {
+          "id": "P2ijn92tvn8",
+          "title": "Lesson 42 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 461
+        },
+        {
+          "id": "xCs62NwZr0k",
+          "title": "Lesson 43 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 317
+        },
+        {
+          "id": "SosJIruNC9Y",
+          "title": "Lesson 44 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 466
+        },
+        {
+          "id": "qLH-_0ZJluU",
+          "title": "Lesson 45 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 351
+        },
+        {
+          "id": "-I3pVwwDy6w",
+          "title": "Lesson 46 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 448
+        },
+        {
+          "id": "rb7Bs70qpJ4",
+          "title": "Lesson 47 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 454
+        },
+        {
+          "id": "lHZccocip3w",
+          "title": "Lesson 48 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 562
+        },
+        {
+          "id": "Lgu62oh16zw",
+          "title": "Lesson 50 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 541
+        },
+        {
+          "id": "wf15ej6vRkY",
+          "title": "Lesson 51 speaking practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 319
+        },
+        {
+          "id": "cFjmd4ghQis",
+          "title": "Lesson 3 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 31
+        },
+        {
+          "id": "PwDJILthcjU",
+          "title": "Lesson 22 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 127
+        },
+        {
+          "id": "dfIPUcwcDP0",
+          "title": "Lesson 43 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 102
+        },
+        {
+          "id": "w-oq4RkEiDI",
+          "title": "Lesson 44 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 100
+        },
+        {
+          "id": "5i95QZhOQfo",
+          "title": "Lesson 45 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 76
+        },
+        {
+          "id": "BhG3apP4ZAo",
+          "title": "Lesson 46 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 96
+        },
+        {
+          "id": "Hx-Wrjwn8h4",
+          "title": "Lesson 48 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 87
+        },
+        {
+          "id": "1kZeXhbcdyU",
+          "title": "Lesson 49 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 136
+        },
+        {
+          "id": "upickl1_6Ak",
+          "title": "Lesson 51 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 91
+        },
+        {
+          "id": "m2VnyoZIlM4",
+          "title": "Lesson 52 pronunciation practice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 56
         }
       ]
     },
@@ -38,21 +468,183 @@
       "id": "voa-lle-2",
       "title": "Let's Learn English, Level 2",
       "source": "VOA Learning English",
-      "description": "The second beginner course: longer lessons about everyday situations.",
+      "description": "The second beginner course, lesson by lesson: longer stories about everyday situations.",
       "clbMin": 3,
       "clbMax": 5,
       "videos": [
         {
-          "id": "a7X5ftOnp74",
-          "title": "Let's Learn English Level 2 Lesson 3: He Said - She Said",
+          "id": "4XaAE5NRHVM",
+          "title": "Lesson 1: Budget Cuts",
           "channel": "VOA Learning English",
-          "durationSeconds": 300
+          "durationSeconds": 301
+        },
+        {
+          "id": "xokbf-np33Q",
+          "title": "Lesson 2: The Interview",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "a7X5ftOnp74",
+          "title": "Lesson 3: He Said - She Said",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
         },
         {
           "id": "OR0d7fb_Ls0",
-          "title": "Let's Learn English Level 2 Lesson 4: Run Away With the Circus!",
+          "title": "Lesson 4: Run Away With the Circus!",
           "channel": "VOA Learning English",
-          "durationSeconds": 313
+          "durationSeconds": 314
+        },
+        {
+          "id": "yJ5fpEFx6j8",
+          "title": "Lesson 5: Greatest Vacation of All Time",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "5xdLrGkmbcg",
+          "title": "Lesson 6: Will It Float?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "x9MqYQYAGdA",
+          "title": "Lesson 7: Tip Your Tour Guide",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "WoJVDTaQQ5A",
+          "title": "Lesson 8",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "8aa3uD1Ywjc",
+          "title": "Lesson 9: Pets Are Family, Too!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "O08F0xp1UGk",
+          "title": "Lesson 10: Visit to Peru",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "DimMV7rUOhQ",
+          "title": "Lesson 11: The Big Snow",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "VwoIWAsBQgM",
+          "title": "Lesson 12: Run! Bees!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "sh-haAqZiy8",
+          "title": "Lesson 13: Save the Bees!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "5fkai35hhVI",
+          "title": "Lesson 14: Made for Each Other",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "bUvWLxbXtkE",
+          "title": "Lesson 15: Before and After",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "0drJKfs3voQ",
+          "title": "Lesson 16: Find Your Joy!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "Ow8u0Zk2wV4",
+          "title": "Lesson 17: Flour Baby, Part 1",
+          "channel": "VOA Learning English",
+          "durationSeconds": 302
+        },
+        {
+          "id": "AMjUoPYXkdY",
+          "title": "Lesson 18: Flour Baby, Part 2",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "-e3XRPYy-ig",
+          "title": "Lesson 19: Movie Night",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "s9gHdZNuBuU",
+          "title": "Lesson 20: The Test Drive",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "Gn383Wyl0UQ",
+          "title": "Lesson 21: It Speaks to Me",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "EOyRn0ajkgM",
+          "title": "Lesson 22: Trash to Treasure, Part 2",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "V_b9YReldOk",
+          "title": "Lesson 23: Rock Star",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "yjFq34vMMJQ",
+          "title": "Lesson 24: I Feel Super!",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "HTn-fhGncO0",
+          "title": "Lesson 25: Only Human",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "an8xrZuIKuQ",
+          "title": "Lesson 26: Two Annas",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "uUl6WkwKNxs",
+          "title": "Lesson 28: For the Birds",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
+        },
+        {
+          "id": "Az3f5OQDtAw",
+          "title": "Lesson 29: Where There's Smoke...",
+          "channel": "VOA Learning English",
+          "durationSeconds": 305
+        },
+        {
+          "id": "mhCAuZBPaNM",
+          "title": "Lesson 30: Dream a Little Dream",
+          "channel": "VOA Learning English",
+          "durationSeconds": 301
         }
       ]
     },
@@ -60,25 +652,25 @@
       "id": "voa-grammar",
       "title": "Everyday Grammar and English in a Minute",
       "source": "VOA Learning English",
-      "description": "Short captioned videos on grammar and everyday expressions.",
+      "description": "Two-minute captioned videos on grammar and everyday English, from tenses to polite requests.",
       "clbMin": 4,
       "clbMax": 6,
       "videos": [
         {
           "id": "VOhvrOSAYWU",
-          "title": "Everyday Grammar: The Simple Past",
+          "title": "The Simple Past",
           "channel": "VOA Learning English",
           "durationSeconds": 137
         },
         {
           "id": "4dcpxo55m_s",
-          "title": "Everyday Grammar: The Simple Future",
+          "title": "The Simple Future",
           "channel": "VOA Learning English",
           "durationSeconds": 132
         },
         {
           "id": "54JqAfH0MJc",
-          "title": "Everyday Grammar: Be About To",
+          "title": "Be About To",
           "channel": "VOA Learning English",
           "durationSeconds": 117
         },
@@ -86,7 +678,289 @@
           "id": "b_ka3-253h0",
           "title": "English in a Minute: No Brainer",
           "channel": "VOA Learning English",
-          "durationSeconds": 60
+          "durationSeconds": 61
+        },
+        {
+          "id": "nvPls347QtM",
+          "title": "Present Progressive Tense",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "BPXroALNDzk",
+          "title": "Will vs. Be Going to",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "EYi-RNiaZxw",
+          "title": "Simple Past Present Perfect",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "q3B-t5Ikrz8",
+          "title": "For & Since",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "1ufv53leV5E",
+          "title": "Frequency Adverbs",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "4XEudQo2d5s",
+          "title": "Yesterday, Ago, Last",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "qPh9rrRVeKs",
+          "title": "Simple Past Yes/No Questions",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "achWQ7YD5Fo",
+          "title": "Have, Has, and Had",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "GleOs3vJ-K4",
+          "title": "Tag Questions",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "POuqEF2F0pE",
+          "title": "'Used to'",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "CzRbY4Sq3A8",
+          "title": "'Be Used to'",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "rwoc_Mj0vhg",
+          "title": "Modals for Asking Permission",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "x1ZEfh5_hv4",
+          "title": "Would you mind…?",
+          "channel": "VOA Learning English",
+          "durationSeconds": 113
+        },
+        {
+          "id": "oNXsaBVaVz4",
+          "title": "Making Suggestions",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "qJ1OgynjFR8",
+          "title": "Expressing Preference",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "IkxwPwCV47M",
+          "title": "Modals (Should, Ought To, Had Better)",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "GsYDM1seWHc",
+          "title": "May, Might, and Must",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "JVrZ82uv4LM",
+          "title": "Could Have, Would Have",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "2piCE1lzvL4",
+          "title": "Polite Offers & Simple Past Tense",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "fOBRbhM8Gx8",
+          "title": "Be Supposed To",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "oVL2BUAahL0",
+          "title": "Superlatives",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "8GfTFn8sdPI",
+          "title": "Comparatives",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "4O0NZd-oDKw",
+          "title": "Introducing Articles",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "541Sxg4uYQc",
+          "title": "Quantifiers",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "sJDTXw2m0AU",
+          "title": "In. On. At.",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "O8Ob_YsT8_o",
+          "title": "Word Order of Adjectives",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "HfGonaT_Hes",
+          "title": "Noncount Nouns",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "IyWmg86blgY",
+          "title": "Introduction to Phrasal Verbs",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "JKWGPwGeDhA",
+          "title": "Separable Phrasal Verbs",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "1Ym2FTMv2oM",
+          "title": "Phrasal Verbs – Go Out",
+          "channel": "VOA Learning English",
+          "durationSeconds": 118
+        },
+        {
+          "id": "Ar2XR83ZnT4",
+          "title": "Phrasal Verbs - Come back",
+          "channel": "VOA Learning English",
+          "durationSeconds": 119
+        },
+        {
+          "id": "Sy8SbRCTqTE",
+          "title": "Phrasal Verbs - Come up",
+          "channel": "VOA Learning English",
+          "durationSeconds": 118
+        },
+        {
+          "id": "zwKLpw0vfVo",
+          "title": "Lend vs. Borrow",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "PQKHigYRYrI",
+          "title": "Commonly Confused Words",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "-vQPXqQWED4",
+          "title": "Tell, Say, Speak, Talk",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "5amtojW8eCU",
+          "title": "Zero Conditional",
+          "channel": "VOA Learning English",
+          "durationSeconds": 123
+        },
+        {
+          "id": "ECeiQzclT2g",
+          "title": "Present And Future Real Conditionals",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "Zcp3ICYWg3Q",
+          "title": "Present Unreal Conditionals",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "YsQ0M4DsKuk",
+          "title": "Reported Speech",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "jb0xZL9vPqY",
+          "title": "Passive & Active Voice",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "mdFw-erJIQs",
+          "title": "Making Polite Requests in Email",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "LZ1MpRb9yuI",
+          "title": "Expressing Thanks and Appreciation",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "bVUQsnJPzo8",
+          "title": "The Most Useful Weather Expressions",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "Lf4MkvBPzP4",
+          "title": "How to Express Condolences",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "B0YkZwkz5TY",
+          "title": "Understanding Fast Talkers",
+          "channel": "VOA Learning English",
+          "durationSeconds": 122
+        },
+        {
+          "id": "MsDid9VFw-s",
+          "title": "American English vs. British English",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
+        },
+        {
+          "id": "_8yrPMHq10o",
+          "title": "Native Speaker Mistakes",
+          "channel": "VOA Learning English",
+          "durationSeconds": 121
         }
       ]
     },
@@ -100,15 +974,129 @@
       "videos": [
         {
           "id": "j9b1CNN_rFU",
-          "title": "Asking Questions - 6 Minute Grammar",
+          "title": "Asking Questions",
           "channel": "BBC Learning English",
           "durationSeconds": 359
         },
         {
           "id": "xFsYrTIndhI",
-          "title": "Present Simple and Present Continuous - 6 Minute Grammar",
+          "title": "Present Simple and Present Continuous",
           "channel": "BBC Learning English",
-          "durationSeconds": 360
+          "durationSeconds": 361
+        },
+        {
+          "id": "X6LuWwb9whM",
+          "title": "How to use present tenses",
+          "channel": "BBC Learning English",
+          "durationSeconds": 374
+        },
+        {
+          "id": "uTB5I8V9Eog",
+          "title": "Past simple and past continuous",
+          "channel": "BBC Learning English",
+          "durationSeconds": 378
+        },
+        {
+          "id": "PgsG98vByiw",
+          "title": "The past simple tense",
+          "channel": "BBC Learning English",
+          "durationSeconds": 372
+        },
+        {
+          "id": "CzoxIVPtPgI",
+          "title": "Indirect Questions",
+          "channel": "BBC Learning English",
+          "durationSeconds": 371
+        },
+        {
+          "id": "tbru3bW2kVE",
+          "title": "Using 'can', 'could', 'be able to' and 'manage to'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 374
+        },
+        {
+          "id": "jwmKjgwlMk8",
+          "title": "Present perfect and past simple",
+          "channel": "BBC Learning English",
+          "durationSeconds": 361
+        },
+        {
+          "id": "8_nhtAwI0dA",
+          "title": "The present perfect with 'just', 'already' and 'yet'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 367
+        },
+        {
+          "id": "o-GWYDA4IQY",
+          "title": "Present perfect with 'ever' and 'never'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 368
+        },
+        {
+          "id": "sSZcAh42qtI",
+          "title": "Present perfect with 'for' and 'since'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 366
+        },
+        {
+          "id": "elPHkXNxi2g",
+          "title": "How to talk about the future",
+          "channel": "BBC Learning English",
+          "durationSeconds": 372
+        },
+        {
+          "id": "ZXN3wROCpfs",
+          "title": "'May', 'might' and 'could'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 365
+        },
+        {
+          "id": "HUXXgVElADg",
+          "title": "'Have To' and 'must'",
+          "channel": "BBC Learning English",
+          "durationSeconds": 359
+        },
+        {
+          "id": "8VETylIxyhw",
+          "title": "The first conditional",
+          "channel": "BBC Learning English",
+          "durationSeconds": 369
+        },
+        {
+          "id": "U2DxNgQqDgQ",
+          "title": "How to use comparatives and superlatives",
+          "channel": "BBC Learning English",
+          "durationSeconds": 375
+        },
+        {
+          "id": "ryRu8zFCKZE",
+          "title": "Articles",
+          "channel": "BBC Learning English",
+          "durationSeconds": 364
+        },
+        {
+          "id": "r6XpFWmA7Gk",
+          "title": "How to use quantifiers",
+          "channel": "BBC Learning English",
+          "durationSeconds": 378
+        },
+        {
+          "id": "foyWhOHhTT0",
+          "title": "Question tags",
+          "channel": "BBC Learning English",
+          "durationSeconds": 364
+        },
+        {
+          "id": "voQLMgJE-QE",
+          "title": "Adverbs of Frequency",
+          "channel": "BBC Learning English",
+          "durationSeconds": 358
+        },
+        {
+          "id": "3dA7P5arkyc",
+          "title": "Used to",
+          "channel": "BBC Learning English",
+          "durationSeconds": 364
         }
       ]
     },
@@ -152,7 +1140,7 @@
           "id": "q72o7f_yzis",
           "title": "Real Life ENGLISH Around the City",
           "channel": "Speak English With Vanessa",
-          "durationSeconds": 1872
+          "durationSeconds": 1873
         },
         {
           "id": "Poe_zqMKD4U",
@@ -172,13 +1160,13 @@
       "videos": [
         {
           "id": "JAUAzf8zBog",
-          "title": "Have a pop: The English We Speak",
+          "title": "Have a pop",
           "channel": "BBC Learning English",
-          "durationSeconds": 147
+          "durationSeconds": 148
         },
         {
           "id": "H-_2iKiXAkw",
-          "title": "You do you: The English We Speak",
+          "title": "You do you",
           "channel": "BBC Learning English",
           "durationSeconds": 138
         }
@@ -188,33 +1176,237 @@
       "id": "bbc-6-minute-english",
       "title": "6 Minute English",
       "source": "BBC Learning English",
-      "description": "Themed listening collections with new vocabulary, about 30 minutes each.",
+      "description": "Listening practice with new vocabulary: 6-minute episodes, and 30-minute collections of several on one theme.",
       "clbMin": 6,
       "clbMax": 8,
       "videos": [
         {
-          "id": "B_CxyglDW8Y",
-          "title": "BOX SET: 6 Minute English - 'Human Emotions 2' English mega-class! 30 minutes of new vocabulary!",
+          "id": "2FrA6kHzVQ4",
+          "title": "Art & Culture (31 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1834
+          "durationSeconds": 1831
         },
         {
-          "id": "WMokf0EgTcA",
-          "title": "BOX SET: 6 Minute English - 'Wellbeing' English mega-class! 30 minutes of new vocabulary!",
+          "id": "9DXq7SRkD54",
+          "title": "Business & Work (31 min)",
           "channel": "BBC Learning English",
-          "durationSeconds": 1829
+          "durationSeconds": 1831
         },
         {
           "id": "m9LyXOBmQvo",
-          "title": "BOX SET: 6 Minute English - 'Business & Work 2' English mega-class! 30 minutes of new vocabulary!",
+          "title": "Business & Work 2 (30 min)",
           "channel": "BBC Learning English",
           "durationSeconds": 1828
         },
         {
-          "id": "2FrA6kHzVQ4",
-          "title": "BOX SET: 6 Minute English - 'Art & Culture' English mega-class! Thirty minutes of new vocabulary!",
+          "id": "U_Oz1wLKCDg",
+          "title": "Communication (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1845
+        },
+        {
+          "id": "Jf1n0-GOXZc",
+          "title": "Culture and customs (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1817
+        },
+        {
+          "id": "RxDUhWAreCg",
+          "title": "Education (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1832
+        },
+        {
+          "id": "iKJhhKUuuGg",
+          "title": "Family (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1839
+        },
+        {
+          "id": "ErU1rjN-cEU",
+          "title": "Food and health (31 min)",
           "channel": "BBC Learning English",
           "durationSeconds": 1831
+        },
+        {
+          "id": "hRqLoEmGWXg",
+          "title": "Health (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1831
+        },
+        {
+          "id": "IozMTwnat3o",
+          "title": "Health 2 (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1801
+        },
+        {
+          "id": "B_CxyglDW8Y",
+          "title": "Human Emotions 2 (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1835
+        },
+        {
+          "id": "U7UxHEzTjxY",
+          "title": "Money (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
+        },
+        {
+          "id": "Ytpek_usCyM",
+          "title": "Money 2 (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1832
+        },
+        {
+          "id": "EVXMiy4LCYE",
+          "title": "Transport (31 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1832
+        },
+        {
+          "id": "WMokf0EgTcA",
+          "title": "Wellbeing (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
+        },
+        {
+          "id": "6OHmXessf9A",
+          "title": "Work 2 (30 min)",
+          "channel": "BBC Learning English",
+          "durationSeconds": 1830
+        },
+        {
+          "id": "V2eW5jGQe8I",
+          "title": "Are you unhappy at work?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 373
+        },
+        {
+          "id": "8E8DQnmd4zs",
+          "title": "Flexible working",
+          "channel": "BBC Learning English",
+          "durationSeconds": 377
+        },
+        {
+          "id": "16hzMhzgaM0",
+          "title": "Life in the modern office",
+          "channel": "BBC Learning English",
+          "durationSeconds": 380
+        },
+        {
+          "id": "s1HxJVusR2w",
+          "title": "What is the future of work?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 383
+        },
+        {
+          "id": "eEBc_QB5VIQ",
+          "title": "Mental health in the workplace",
+          "channel": "BBC Learning English",
+          "durationSeconds": 393
+        },
+        {
+          "id": "TVHePsQLa3w",
+          "title": "Do you have a second job?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 392
+        },
+        {
+          "id": "l66TJNGKQFQ",
+          "title": "Healthy meals on a budget",
+          "channel": "BBC Learning English",
+          "durationSeconds": 352
+        },
+        {
+          "id": "vOuhs1mA0xo",
+          "title": "How advertisers make us spend money",
+          "channel": "BBC Learning English",
+          "durationSeconds": 374
+        },
+        {
+          "id": "zsOnAHAY6to",
+          "title": "Money and lifestyle",
+          "channel": "BBC Learning English",
+          "durationSeconds": 392
+        },
+        {
+          "id": "j2PdEQpu5js",
+          "title": "Why you need a good night's sleep",
+          "channel": "BBC Learning English",
+          "durationSeconds": 380
+        },
+        {
+          "id": "HZd53TJpmoQ",
+          "title": "What to do when you can't sleep",
+          "channel": "BBC Learning English",
+          "durationSeconds": 393
+        },
+        {
+          "id": "DsQMLrPdLf8",
+          "title": "Why sitting is bad for health",
+          "channel": "BBC Learning English",
+          "durationSeconds": 382
+        },
+        {
+          "id": "iKzpnVWdZ70",
+          "title": "Are you getting enough exercise?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 373
+        },
+        {
+          "id": "fG7dJ6A3l7w",
+          "title": "Food and mood",
+          "channel": "BBC Learning English",
+          "durationSeconds": 382
+        },
+        {
+          "id": "wkjSBC-_bDA",
+          "title": "How do you learn to speak a language?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 382
+        },
+        {
+          "id": "9ifQ3xRz4hM",
+          "title": "Learning multiple languages",
+          "channel": "BBC Learning English",
+          "durationSeconds": 423
+        },
+        {
+          "id": "oTPZWpQ9pbA",
+          "title": "Cultural differences and body language",
+          "channel": "BBC Learning English",
+          "durationSeconds": 373
+        },
+        {
+          "id": "5kr5ADrMeYU",
+          "title": "Learning a new food culture",
+          "channel": "BBC Learning English",
+          "durationSeconds": 382
+        },
+        {
+          "id": "wAV-vbHLn3Q",
+          "title": "Making male friends",
+          "channel": "BBC Learning English",
+          "durationSeconds": 384
+        },
+        {
+          "id": "Z_ptQVVLFoo",
+          "title": "Do you need to declutter your home?",
+          "channel": "BBC Learning English",
+          "durationSeconds": 386
+        },
+        {
+          "id": "m7IlyBEyi3c",
+          "title": "Limiting screen time for children",
+          "channel": "BBC Learning English",
+          "durationSeconds": 385
+        },
+        {
+          "id": "adFreL6VqQY",
+          "title": "Body language online",
+          "channel": "BBC Learning English",
+          "durationSeconds": 381
         }
       ]
     },
@@ -228,19 +1420,19 @@
       "videos": [
         {
           "id": "iG9CE55wbtY",
-          "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+          "title": "Do schools kill creativity? | Sir Ken Robinson",
           "channel": "TED",
-          "durationSeconds": 1203
+          "durationSeconds": 1204
         },
         {
           "id": "qp0HIF3SfI4",
-          "title": "How Great Leaders Inspire Action | Simon Sinek | TED",
+          "title": "How Great Leaders Inspire Action | Simon Sinek",
           "channel": "TED",
           "durationSeconds": 1115
         },
         {
           "id": "iCvmsMzlF7o",
-          "title": "The Power of Vulnerability | Brené Brown | TED",
+          "title": "The Power of Vulnerability | Brené Brown",
           "channel": "TED",
           "durationSeconds": 1250
         }
