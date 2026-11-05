@@ -15,6 +15,11 @@ export interface VocabularySense {
   // they existed, so older test data may leave them out.
   synonyms?: string[] | null
   antonyms?: string[] | null
+  // The memory hook: a scene in one sentence, emoji that show it, and how the word is built (written
+  // on the first meaning only). Empty when there is none.
+  scene?: string | null
+  emoji?: string | null
+  parts?: string | null
 }
 
 export interface VocabularyEntry {

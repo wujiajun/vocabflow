@@ -5,7 +5,9 @@ import java.util.List;
 /**
  * One meaning of a word. {@code label} tells it from the word's other meanings. {@code synonyms}
  * and {@code antonyms} belong to this meaning only and are never null, since a word stored before
- * they existed has none.
+ * they existed has none. {@code scene}, {@code emoji} and {@code parts} are the memory hook: a
+ * one-sentence picture of this meaning, emoji that show it, and, on the first meaning only, how the
+ * word is built from a known word and a common prefix or suffix. Each is null when there is none.
  */
 public record VocabularySense(
     String partOfSpeech,
@@ -15,7 +17,10 @@ public record VocabularySense(
     List<String> examples,
     List<String> collocations,
     List<String> synonyms,
-    List<String> antonyms) {
+    List<String> antonyms,
+    String scene,
+    String emoji,
+    String parts) {
 
   public VocabularySense {
     synonyms = synonyms == null ? List.of() : synonyms;
@@ -44,6 +49,9 @@ public record VocabularySense(
                 examples,
                 collocations,
                 List.of(),
-                List.of()));
+                List.of(),
+                null,
+                null,
+                null));
   }
 }

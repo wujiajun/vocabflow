@@ -59,6 +59,10 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     assertThat(second.synonyms()).containsExactly("restart", "continue");
     assertThat(second.antonyms()).containsExactly("stop");
     assertThat(result.senses().get(0).antonyms()).isEmpty();
+    assertThat(result.senses().get(0).scene()).isEqualTo("You hand your paper to a manager.");
+    assertThat(result.senses().get(0).emoji()).isEqualTo("📄");
+    assertThat(result.senses().get(0).parts()).isNull();
+    assertThat(second.emoji()).isNull();
     assertThat(adapter.source()).isEqualTo("claude:claude-haiku-5-5");
   }
 
@@ -252,6 +256,12 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> blankAntonym = sense("noun", "x");
     blankAntonym.put("antonyms", List.of(" "));
     assertRejected(blankAntonym);
+    Map<String, Object> overlongScene = sense("noun", "x");
+    overlongScene.put("scene", "x".repeat(301));
+    assertRejected(overlongScene);
+    Map<String, Object> noSceneField = sense("noun", "x");
+    noSceneField.remove("scene");
+    assertRejected(noSceneField);
     Map<String, Object> noSynonymsField = sense("noun", "x");
     noSynonymsField.remove("synonyms");
     assertRejected(noSynonymsField);
@@ -331,6 +341,9 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     first.put("collocations", List.of("update a resume"));
     first.put("synonyms", List.of("CV"));
     first.put("antonyms", List.of());
+    first.put("scene", "You hand your paper to a manager.");
+    first.put("emoji", "📄");
+    first.put("parts", "");
     Map<String, Object> second = new HashMap<>();
     second.put("partOfSpeech", "verb");
     second.put("label", "start again");
@@ -340,6 +353,9 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     second.put("collocations", List.of("resume work"));
     second.put("synonyms", List.of("restart", "continue"));
     second.put("antonyms", List.of("stop"));
+    second.put("scene", "The talk starts again after lunch.");
+    second.put("emoji", "");
+    second.put("parts", "");
     Map<String, Object> entry = new HashMap<>();
     entry.put("term", "resume");
     entry.put("baseForm", "");
@@ -361,6 +377,9 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     sense.put("collocations", List.of("a collocation"));
     sense.put("synonyms", List.of());
     sense.put("antonyms", List.of());
+    sense.put("scene", "");
+    sense.put("emoji", "");
+    sense.put("parts", "");
     return sense;
   }
 

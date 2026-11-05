@@ -10,7 +10,17 @@ class VocabularySenseTest {
   void aMeaningWithoutSynonymsOrAntonymsHasEmptyListsNotNull() {
     VocabularySense sense =
         new VocabularySense(
-            "noun", null, null, "A definition.", List.of("An example."), List.of(), null, null);
+            "noun",
+            null,
+            null,
+            "A definition.",
+            List.of("An example."),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null);
 
     assertThat(sense.synonyms()).isEmpty();
     assertThat(sense.antonyms()).isEmpty();
