@@ -53,8 +53,8 @@ Return:
   - definition: one clear sentence in plain English.
   - examples: 2 natural example sentences in everyday Canadian contexts.
   - collocations: 3 to 5 common word combinations that use the word in this meaning and part of speech only. Leave out any that belong to another meaning.
-  - synonyms: 0 to 4 plain, common words or short phrases that a learner could use in place of the text in this meaning and part of speech, the closest first. Each must be easier or at least as common as the text, and must not belong to another meaning. Use an empty array when nothing really matches.
-  - antonyms: 0 to 3 words or short phrases that are the direct opposite of the text in this meaning and part of speech, the kind a thesaurus lists. Use an empty array when a thesaurus would list none, as it does for most nouns, phrases and idioms: never stretch to fill the list.
+  - synonyms: only words or short phrases that a learner could swap in for the text in this meaning and part of speech in most sentences without changing what is said, the closest first, at most 4. Each must be easier or at least as common as the text. Fewer is better: leave out any that is only roughly related, narrower, broader or a different register, and use an empty array when nothing fits well, which is normal and often right.
+  - antonyms: only a direct opposite that a thesaurus lists for this meaning and part of speech, at most 3. Use an empty array otherwise, as for most nouns, phrases and idioms, and for any meaning where the opposite depends on the sentence: never stretch to fill the list.
 If the input is not a real English word or phrase, return the best entry you can for the text as written."""
 
 SCHEMA = {
