@@ -109,6 +109,14 @@ export function StudyComplete({
         </p>
       ) : null}
 
+      <GameMenu
+        games={[
+          { show: queue.studiedToday.length >= minPairs, to: '/app/study/review', icon: '🧩', title: 'Quick review game', about: 'Drag words onto their meanings', tone: 'indigo' },
+          { show: queue.studiedToday.length >= minQuestions && isSpeechSupported(), to: '/app/study/fill', icon: '🎯', title: 'Fill in the blank', about: 'Drop the right sound into the blank', tone: 'amber' },
+          { show: queue.studiedToday.length >= minListenQuestions && isSpeechSupported(), to: '/app/study/listen', icon: '🎧', title: 'Listen and choose', about: 'Hear a word, pick its meaning', tone: 'emerald' },
+        ]}
+      />
+
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         {queue.moreNewWords ? (
           <button
@@ -119,33 +127,6 @@ export function StudyComplete({
           >
             {more.isPending ? 'Adding words…' : 'Study more new words'}
           </button>
-        ) : null}
-        {queue.studiedToday.length >= minPairs ? (
-          <Link
-            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            state={backState('/app/study', 'Back to study')}
-            to="/app/study/review"
-          >
-            Quick review game
-          </Link>
-        ) : null}
-        {queue.studiedToday.length >= minQuestions && isSpeechSupported() ? (
-          <Link
-            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            state={backState('/app/study', 'Back to study')}
-            to="/app/study/fill"
-          >
-            Fill in the blank
-          </Link>
-        ) : null}
-        {queue.studiedToday.length >= minListenQuestions && isSpeechSupported() ? (
-          <Link
-            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-center text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
-            state={backState('/app/study', 'Back to study')}
-            to="/app/study/listen"
-          >
-            Listen and choose
-          </Link>
         ) : null}
         {/* Only when there is nothing more to study: with words waiting, "Study more" is the way on. The
             panel is the same as the "+ Add" in the tabs, so the learner stays on this page. */}
@@ -174,4 +155,61 @@ function heading(queue: StudyQueue) {
     return 'Today’s study is complete'
   }
   return queue.nextDueAt ? 'Nothing is due right now' : 'Nothing to study yet'
+}
+
+const tones = {
+  indigo: 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200',
+  amber: 'border-amber-200 bg-amber-50 hover:bg-amber-100 active:bg-amber-200',
+  emerald: 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200',
+} as const
+
+interface Game {
+  show: boolean
+  to: string
+  icon: string
+  title: string
+  about: string
+  tone: keyof typeof tones
+}
+
+// The practice games as a small menu: each is a tile with its own icon and colour, so they read as
+// games to play and not as three more buttons. A game that cannot be played now (too few words, or no
+// voice on this device) is left out, and so is the whole menu when none can.
+function GameMenu({ games }: { games: Game[] }) {
+  const id = useId()
+  const available = games.filter((game) => game.show)
+  if (available.length === 0) {
+    return null
+  }
+
+  return (
+    <section aria-label="Games" className="mt-6">
+      <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Play a game</h3>
+      <ul className="mt-2 grid gap-2 sm:grid-cols-3">
+        {available.map((game, index) => (
+          <li key={game.to}>
+            <Link
+              aria-describedby={`${id}-${index}-about`}
+              aria-labelledby={`${id}-${index}-title`}
+              className={`flex min-h-16 items-center gap-3 rounded-2xl border p-3 transition active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 sm:h-full sm:flex-col sm:items-start ${tones[game.tone]}`}
+              state={backState('/app/study', 'Back to study')}
+              to={game.to}
+            >
+              <span aria-hidden="true" className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
+                {game.icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-base font-bold tracking-tight text-slate-900" id={`${id}-${index}-title`}>
+                  {game.title}
+                </span>
+                <span className="block text-sm leading-5 text-slate-700" id={`${id}-${index}-about`}>
+                  {game.about}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }

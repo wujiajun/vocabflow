@@ -9,6 +9,7 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Added
 
+- On the study-complete page the practice games are now a small "Play a game" menu of tiles, each with its own icon, colour and one-line description (🧩 Quick review game, 🎯 Fill in the blank, 🎧 Listen and choose), instead of three plain buttons. A game that cannot be played yet (too few words, or no voice) is left out.
 - "Listen and choose" now plays like a game: a progress bar, a streak (🔥) and a score (⭐), a big round play button that glows while the word is said, lettered answer tiles that pop when right (with a short "ding") and shake when wrong, a start screen, and a results screen with stars. The result and the Next button stay fixed at the bottom of the screen, like in the quick review, so they no longer scroll out of reach below tall answers.
 - Study cards that start with the picture or the sound now ask a different meaning of a word with several meanings each review, in turn, and the answer opens on that meaning, so the second and third meanings are practised too. The sound card says "This time: meaning 2 of 3".
 - A study card that starts with the sound now has "Show a hint" too: first the picture (emoji), then, with "Another hint", the scene with the word hidden. It was missing from the sound-first card.

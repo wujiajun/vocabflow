@@ -81,6 +81,14 @@ test('with too few words studied the game says so', async () => {
   expect(await screen.findByText('Study at least 5 words today to play this game.')).toBeInTheDocument()
 })
 
+test('five words that share a meaning say so, instead of asking for more words', async () => {
+  const same = { ...routes(), ...Object.fromEntries(words.map((word) => [`GET /api/v1/vocabulary/${word.id}`, () => jsonResponse(entry({ ...word, definition: 'The same thing.' }))])) }
+  stubApi(same)
+  renderApp('/app/study/review')
+
+  expect(await screen.findByText(/do not have 5 different meanings/)).toBeInTheDocument()
+})
+
 test('tapping a word and then its meaning places it, a wrong meaning shakes it back, and the results name the slips', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()
