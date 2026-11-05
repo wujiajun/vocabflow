@@ -27,7 +27,9 @@ public class VocabularyController {
       String phonetic,
       String definition,
       List<String> examples,
-      List<String> collocations) {}
+      List<String> collocations,
+      List<String> synonyms,
+      List<String> antonyms) {}
 
   record Item(
       long id,
@@ -68,7 +70,9 @@ public class VocabularyController {
                         sense.phonetic(),
                         sense.definition(),
                         sense.examples(),
-                        sense.collocations()))
+                        sense.collocations(),
+                        sense.synonyms(),
+                        sense.antonyms()))
             .toList(),
         item.baseForm(),
         item.spellingSuggestion(),

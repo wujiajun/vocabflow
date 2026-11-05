@@ -41,7 +41,9 @@ public class StudyController {
       String phonetic,
       String definition,
       List<String> examples,
-      List<String> collocations) {}
+      List<String> collocations,
+      List<String> synonyms,
+      List<String> antonyms) {}
 
   record Card(
       long userVocabularyId,
@@ -145,7 +147,9 @@ public class StudyController {
                         sense.phonetic(),
                         sense.definition(),
                         sense.examples(),
-                        sense.collocations()))
+                        sense.collocations(),
+                        sense.synonyms(),
+                        sense.antonyms()))
             .toList(),
         content.baseForm(),
         next.card().state().name(),

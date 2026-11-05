@@ -14,6 +14,21 @@ function sense(partOfSpeech: string | null, label: string | null, definition: st
   return { partOfSpeech, label, phonetic: `/${definition}/`, definition, examples: [`${definition} example`], collocations: [`${definition} combination`] }
 }
 
+test('lists the synonyms and antonyms of the shown meaning, and nothing when it has none', async () => {
+  const browserUser = userEvent.setup()
+  const withWords: VocabularySense = { ...sense('verb', 'start again', 'second'), synonyms: ['restart', 'continue'], antonyms: ['stop'] }
+  render(<SenseTabs headingLevel="h2" senses={[sense('noun', 'document', 'first'), withWords]} />)
+
+  expect(screen.queryByRole('heading', { name: 'Similar words' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Opposites' })).not.toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('tab', { name: 'verb · start again' }))
+
+  const panel = screen.getByRole('tabpanel', { name: 'verb · start again' })
+  expect(within(within(panel).getByRole('heading', { name: 'Similar words' }).closest('section')!).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['restart', 'continue'])
+  expect(within(within(panel).getByRole('heading', { name: 'Opposites' }).closest('section')!).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['stop'])
+})
+
 const senses = [sense('noun', 'document', 'first'), sense('verb', 'start again', 'second'), sense('noun', 'third one', 'third')]
 
 test('shows only the first meaning at the start, linked to its tab', () => {

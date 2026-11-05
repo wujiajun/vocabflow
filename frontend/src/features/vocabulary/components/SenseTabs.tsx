@@ -94,8 +94,39 @@ function SenseContent({
         <TappableText text={sense.definition} />
       </p>
       <SenseList headingLevel={headingLevel} items={sense.examples} speakable={speakExamples} tappable title="Examples" />
+      <SenseWords headingLevel={headingLevel} items={sense.synonyms} title="Similar words" />
+      <SenseWords headingLevel={headingLevel} items={sense.antonyms} title="Opposites" />
       <SenseList headingLevel={headingLevel} items={sense.collocations} title="Collocations" />
     </div>
+  )
+}
+
+// Synonyms and antonyms as small chips. Their words are taps that offer to add them, like the
+// words of an example, so a learner can pick up the neighbours of a word too.
+function SenseWords({
+  title,
+  items,
+  headingLevel: Heading,
+}: {
+  title: string
+  items: string[] | null | undefined
+  headingLevel: 'h2' | 'h3'
+}) {
+  if (!items || items.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="mt-5">
+      <Heading className="text-sm font-semibold tracking-wide text-slate-600 uppercase">{title}</Heading>
+      <ul className="mt-2 flex flex-wrap gap-2">
+        {items.map((item) => (
+          <li className="rounded-full bg-slate-100 px-3 py-1 text-slate-800" key={item}>
+            <TappableText text={item} />
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

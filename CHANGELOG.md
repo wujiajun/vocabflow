@@ -9,6 +9,7 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Added
 
+- Each meaning of a new word now lists a few synonyms ("Similar words") and antonyms ("Opposites") when it has them, on the detail page and the back of a study card; their words can be tapped to add them. Words saved before this have none, and a meaning with no real opposite shows no Opposites.
 - On a word's detail page each example sentence has a speaker button that reads it aloud (a press again stops it). The same buttons are on the back of a study card.
 
 ### Changed

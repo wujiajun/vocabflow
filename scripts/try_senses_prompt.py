@@ -53,6 +53,8 @@ Return:
   - definition: one clear sentence in plain English.
   - examples: 2 natural example sentences in everyday Canadian contexts.
   - collocations: 3 to 5 common word combinations that use the word in this meaning and part of speech only. Leave out any that belong to another meaning.
+  - synonyms: 0 to 4 plain, common words or short phrases that a learner could use in place of the text in this meaning and part of speech, the closest first. Each must be easier or at least as common as the text, and must not belong to another meaning. Use an empty array when nothing really matches.
+  - antonyms: 0 to 3 words or short phrases that are the direct opposite of the text in this meaning and part of speech, the kind a thesaurus lists. Use an empty array when a thesaurus would list none, as it does for most nouns, phrases and idioms: never stretch to fill the list.
 If the input is not a real English word or phrase, return the best entry you can for the text as written."""
 
 SCHEMA = {
@@ -75,8 +77,10 @@ SCHEMA = {
                     "definition": {"type": "string"},
                     "examples": {"type": "array", "items": {"type": "string"}},
                     "collocations": {"type": "array", "items": {"type": "string"}},
+                    "synonyms": {"type": "array", "items": {"type": "string"}},
+                    "antonyms": {"type": "array", "items": {"type": "string"}},
                 },
-                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations"],
+                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations", "synonyms", "antonyms"],
                 "additionalProperties": False,
             },
         },
@@ -140,6 +144,7 @@ def show(word, reply):
         print(f"   {sense['definition']}")
         print(f"   e.g. {sense['examples'][0] if sense['examples'] else '(none)'}")
         print(f"   with: {', '.join(sense['collocations'])}")
+        print(f"   same: {', '.join(sense['synonyms']) or '-'}   |   opposite: {', '.join(sense['antonyms']) or '-'}")
 
 
 def main():
