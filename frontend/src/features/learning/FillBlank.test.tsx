@@ -70,7 +70,12 @@ test('the study-complete page offers the exercise only with a voice and four wor
 
   stubApi(routes(4))
   renderApp('/app/study')
-  expect(await screen.findByRole('link', { name: 'Fill in the blank' })).toHaveAttribute('href', '/app/study/fill')
+  const link = await screen.findByRole('link', { name: 'Fill in the blank' })
+  expect(link).toHaveAttribute('href', '/app/study/fill')
+  // The games are a menu of tiles: each says in a line what it is.
+  expect(link).toHaveAccessibleDescription('Drop the right sound into the blank')
+  expect(screen.getByRole('heading', { name: 'Play a game' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Listen and choose' })).toHaveAccessibleDescription('Hear a word, pick its meaning')
 })
 
 test('on a device that cannot speak it says so', async () => {
