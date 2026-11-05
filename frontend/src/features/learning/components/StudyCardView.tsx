@@ -48,7 +48,11 @@ export function StudyCardView({
   // be only heard (what does it mean?), as chosen in Settings. Without a hook, or on a device that
   // cannot speak, the card shows the word as before.
   const [start] = useState(getCardStart)
-  const cue = card.senses.find((sense) => sense.emoji || sense.scene)
+  // Each review asks a different meaning of a word that has several, in turn, so that the second and
+  // third are practised too: the card's version counts its ratings.
+  const hooked = card.senses.flatMap((sense, index) => (sense.emoji || sense.scene ? [index] : []))
+  const cueIndex = hooked.length > 0 ? hooked[card.version % hooked.length] : undefined
+  const cue = cueIndex === undefined ? undefined : card.senses[cueIndex]
   const cueing = start === 'picture' && cue !== undefined && !revealed
   const listening = start === 'sound' && isSpeechSupported() && !revealed
   const hintRef = useRef<HTMLParagraphElement>(null)
@@ -128,6 +132,11 @@ export function StudyCardView({
           <h2 className="text-xl font-bold tracking-tight outline-none" ref={termRef} tabIndex={-1}>
             Listen: what does this word mean?
           </h2>
+          {cueIndex !== undefined && card.senses.length > 1 ? (
+            <p className="mt-1 text-sm text-slate-600">
+              This time: meaning {cueIndex + 1} of {card.senses.length}
+            </p>
+          ) : null}
           <div className={`mt-4 grid gap-3 ${hintSteps > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <button className={tintedAction} onClick={() => speakText(card.term, { onStart: () => {}, onEnd: () => {} })} type="button">
               <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
@@ -206,7 +215,7 @@ export function StudyCardView({
           <div className="mt-4 outline-none" ref={answerRef} tabIndex={-1}>
             <BaseFormNote baseForm={card.baseForm} className="mb-1" />
             {kind ? <p className="mb-2 text-sm text-slate-600">{kind}</p> : null}
-            <SenseTabs headingLevel="h3" senses={card.senses} speakExamples />
+            <SenseTabs headingLevel="h3" initial={start === 'word' ? undefined : cueIndex} senses={card.senses} speakExamples />
           </div>
 
           {review.isError ? (

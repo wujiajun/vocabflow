@@ -5,6 +5,9 @@ export interface MatchPair {
   term: string
   // The meaning with the word itself blanked out, so it does not give the answer away.
   definition: string
+  // Only for the sound exercise: a clue under the sentence, and the sentence with the word in place.
+  hint?: string
+  filled?: string
 }
 
 // Words in a round, and words in a game: the game is one or two rounds.

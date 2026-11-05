@@ -835,3 +835,68 @@ test('an earlier choice to turn the picture off still shows the word first', asy
   expect(await screen.findByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   window.localStorage.removeItem('vocabflow.recallFirst')
 })
+
+const twoMeanings = (version: number) =>
+  card({
+    version,
+    senses: [
+      { partOfSpeech: 'noun', label: 'document', phonetic: '/x/', definition: 'A paper about your work.', examples: ['Send a resume.'], collocations: [], emoji: '📄', scene: 'You hand a paper to a manager.' },
+      { partOfSpeech: 'verb', label: 'start again', phonetic: '/y/', definition: 'To begin again.', examples: ['We resume at noon.'], collocations: [], emoji: '▶️', scene: 'The talk starts again after lunch.' },
+    ],
+  })
+
+test('each review asks the next meaning in turn, and the answer opens on it', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
+  window.localStorage.removeItem('vocabflow.recallFirst')
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: twoMeanings(3) })) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study')
+
+  // Version 3 of two meanings is the second one.
+  expect(await screen.findByText('▶️')).toBeInTheDocument()
+  expect(screen.queryByText('📄')).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('tab', { name: 'verb · start again' })).toHaveAttribute('aria-selected', 'true')
+  cleanup()
+  vi.unstubAllGlobals()
+
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: twoMeanings(4) })) })
+  renderApp('/app/study')
+  expect(await screen.findByText('📄')).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('tab', { name: 'noun · document' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('the card that starts with the sound says which meaning is asked this time', async () => {
+  window.localStorage.setItem('vocabflow.cardStart', 'sound')
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: twoMeanings(3) })) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study')
+
+  expect(await screen.findByText('This time: meaning 2 of 2')).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show a hint' }))
+  expect(screen.getByText('▶️')).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('tab', { name: 'verb · start again' })).toHaveAttribute('aria-selected', 'true')
+  window.localStorage.removeItem('vocabflow.cardStart')
+})
+
+test('a word with one meaning is not told which meaning, and the word-first card does not rotate', async () => {
+  window.localStorage.setItem('vocabflow.cardStart', 'sound')
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: card() })) })
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'Listen: what does this word mean?' })
+  expect(screen.queryByText(/This time/)).not.toBeInTheDocument()
+  cleanup()
+  vi.unstubAllGlobals()
+
+  window.localStorage.setItem('vocabflow.cardStart', 'word')
+  const browserUser = userEvent.setup()
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: twoMeanings(3) })) })
+  renderApp('/app/study')
+  await browserUser.click(await screen.findByRole('button', { name: 'Show answer' }))
+  expect(screen.getByRole('tab', { name: 'noun · document' })).toHaveAttribute('aria-selected', 'true')
+  window.localStorage.removeItem('vocabflow.cardStart')
+})

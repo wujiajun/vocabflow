@@ -13,12 +13,15 @@ export function SenseTabs({
   senses,
   headingLevel,
   speakExamples = false,
+  initial = 0,
 }: {
   senses: VocabularySense[]
   headingLevel: 'h2' | 'h3'
   speakExamples?: boolean
+  // The meaning shown first, when it is not the first.
+  initial?: number
 }) {
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelected] = useState(initial)
   // How the word is built is written once, on one meaning, and belongs to all of them.
   const parts = senses.find((sense) => sense.parts)?.parts
   const id = useId()

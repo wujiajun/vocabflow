@@ -23,10 +23,14 @@ export function MatchRound({
   pairs,
   continueLabel,
   onContinue,
+  sounds = false,
 }: {
   pairs: MatchPair[]
   continueLabel: string
   onContinue: (result: RoundResult) => void
+  // The chips are sounds, not words: a chip says its word when tapped and shows only a number, and
+  // the cards are sentences with a blank. The word then shows on the card it was placed on.
+  sounds?: boolean
 }) {
   const chips = useMemo(() => shuffle(pairs), [pairs])
   const [matched, setMatched] = useState<ReadonlySet<number>>(new Set())
@@ -75,7 +79,7 @@ export function MatchRound({
       setWrong({ wordId, cardId })
       clearTimeout(wrongTimer.current)
       wrongTimer.current = setTimeout(() => setWrong(null), wrongMs)
-      setMessage('Not that one. Try another meaning.')
+      setMessage(sounds ? 'Not that one. Try another sound.' : 'Not that one. Try another meaning.')
       playWrong()
     }
   }
@@ -157,13 +161,22 @@ export function MatchRound({
       swallowClick.current = false
       return
     }
-    setSelected((current) => (current === id ? null : id))
     setMessage('')
+    if (sounds) {
+      // A tap on a sound plays it, every time, and keeps it chosen.
+      setSelected(id)
+      const word = pairs.find((pair) => pair.id === id)
+      if (word && isSpeechSupported()) {
+        speakText(word.term, { onStart: () => {}, onEnd: () => {} })
+      }
+      return
+    }
+    setSelected((current) => (current === id ? null : id))
   }
 
   function chooseCard(id: number) {
     if (selected === null) {
-      setMessage('Choose a word first, or drag one onto a meaning.')
+      setMessage(sounds ? 'Tap a sound first, or drag one onto a sentence.' : 'Choose a word first, or drag one onto a meaning.')
       return
     }
     attempt(selected, id)
@@ -171,9 +184,13 @@ export function MatchRound({
 
   return (
     <div>
-      <p className="text-xs text-slate-600">Drag each word onto its meaning, or tap a word and then a meaning.</p>
+      <p className="text-xs text-slate-600">
+        {sounds
+          ? 'Tap a sound to hear it, then drag it onto the sentence it fits, or tap the sentence.'
+          : 'Drag each word onto its meaning, or tap a word and then a meaning.'}
+      </p>
 
-      <ul aria-label="Meanings" className="mt-2 space-y-1.5">
+      <ul aria-label={sounds ? 'Sentences' : 'Meanings'} className="mt-2 space-y-1.5">
         {pairs.map((pair) => {
           const placed = matched.has(pair.id)
           return (
@@ -181,7 +198,7 @@ export function MatchRound({
               {placed ? (
                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 motion-safe:animate-pop">
                   <p className="text-base font-bold text-emerald-900">{pair.term}</p>
-                  <p className="text-sm leading-5 text-emerald-900">{pair.definition}</p>
+                  <p className="text-sm leading-5 text-emerald-900">{pair.filled ?? pair.definition}</p>
                 </div>
               ) : (
                 <button
@@ -198,6 +215,7 @@ export function MatchRound({
                   type="button"
                 >
                   {pair.definition}
+                  {pair.hint ? <span className="mt-1 block text-xs leading-4 text-slate-600">{pair.hint}</span> : null}
                 </button>
               )}
             </li>
@@ -234,13 +252,14 @@ export function MatchRound({
             </button>
           </div>
         ) : (
-          <div aria-label="Words" className="flex flex-wrap gap-2 pb-1" ref={trayRef} role="group">
+          <div aria-label={sounds ? 'Sounds' : 'Words'} className="flex flex-wrap gap-2 pb-1" ref={trayRef} role="group">
             {remaining.map((pair) => {
               const dragging = drag?.id === pair.id
               return (
                 <button
+                  aria-label={sounds ? `Play sound ${chips.indexOf(pair) + 1}` : undefined}
                   aria-pressed={selected === pair.id}
-                  className={`relative cursor-grab touch-none rounded-full border px-4 py-2 text-base font-semibold select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                  className={`relative inline-flex min-h-11 cursor-grab touch-none items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-base font-semibold select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                     wrong?.wordId === pair.id
                       ? 'border-rose-600 bg-rose-100 text-rose-900'
                       : selected === pair.id
@@ -259,7 +278,17 @@ export function MatchRound({
                   style={dragging ? { transform: `translate(${drag.dx}px, ${drag.dy}px) scale(1.08)` } : undefined}
                   type="button"
                 >
-                  {pair.term}
+                  {sounds ? (
+                    <>
+                      <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+                        <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                        <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                      </svg>
+                      {chips.indexOf(pair) + 1}
+                    </>
+                  ) : (
+                    pair.term
+                  )}
                 </button>
               )
             })}
