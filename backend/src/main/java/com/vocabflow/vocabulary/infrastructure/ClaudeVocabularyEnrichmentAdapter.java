@@ -93,12 +93,16 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       part of speech only. Leave out any that belong to another meaning.
         - synonyms: only words or short phrases that a learner could swap in for the text in this \
       meaning and part of speech in most sentences without changing what is said, the closest \
-      first, at most 4. Each must be easier or at least as common as the text. Fewer is better: \
+      first, at most 4. Fewer is better: \
       leave out any that is only roughly related, narrower, broader or a different register, and \
-      use an empty array when nothing fits well, which is normal and often right.
+      use an empty array when nothing fits well, which is normal and often right. Use only \
+      simple, everyday words that a learner at about CLB 4 to 5 (roughly the 2,000 most common \
+      English words) already knows: a harder, rarer, more formal or more academic word is worse than \
+      none, because the point is to explain the text with words the learner can already read.
         - antonyms: only a direct opposite that a thesaurus lists for this meaning and part of \
       speech, at most 3. Use an empty array otherwise, as for most nouns, phrases and idioms, and \
-      for any meaning where the opposite depends on the sentence: never stretch to fill the list.
+      for any meaning where the opposite depends on the sentence: never stretch to fill the list. \
+      The same simple-words rule applies.
       If the input is not a real English word or phrase, return the best entry you can for the \
       text as written.""";
 
