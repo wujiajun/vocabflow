@@ -101,8 +101,13 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
   const [position, setPosition] = useState(0)
   const [answers, setAnswers] = useState<Answered[]>([])
 
+  // Words that share a meaning count once, so four words studied can still be too few to choose between.
   if (questions.length < minListenQuestions) {
-    return <NotEnough />
+    return (
+      <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+        Today’s words do not have {minListenQuestions} different meanings to choose between yet. Study a few more words and try again.
+      </p>
+    )
   }
 
   // Speech may start only from a press, so the first word waits for this one.
