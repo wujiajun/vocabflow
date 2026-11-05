@@ -801,6 +801,15 @@ test('a card that starts with the sound hides the word, says it, and gives the w
   await browserUser.click(screen.getByRole('button', { name: 'Hear the word again' }))
   expect(speech.spoken).toHaveLength(2)
 
+  // Hints come one at a time, the picture and then the scene with the word hidden.
+  expect(screen.queryByText('😵📚')).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show a hint' }))
+  expect(screen.getByText('😵📚')).toBeInTheDocument()
+  expect(screen.queryByText(/huge pile/)).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Show another hint' }))
+  expect(screen.getByText('A student sits under a huge pile of books and feels _____.')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /hint/ })).not.toBeInTheDocument()
+
   await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
   expect(screen.getByRole('heading', { name: 'overwhelmed' })).toBeInTheDocument()
   window.localStorage.removeItem('vocabflow.cardStart')
