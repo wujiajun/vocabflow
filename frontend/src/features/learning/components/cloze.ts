@@ -1,27 +1,18 @@
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
-import { findTerm, maskTerm, shuffle } from './matching'
+import { findTerm, type MatchPair, maskTerm, shuffle } from './matching'
 
 export const blank = '_____'
 export const maxQuestions = 10
-export const minQuestions = 3
+export const minQuestions = 4
 
-export interface BlankQuestion {
-  id: number
-  term: string
-  // The example sentence in two halves, with the word left out between them as it was written there.
-  before: string
-  after: string
-  form: string
-  // The meaning of that sentence, with the word itself hidden, and the sense's emoji if it has one.
-  meaning: string
-  emoji: string | null
-}
-
-// One question per word, from a random example of a random meaning: an example is a sentence the
-// learner has seen, so it is the context the word is recalled in. Words with no example that shows
-// the word (or a form of it) are left out.
-export function buildBlanks(entries: readonly VocabularyEntry[], random: () => number = Math.random): BlankQuestion[] {
-  const questions: BlankQuestion[] = []
+// One sentence per word, from a random example of a random meaning: an example is a sentence the
+// learner has seen, so it is the context the word is placed in. The word, or a form of it, is left out
+// of the sentence and out of the meaning that serves as the clue, and the sentence with the word in
+// place shows once the sound is put on it. Words with no example that shows the word are left out, and
+// so are sentences that read the same as one already taken.
+export function buildSoundPairs(entries: readonly VocabularyEntry[], random: () => number = Math.random): MatchPair[] {
+  const pairs: MatchPair[] = []
+  const taken = new Set<string>()
 
   for (const entry of entries) {
     const options = entry.senses.flatMap((sense) =>
@@ -34,32 +25,21 @@ export function buildBlanks(entries: readonly VocabularyEntry[], random: () => n
       continue
     }
     const { sense, example, found } = options[Math.floor(random() * options.length)]
-    questions.push({
+    const sentence =
+      example.slice(0, found.index) + blank + maskTerm(example.slice(found.index + found.form.length), [entry.term, entry.baseForm])
+    if (taken.has(sentence.toLowerCase())) {
+      continue
+    }
+    taken.add(sentence.toLowerCase())
+    const meaning = maskTerm(sense.definition, [entry.term, entry.baseForm])
+    pairs.push({
       id: entry.id,
       term: entry.term,
-      before: example.slice(0, found.index),
-      after: maskTerm(example.slice(found.index + found.form.length), [entry.term, entry.baseForm]),
-      form: found.form,
-      meaning: maskTerm(sense.definition, [entry.term, entry.baseForm]),
-      emoji: sense.emoji ?? null,
+      definition: sentence,
+      hint: `${sense.emoji ? `${sense.emoji} ` : ''}${meaning}`,
+      filled: example,
     })
   }
 
-  return shuffle(questions, random).slice(0, maxQuestions)
-}
-
-function normalize(text: string) {
-  return text
-    .normalize('NFC')
-    .replaceAll('’', "'")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}' -]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-// The form in the sentence, or the word as it is listed: "walk" is not marked wrong for "walked".
-export function isRight(answer: string, question: BlankQuestion) {
-  const given = normalize(answer)
-  return given !== '' && (given === normalize(question.form) || given === normalize(question.term))
+  return shuffle(pairs, random).slice(0, maxQuestions)
 }

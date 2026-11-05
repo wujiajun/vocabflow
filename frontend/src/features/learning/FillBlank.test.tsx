@@ -1,7 +1,8 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
+import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
 beforeEach(() => {
@@ -16,9 +17,11 @@ afterEach(() => {
 })
 
 const words = [
-  { id: 1, term: 'cope', example: 'I can cope with the cold.' },
-  { id: 2, term: 'budget', example: 'Our budget is tight.' },
-  { id: 3, term: 'tenant', example: 'The tenant paid the rent.' },
+  { id: 1, term: 'cope', example: 'I can cope with the cold.', start: /^I can _____ with the cold\./ },
+  { id: 2, term: 'budget', example: 'Our budget is tight.', start: /^Our _____ is tight\./ },
+  { id: 3, term: 'tenant', example: 'The tenant paid the rent.', start: /^The _____ paid the rent\./ },
+  { id: 4, term: 'deposit', example: 'She made a deposit today.', start: /^She made a _____ today\./ },
+  { id: 5, term: 'rent', example: 'We rent a small flat.', start: /^We _____ a small flat\./ },
 ]
 
 function entry(word: (typeof words)[number]) {
@@ -31,7 +34,7 @@ function entry(word: (typeof words)[number]) {
     definition: null,
     examples: null,
     collocations: null,
-    senses: [{ partOfSpeech: null, label: null, phonetic: null, definition: `Meaning of ${word.term}.`, examples: [word.example], collocations: null, emoji: '🧊' }],
+    senses: [{ partOfSpeech: null, label: null, phonetic: null, definition: `Number ${word.id} means ${word.term}.`, examples: [word.example], collocations: null, emoji: '🧊' }],
     baseForm: null,
     spellingSuggestion: null,
     enrichmentStatus: 'COMPLETED',
@@ -41,7 +44,7 @@ function entry(word: (typeof words)[number]) {
   }
 }
 
-function routes(count = 3) {
+function routes(count = 5) {
   const studied = words.slice(0, count).map((word) => ({ userVocabularyId: word.id, term: word.term, learningStatus: 'LEARNING' }))
   return {
     'GET /api/v1/auth/me': () => jsonResponse(user),
@@ -51,50 +54,72 @@ function routes(count = 3) {
   }
 }
 
-test('the study-complete page offers the exercise once three words were studied', async () => {
-  stubApi(routes(2))
+test('the study-complete page offers the exercise only with a voice and four words studied', async () => {
+  stubApi(routes(5))
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'Today’s study is complete' })
   expect(screen.queryByRole('link', { name: 'Fill in the blank' })).not.toBeInTheDocument()
   cleanup()
 
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi(routes(3))
+  renderApp('/app/study')
+  await screen.findByRole('heading', { name: 'Today’s study is complete' })
+  expect(screen.queryByRole('link', { name: 'Fill in the blank' })).not.toBeInTheDocument()
+  cleanup()
+
+  stubApi(routes(4))
   renderApp('/app/study')
   expect(await screen.findByRole('link', { name: 'Fill in the blank' })).toHaveAttribute('href', '/app/study/fill')
 })
 
-test('with too few words studied it says so', async () => {
-  stubApi(routes(2))
+test('on a device that cannot speak it says so', async () => {
+  stubApi(routes())
   renderApp('/app/study/fill')
 
-  expect(await screen.findByText(/Study at least 3 words today/)).toBeInTheDocument()
+  expect(await screen.findByText(/cannot read words aloud/)).toBeInTheDocument()
 })
 
-test('asks for each word in a sentence, marks the answer, and ends with the words to look at again', async () => {
-  stubApi(routes(3))
+test('sounds are tapped to be heard, never show their word, and are placed on the sentence they fit', async () => {
+  const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/fill')
-  await screen.findByRole('heading', { name: 'Fill in the blank' })
 
-  const missed: string[] = []
-  for (let question = 1; question <= 3; question += 1) {
-    const region = await screen.findByRole('region', { name: `Question ${question} of 3` })
-    const sentence = region.querySelectorAll('p')[0].textContent ?? ''
-    const word = words.find((candidate) => sentence.includes(candidate.example.split(candidate.term)[0]))!
-    // The first word is answered wrongly on purpose.
-    if (question === 1) {
-      missed.push(word.term)
-      await browserUser.type(screen.getByLabelText('Your answer'), 'wrong')
-      await browserUser.click(screen.getByRole('button', { name: 'Check' }))
-      expect(screen.getByRole('status')).toHaveTextContent(`Not quite. The word is “${word.term}”.`)
-    } else {
-      await browserUser.type(screen.getByLabelText('Your answer'), `${word.term.toUpperCase()}{Enter}`)
-      expect(screen.getByRole('status')).toHaveTextContent('Correct!')
+  expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
+  const tray = () => screen.getByRole('group', { name: 'Sounds' })
+  // The chips carry a number and nothing that gives the word away.
+  expect(within(tray()).getAllByRole('button').map((chip) => chip.getAttribute('aria-label'))).toEqual(
+    expect.arrayContaining(['Play sound 1', 'Play sound 2', 'Play sound 3', 'Play sound 4', 'Play sound 5']),
+  )
+  for (const word of words) {
+    expect(within(tray()).queryByText(word.term)).not.toBeInTheDocument()
+  }
+  expect(screen.getByRole('list', { name: 'Sentences' })).toHaveTextContent('Number 1 means _____.')
+
+  // The first sound is tried on the wrong sentence, so its word is missed.
+  await browserUser.click(within(tray()).getAllByRole('button')[0])
+  const missedTerm = speech.lastUtterance().text
+  expect(words.map((word) => word.term)).toContain(missedTerm)
+  const wrongWord = words.find((word) => word.term !== missedTerm)!
+  await browserUser.click(screen.getByRole('button', { name: wrongWord.start }))
+  expect(screen.getByRole('status')).toHaveTextContent('Not that one. Try another sound.')
+
+  while (within(tray()).queryAllByRole('button').length > 0) {
+    await browserUser.click(within(tray()).getAllByRole('button')[0])
+    const heard = words.find((word) => word.term === speech.lastUtterance().text)!
+    await browserUser.click(screen.getByRole('button', { name: heard.start }))
+    expect(screen.getByRole('status')).toHaveTextContent(`Correct: ${heard.term}.`)
+    if (screen.queryByRole('heading', { name: /All matched/ })) {
+      break
     }
-    await browserUser.click(screen.getByRole('button', { name: question === 3 ? 'See results' : 'Next' }))
   }
 
-  expect(screen.getByRole('heading', { name: 'Nicely done! 2 of 3 right' })).toBeInTheDocument()
-  expect(screen.getByText(`Worth another look: ${missed[0]}.`)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'All matched!' })).toBeInTheDocument()
+  // A placed sound shows its word and the sentence with the word in it.
+  expect(screen.getByText('I can cope with the cold.')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('button', { name: 'See results' }))
+  expect(screen.getByRole('heading', { name: /4 of 5 on the first try/ })).toBeInTheDocument()
+  expect(screen.getByText(`Worth another look: ${missedTerm}.`)).toBeInTheDocument()
 })
