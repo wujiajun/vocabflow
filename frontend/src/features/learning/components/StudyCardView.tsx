@@ -45,6 +45,10 @@ export function StudyCardView({
   const cueing = start === 'picture' && cue !== undefined && !revealed
   const listening = start === 'sound' && isSpeechSupported() && !revealed
   const hintRef = useRef<HTMLParagraphElement>(null)
+  // On a card that starts with the sound, the hints come one at a time: the picture, then the scene.
+  const [soundHints, setSoundHints] = useState(0)
+  const soundHintRef = useRef<HTMLDivElement>(null)
+  const hintSteps = (cue?.emoji ? 1 : 0) + (cue?.scene ? 1 : 0)
   const review = useSubmitReview()
   const termRef = useRef<HTMLHeadingElement>(null)
   const answerRef = useRef<HTMLDivElement>(null)
@@ -67,6 +71,12 @@ export function StudyCardView({
       answerRef.current?.focus()
     }
   }, [revealed])
+
+  useEffect(() => {
+    if (soundHints > 0) {
+      soundHintRef.current?.focus()
+    }
+  }, [soundHints])
 
   useEffect(() => {
     if (hintShown) {
@@ -123,6 +133,25 @@ export function StudyCardView({
             </svg>
             Hear the word again
           </button>
+          {soundHints > 0 && cue ? (
+            <div className="mt-3 outline-none" ref={soundHintRef} tabIndex={-1}>
+              {cue.emoji ? <p className="text-5xl leading-none">{cue.emoji}</p> : null}
+              {cue.scene && soundHints >= (cue.emoji ? 2 : 1) ? (
+                <p className="mt-3 rounded-xl bg-indigo-50 px-4 py-3 text-lg leading-7 font-medium text-indigo-950">
+                  {maskTerm(cue.scene, [card.term, card.baseForm])}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {soundHints < hintSteps ? (
+            <button
+              className="mt-3 ml-2 min-h-11 rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              onClick={() => setSoundHints((current) => current + 1)}
+              type="button"
+            >
+              {soundHints === 0 ? 'Show a hint' : 'Show another hint'}
+            </button>
+          ) : null}
         </div>
       ) : cueing ? (
         <div>

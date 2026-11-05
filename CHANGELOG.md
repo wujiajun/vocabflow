@@ -9,6 +9,7 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Added
 
+- A study card that starts with the sound now has "Show a hint" too: first the picture (emoji), then, with "Show another hint", the scene with the word hidden. It was missing from the sound-first card.
 - A "Listen and choose" exercise next to the other practice buttons on the study-complete page (on a device that can read aloud, with 4+ words studied today): it says one of today's words, you pick its meaning from four, and it shows the word after your answer and sums up how fast you were. Practice only.
 - Settings: "How a study card starts" now has three choices: the word, the picture first (as before, the default), or the sound first (the word is only said, with "Hear the word again", and you recall its meaning). An earlier choice to turn the picture off is kept as "the word".
 - A study card whose word has a memory hook now asks "Which word is this?" with the picture (emoji) first; "Show a hint" gives the scene with the word hidden, and "Show answer" gives the word and meanings. The word is not read aloud until the answer. A switch in Settings (on this device, on by default) goes back to showing the word first; a word without a hook is unchanged.
