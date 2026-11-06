@@ -77,7 +77,7 @@ export function ArticlesPage() {
           </div>
         ) : shown.length === 0 ? (
           <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
-            No albums {all ? 'for that level' : `for CLB ${level} `}yet.{' '}
+            No albums {all ? 'for that level ' : `for CLB ${level} `}yet.{' '}
             {all ? null : (
               <Link className="font-semibold text-indigo-700 underline underline-offset-4" replace to={`${listPath}?levels=all`}>
                 Show all levels

@@ -90,9 +90,10 @@ export function ArticlePage() {
         <p className="mt-1 text-sm text-slate-600">Tap any word to add it to your list.</p>
 
         <PassageReader source={{ title: current.title, link: `/app/reading/articles/a/${current.id}` }} text={current.text} />
-        <div ref={endRef} />
 
         {current.glossary.length > 0 ? <GlossaryList words={current.glossary} /> : null}
+        {/* The end of the article, glossary included: reaching it marks the article as read. */}
+        <div ref={endRef} />
 
         {setRead.isError ? (
           <p className="mt-6 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
