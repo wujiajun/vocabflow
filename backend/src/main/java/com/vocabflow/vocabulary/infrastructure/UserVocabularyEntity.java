@@ -27,4 +27,16 @@ public class UserVocabularyEntity {
 
   @Column(name = "created_at", nullable = false)
   public Instant createdAt;
+
+  @Column(name = "source_sentence", length = 300)
+  public String sourceSentence;
+
+  @Column(name = "source_form")
+  public String sourceForm;
+
+  @Column(name = "source_title", length = 120)
+  public String sourceTitle;
+
+  @Column(name = "source_link")
+  public String sourceLink;
 }

@@ -9,6 +9,7 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { EnrichmentPanel } from '../components/EnrichmentPanel'
 import { BaseFormNote } from '../components/BaseFormNote'
 import { TypedAsNote } from '../components/TypedAsNote'
+import { SourceBlock } from '../components/SourceBlock'
 import { SenseTabs } from '../components/SenseTabs'
 import { describeKind, formatLearningStatus } from '../components/formatVocabulary'
 import { useVocabularyDetail } from '../hooks/useVocabulary'
@@ -89,6 +90,7 @@ export function VocabularyDetailPage() {
             No American English voice was found on this device, so another English voice is used.
           </p>
         ) : null}
+        {entry.source ? <SourceBlock source={entry.source} /> : null}
         <div className="mt-6">
           {entry.senses.length > 0 ? (
             <SenseTabs headingLevel="h2" key={entry.id} senses={entry.senses} speakExamples />

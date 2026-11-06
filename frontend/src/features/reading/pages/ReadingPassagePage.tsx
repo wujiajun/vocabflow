@@ -80,7 +80,7 @@ export function ReadingPassagePage() {
           the ones you studied. Tap any other word to add it to your list.
         </p>
 
-        <PassageReader text={current.text} />
+        <PassageReader source={{ title: current.title, link: `/app/reading/${current.id}` }} text={current.text} />
 
         <section aria-label="Words in this passage" className="mt-8">
           <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Words in this passage</h2>

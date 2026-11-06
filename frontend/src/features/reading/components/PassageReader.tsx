@@ -5,7 +5,7 @@ import { ReadAloudControls } from './ReadAloudControls'
 import { splitIntoSentences } from './splitPassage'
 
 // The passage with its controls for reading it aloud, where the browser can.
-export function PassageReader({ text }: { text: string }) {
+export function PassageReader({ text, source }: { text: string; source?: { title: string; link: string } }) {
   const { paragraphs, sentences } = useMemo(() => splitIntoSentences(text), [text])
   const aloud = useReadAloud(sentences)
 
@@ -24,7 +24,7 @@ export function PassageReader({ text }: { text: string }) {
         />
       ) : null}
       <div className="mt-6">
-        <PassageText current={aloud.current} paragraphs={paragraphs} />
+        <PassageText current={aloud.current} paragraphs={paragraphs} source={source} />
       </div>
     </>
   )

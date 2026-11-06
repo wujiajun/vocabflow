@@ -19,7 +19,14 @@ public class VocabularyController {
     this.service = service;
   }
 
-  record Create(@NotBlank @Size(max = 255) String term) {}
+  record Create(
+      @NotBlank @Size(max = 255) String term,
+      @Size(max = 5000) String sentence,
+      @Size(max = 255) String form,
+      @Size(max = 500) String sourceTitle,
+      @Size(max = 500) String sourceLink) {}
+
+  record Source(String sentence, String form, String title, String link) {}
 
   record Sense(
       String partOfSpeech,
@@ -50,12 +57,14 @@ public class VocabularyController {
       String enrichmentStatus,
       String failureReason,
       String learningStatus,
-      Instant createdAt) {}
+      Instant createdAt,
+      Source source) {}
 
   record PageResponse(List<Item> content, int page, int size, long totalElements, int totalPages) {}
 
   private Item map(UserVocabulary userVocabulary) {
     VocabularyItem item = userVocabulary.item();
+    SourceContext source = userVocabulary.source();
     return new Item(
         userVocabulary.id(),
         item.term().value(),
@@ -87,13 +96,19 @@ public class VocabularyController {
         item.enrichmentStatus().name(),
         item.failureReason(),
         userVocabulary.learningStatus().name(),
-        userVocabulary.createdAt());
+        userVocabulary.createdAt(),
+        source == null
+            ? null
+            : new Source(source.sentence(), source.form(), source.title(), source.link()));
   }
 
   @PostMapping
   public Item create(
       @AuthenticationPrincipal Long userId, @RequestBody @jakarta.validation.Valid Create request) {
-    return map(service.add(userId, request.term()));
+    SourceContext source =
+        SourceContext.of(
+            request.sentence(), request.form(), request.sourceTitle(), request.sourceLink());
+    return map(service.add(userId, request.term(), source));
   }
 
   @GetMapping

@@ -1,6 +1,7 @@
 import { type FormEvent, type Ref, useEffect, useId, useRef, useState } from 'react'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { authErrorMessage } from '../../auth/components/AuthError'
+import type { TapSource } from '../types/vocabulary'
 import { useAddVocabulary } from '../hooks/useVocabulary'
 import { wordSheetTimings } from './wordSheetTimings'
 
@@ -9,7 +10,7 @@ const maxTermLength = 255
 // A small panel at the bottom of the screen, within reach of a thumb. It sits in the page after the
 // content, stuck to the bottom of the window, so it adds room to scroll instead of covering the last
 // controls. Remounted for every word, so it never shows the result for the previous one.
-export function WordSheet({ initialWord, onClose }: { initialWord: string; onClose: () => void }) {
+export function WordSheet({ initialWord, source, onClose }: { initialWord: string; source?: TapSource; onClose: () => void }) {
   const add = useAddVocabulary()
   const id = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -114,7 +115,12 @@ export function WordSheet({ initialWord, onClose }: { initialWord: string; onClo
       return
     }
     setValidationError(undefined)
-    add.mutate({ term: trimmed }, { onSuccess: () => setAdded(trimmed) })
+    // The sentence goes along only while the word is the one that was tapped.
+    const request =
+      source && trimmed === initialWord.trim()
+        ? { term: trimmed, sentence: source.sentence, form: source.form, sourceTitle: source.title, sourceLink: source.link }
+        : { term: trimmed }
+    add.mutate(request, { onSuccess: () => setAdded(trimmed) })
   }
 
   const error = validationError ?? (add.isError ? failureMessage(add.error, term.trim()) : undefined)

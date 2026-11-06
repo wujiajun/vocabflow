@@ -4,7 +4,15 @@ import type { PassageSentence } from './splitPassage'
 
 // The studied words are highlighted and plain; every other word can be tapped to add it. While the
 // passage is read aloud, the sentence being read has a soft background and is kept in view.
-export function PassageText({ paragraphs, current }: { paragraphs: PassageSentence[][]; current: number | null }) {
+export function PassageText({
+  paragraphs,
+  current,
+  source,
+}: {
+  paragraphs: PassageSentence[][]
+  current: number | null
+  source?: { title: string; link: string }
+}) {
   const reading = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -28,7 +36,7 @@ export function PassageText({ paragraphs, current }: { paragraphs: PassageSenten
                     {part.text}
                   </mark>
                 ) : (
-                  <TappableText key={index} text={part.text} />
+                  <TappableText key={index} sentence={sentence.text} source={source} text={part.text} />
                 ),
               )}
             </span>
