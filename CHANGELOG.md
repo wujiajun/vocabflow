@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.4.0] - 2026-11-06
+
+### Added
+
+- **Article albums**: the Reading switch is now "Passages | Videos | Articles". Articles are texts from VOA Learning English, kept inside the app and shown in the same reader as your passages: tap any word to add it (with its sentence and a link back to the article), listen to it read aloud, and see where it comes from, with a link to the original and, when VOA has one, to its recording. VOA says the text it writes itself is public domain; any article that credits or quotes a wire service (AP, Reuters, AFP) is left out, and no pictures are kept. The first three programs are Ask a Teacher (CLB 4–6), Words & Their Stories (CLB 4–6) and American Stories (CLB 5–7). Like the video albums, you see the albums for your own CLB level, or "Show all levels" with a filter by band; an album lists its articles in a Short (up to 5 minutes) and a Long list, the unread ones first. An article is marked read when you reach its end (or by hand), and "Words in This Story" lists VOA's glossary with a one-tap "+ Add" for each word. New table `article_reads` (migration V16); `GET /api/v1/articles/albums`, `GET /api/v1/articles/albums/{id}`, `GET /api/v1/articles/{id}`, `PUT/DELETE /api/v1/articles/{id}/read`. The catalog is a file (`articles/catalog.json`) kept by the developer with `scripts/article_catalog.py`; users cannot add articles.
+
 ## [1.3.0] - 2026-11-06
 
 ### Added
