@@ -93,4 +93,73 @@ class VideoApiTests {
     mvc.perform(put("/api/v1/videos/AAAAAAAAAAA/watched").header("Authorization", auth))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void aVideosPlaceIsKeptPerUserAndClearedByTheRules() throws Exception {
+    String alice = "Bearer " + token("video-dora@example.com");
+    String bob = "Bearer " + token("video-eli@example.com");
+    String video = "IEA9LMy-N3M";
+
+    mvc.perform(
+            put("/api/v1/videos/" + video + "/position")
+                .header("Authorization", alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"seconds\":120}"))
+        .andExpect(status().isNoContent());
+    // A newer place replaces the old one.
+    mvc.perform(
+            put("/api/v1/videos/" + video + "/position")
+                .header("Authorization", alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"seconds\":200}"))
+        .andExpect(status().isNoContent());
+
+    mvc.perform(get("/api/v1/videos/albums/voa-lle-1").header("Authorization", alice))
+        .andExpect(
+            jsonPath("$.videos[?(@.id=='" + video + "' && @.positionSeconds==200)]").isNotEmpty())
+        .andExpect(
+            jsonPath("$.videos[?(@.id=='" + video + "' && @.positionUpdatedAt != null)]")
+                .isNotEmpty())
+        .andExpect(
+            jsonPath("$.videos[0].positionSeconds").value(org.hamcrest.Matchers.nullValue()));
+    mvc.perform(get("/api/v1/videos/albums/voa-lle-1").header("Authorization", bob))
+        .andExpect(
+            jsonPath("$.videos[?(@.id=='" + video + "')].positionSeconds[0]").doesNotExist());
+
+    // Played to the end: watched, and the place is gone.
+    mvc.perform(
+            put("/api/v1/videos/" + video + "/position")
+                .header("Authorization", alice)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"seconds\":5000}"))
+        .andExpect(status().isNoContent());
+    mvc.perform(get("/api/v1/videos/albums/voa-lle-1").header("Authorization", alice))
+        .andExpect(jsonPath("$.videos[?(@.id=='" + video + "' && @.watched==true)]").isNotEmpty())
+        .andExpect(
+            jsonPath("$.videos[?(@.id=='" + video + "')].positionSeconds[0]").doesNotExist());
+  }
+
+  @Test
+  void aPlaceNeedsValidSecondsAndAKnownVideo() throws Exception {
+    String auth = "Bearer " + token("video-fay@example.com");
+
+    mvc.perform(
+            put("/api/v1/videos/IEA9LMy-N3M/position")
+                .header("Authorization", auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"seconds\":-1}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(
+            put("/api/v1/videos/IEA9LMy-N3M/position")
+                .header("Authorization", auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(
+            put("/api/v1/videos/AAAAAAAAAAA/position")
+                .header("Authorization", auth)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"seconds\":30}"))
+        .andExpect(status().isNotFound());
+  }
 }

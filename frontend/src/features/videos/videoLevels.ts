@@ -47,6 +47,17 @@ export function isShort(seconds: number) {
   return seconds <= shortVideoSeconds
 }
 
+// Where a video stands: the first seconds are not kept, and about nine tenths of it counts as watched.
+// The server applies the same rules; the page applies them at once, so it does not wait for the answer.
+export const minPositionSeconds = 10
+export const finishedShare = 0.9
+// A video opened from its place starts a few seconds earlier, to catch the thread.
+export const resumeRewindSeconds = 5
+
+export function resumeFrom(positionSeconds: number | null) {
+  return positionSeconds === null ? 0 : Math.max(0, positionSeconds - resumeRewindSeconds)
+}
+
 export function formatDuration(seconds: number) {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)

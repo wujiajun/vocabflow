@@ -1,8 +1,10 @@
 package com.vocabflow.video.infrastructure;
 
 import com.vocabflow.video.application.VideoProgressRepository;
+import com.vocabflow.video.domain.VideoPlace;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,9 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class JpaVideoProgressRepositoryAdapter implements VideoProgressRepository {
   private final VideoProgressJpaRepository progress;
+  private final VideoPositionJpaRepository positions;
 
-  public JpaVideoProgressRepositoryAdapter(VideoProgressJpaRepository progress) {
+  public JpaVideoProgressRepositoryAdapter(
+      VideoProgressJpaRepository progress, VideoPositionJpaRepository positions) {
     this.progress = progress;
+    this.positions = positions;
   }
 
   @Override
@@ -47,6 +52,41 @@ public class JpaVideoProgressRepositoryAdapter implements VideoProgressRepositor
   @Transactional
   public void unmarkWatched(long userId, String videoId) {
     progress.deleteByUserIdAndVideoId(userId, videoId);
+  }
+
+  @Override
+  public Map<String, VideoPlace> positions(long userId) {
+    return positions.findByUserId(userId).stream()
+        .collect(
+            Collectors.toUnmodifiableMap(
+                entity -> entity.videoId,
+                entity -> new VideoPlace(entity.positionSeconds, entity.updatedAt)));
+  }
+
+  @Override
+  public void savePosition(long userId, String videoId, int seconds, Instant at) {
+    if (positions.update(userId, videoId, seconds, at) > 0) {
+      return;
+    }
+    VideoPositionEntity entity = new VideoPositionEntity();
+    entity.userId = userId;
+    entity.videoId = videoId;
+    entity.positionSeconds = seconds;
+    entity.updatedAt = at;
+    try {
+      positions.saveAndFlush(entity);
+    } catch (DataIntegrityViolationException exception) {
+      // Another save made the row a moment ago: this one is the newer place, so it replaces it.
+      if (!isDuplicateKeyViolation(exception)) {
+        throw exception;
+      }
+      positions.update(userId, videoId, seconds, at);
+    }
+  }
+
+  @Override
+  public void clearPosition(long userId, String videoId) {
+    positions.deleteByUserIdAndVideoId(userId, videoId);
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {

@@ -3,9 +3,13 @@ export interface YouTubePlayerEvent {
   data: number
 }
 
+export interface YouTubePlayer {
+  getCurrentTime(): number
+}
+
 export interface YouTubeNamespace {
-  Player: new (element: HTMLIFrameElement, options: { events: { onStateChange: (event: YouTubePlayerEvent) => void } }) => unknown
-  PlayerState: { ENDED: number }
+  Player: new (element: HTMLIFrameElement, options: { events: { onStateChange: (event: YouTubePlayerEvent) => void } }) => YouTubePlayer
+  PlayerState: { ENDED: number; PLAYING: number; PAUSED: number }
 }
 
 declare global {
@@ -14,6 +18,9 @@ declare global {
     onYouTubeIframeAPIReady?: () => void
   }
 }
+
+// How often the place is saved while a video plays. A mutable object so a test can shorten it.
+export const playerTimings = { saveEveryMs: 15000 }
 
 let loading: Promise<YouTubeNamespace> | undefined
 

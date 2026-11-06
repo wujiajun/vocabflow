@@ -2,6 +2,10 @@ package com.vocabflow.video.adapter;
 
 import com.vocabflow.video.application.VideoService;
 import com.vocabflow.video.domain.VideoAlbum;
+import com.vocabflow.video.domain.VideoPlace;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +31,16 @@ public class VideoController {
       int watchedCount,
       String coverVideoId) {}
 
-  record Video(String id, String title, String channel, int durationSeconds, boolean watched) {}
+  record Video(
+      String id,
+      String title,
+      String channel,
+      int durationSeconds,
+      boolean watched,
+      Integer positionSeconds,
+      Instant positionUpdatedAt) {}
+
+  record PositionRequest(@NotNull(message = "Seconds are required") @Min(0) Integer seconds) {}
 
   record AlbumDetail(
       String id,
@@ -66,13 +79,17 @@ public class VideoController {
     List<Video> videos =
         album.videos().stream()
             .map(
-                video ->
-                    new Video(
-                        video.id(),
-                        video.title(),
-                        video.channel(),
-                        video.durationSeconds(),
-                        detail.watchedVideoIds().contains(video.id())))
+                video -> {
+                  VideoPlace place = detail.positions().get(video.id());
+                  return new Video(
+                      video.id(),
+                      video.title(),
+                      video.channel(),
+                      video.durationSeconds(),
+                      detail.watchedVideoIds().contains(video.id()),
+                      place == null ? null : place.seconds(),
+                      place == null ? null : place.updatedAt());
+                })
             .toList();
     return new AlbumDetail(
         album.id(),
@@ -89,6 +106,15 @@ public class VideoController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void markWatched(@AuthenticationPrincipal Long userId, @PathVariable String videoId) {
     service.setWatched(userId, videoId, true);
+  }
+
+  @PutMapping("/{videoId}/position")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void savePosition(
+      @AuthenticationPrincipal Long userId,
+      @PathVariable String videoId,
+      @RequestBody @jakarta.validation.Valid PositionRequest request) {
+    service.savePosition(userId, videoId, request.seconds());
   }
 
   @DeleteMapping("/{videoId}/watched")

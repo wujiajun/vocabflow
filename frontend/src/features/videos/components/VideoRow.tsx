@@ -1,4 +1,4 @@
-import { formatDuration } from '../videoLevels'
+import { formatDuration, resumeFrom } from '../videoLevels'
 import type { AlbumVideo } from '../types/videos'
 import { VideoPlayer } from './VideoPlayer'
 
@@ -12,12 +12,15 @@ export function VideoRow({
   open,
   onToggle,
   onSetWatched,
+  onPosition,
 }: {
   video: AlbumVideo
   open: boolean
   onToggle: () => void
   onSetWatched: (watched: boolean) => void
+  onPosition: (seconds: number, keepalive: boolean) => void
 }) {
+  const inProgress = !video.watched && video.positionSeconds !== null
   const playerId = `player-${video.id}`
 
   return (
@@ -35,16 +38,34 @@ export function VideoRow({
             <span className="flex size-9 items-center justify-center rounded-full bg-black/60 pl-0.5 text-white">▶</span>
           </span>
           <span className="absolute right-1 bottom-1 rounded bg-black/75 px-1.5 text-xs font-semibold text-white">{formatDuration(video.durationSeconds)}</span>
+          {inProgress ? (
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
+              <span className="block h-full bg-indigo-400" style={{ width: `${Math.min(100, ((video.positionSeconds ?? 0) / video.durationSeconds) * 100)}%` }} />
+            </span>
+          ) : null}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block leading-6 font-semibold text-slate-900">{video.title}</span>
           <span className="block text-sm text-slate-600">{video.channel}</span>
+          {inProgress ? (
+            <span className="mt-1 inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-900">
+              Continue from {formatDuration(video.positionSeconds ?? 0)}
+            </span>
+          ) : null}
           {video.watched ? (
             <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-900">✓ Watched</span>
           ) : null}
         </span>
       </button>
-      <div id={playerId}>{open ? <VideoPlayer onEnded={() => !video.watched && onSetWatched(true)} title={video.title} videoId={video.id} /> : null}</div>
+      <div id={playerId}>{open ? (
+          <VideoPlayer
+            onEnded={() => !video.watched && onSetWatched(true)}
+            onPosition={onPosition}
+            startSeconds={resumeFrom(video.positionSeconds)}
+            title={video.title}
+            videoId={video.id}
+          />
+        ) : null}</div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button className={actionClass} onClick={() => onSetWatched(!video.watched)} type="button">
           {video.watched ? 'Mark as not watched' : 'Mark as watched'}
