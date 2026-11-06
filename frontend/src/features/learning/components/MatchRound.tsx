@@ -234,7 +234,7 @@ export function MatchRound({
                 </div>
               ) : (
                 <button
-                  className={`w-full rounded-xl border-2 border-dashed px-3 py-2 text-left text-sm leading-5 text-slate-800 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
+                  className={`min-h-11 w-full rounded-xl border-2 border-dashed px-3 py-2 text-left text-sm leading-5 text-slate-800 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${
                     wrong?.cardId === pair.id
                       ? 'border-solid border-rose-600 bg-rose-100 text-rose-900'
                       : drag?.over === pair.id
