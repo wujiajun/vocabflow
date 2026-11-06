@@ -32,7 +32,8 @@ public class VocabularyController {
       List<String> antonyms,
       String scene,
       String emoji,
-      String parts) {}
+      String parts,
+      String chinese) {}
 
   record Item(
       long id,
@@ -78,7 +79,8 @@ public class VocabularyController {
                         sense.antonyms(),
                         sense.scene(),
                         sense.emoji(),
-                        sense.parts()))
+                        sense.parts(),
+                        sense.chinese()))
             .toList(),
         item.baseForm(),
         item.spellingSuggestion(),

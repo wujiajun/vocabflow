@@ -40,7 +40,8 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   List.of(),
                   "You hand a paper with your work history to a manager.",
                   "📄🙋",
-                  null),
+                  null,
+                  "简历"),
               new VocabularySense(
                   "verb",
                   "start again",
@@ -52,7 +53,8 @@ public class FakeVocabularyEnrichmentAdapter implements VocabularyEnrichmentProv
                   List.of("stop", "suspend"),
                   "The talk stopped for lunch, and now the speaker starts again.",
                   "▶️",
-                  null)));
+                  null,
+                  "恢复；重新开始")));
     if (n.equals("recieve")) throw new MisspelledTermException("receive");
     if (n.equals("leases"))
       return new EnrichmentResult(

@@ -1,6 +1,7 @@
 import { type FormEvent, memo, useState } from 'react'
 import { getGameSound, setGameSound } from '../../../shared/sound/effects'
 import { type CardStart, getCardStart, setCardStart } from '../../../shared/cardStart'
+import { getShowChinese, setShowChinese } from '../../../shared/showChinese'
 import { getSpeakOnAnswer, getSpeakOnCard, setSpeakOnAnswer, setSpeakOnCard } from '../../../shared/speech/autoSpeak'
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
@@ -22,6 +23,7 @@ export function SettingsPage() {
   const [timeZone, setTimeZone] = useState(auth.user?.timeZone ?? '')
   const [speakOnCard, setSpeakOnCardState] = useState(getSpeakOnCard)
   const [cardStart, setCardStartState] = useState<CardStart>(getCardStart)
+  const [showChinese, setShowChineseState] = useState(getShowChinese)
   const [speakOnAnswer, setSpeakOnAnswerState] = useState(getSpeakOnAnswer)
   const [gameSound, setGameSoundState] = useState(getGameSound)
   const [validationError, setValidationError] = useState<string>()
@@ -146,7 +148,19 @@ export function SettingsPage() {
 
       <section aria-label="On this device" className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-7">
         <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>
-        <fieldset aria-describedby="settings-start-hint" className="mt-3">
+        <label className="mt-3 flex items-center gap-3 text-sm font-medium text-slate-800">
+          <input
+            checked={showChinese}
+            className="size-5 shrink-0 accent-indigo-700"
+            onChange={(event) => {
+              setShowChineseState(event.target.checked)
+              setShowChinese(event.target.checked)
+            }}
+            type="checkbox"
+          />
+          Show the Chinese meaning without tapping 中文
+        </label>
+        <fieldset aria-describedby="settings-start-hint" className="mt-4">
           <legend className="text-sm font-medium text-slate-800">How a study card starts</legend>
           {(
             [

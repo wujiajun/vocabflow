@@ -58,6 +58,7 @@ Return:
   - scene: one short, vivid sentence in very simple everyday English that makes the learner picture a concrete situation showing exactly this meaning and no other, so that the picture brings the meaning back to mind.
   - emoji: 1 to 3 emoji that show the scene as a picture. Use an empty string when no emoji shows this meaning clearly, which is normal for abstract words: never use an emoji that only loosely fits.
   - parts: on the first meaning only (an empty string on the others), and only when the text is a word the learner knows plus a common prefix or suffix, such as "re- (again) + play" or "open + -ness (state of being)": one short line naming each part and the idea they make together. Use an empty string for anything else. Never use Latin or Greek roots, and never invent how a word is built.
+  - chinese: this meaning in simple Simplified Chinese, as a bilingual dictionary gives it: one to three short equivalents separated by "；" (for example 吞咽；咽下). It translates this meaning of the text for its part of speech, not the example sentences and not the English definition word for word. Use an empty string when you are not sure of a good equivalent.
 If the input is not a real English word or phrase, return the best entry you can for the text as written."""
 
 SCHEMA = {
@@ -85,8 +86,9 @@ SCHEMA = {
                     "scene": {"type": "string"},
                     "emoji": {"type": "string"},
                     "parts": {"type": "string"},
+                    "chinese": {"type": "string"},
                 },
-                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations", "synonyms", "antonyms", "scene", "emoji", "parts"],
+                "required": ["partOfSpeech", "label", "phonetic", "definition", "examples", "collocations", "synonyms", "antonyms", "scene", "emoji", "parts", "chinese"],
                 "additionalProperties": False,
             },
         },
@@ -151,6 +153,7 @@ def show(word, reply):
         print(f"   e.g. {sense['examples'][0] if sense['examples'] else '(none)'}")
         print(f"   with: {', '.join(sense['collocations'])}")
         print(f"   hook: {sense['emoji'] or '-'}  {sense['scene']}  [{sense['parts'] or '-'}]")
+        print(f"   中文: {sense['chinese'] or '-'}")
         print(f"   same: {', '.join(sense['synonyms']) or '-'}   |   opposite: {', '.join(sense['antonyms']) or '-'}")
 
 

@@ -7,7 +7,8 @@ import java.util.List;
  * and {@code antonyms} belong to this meaning only and are never null, since a word stored before
  * they existed has none. {@code scene}, {@code emoji} and {@code parts} are the memory hook: a
  * one-sentence picture of this meaning, emoji that show it, and, on the first meaning only, how the
- * word is built from a known word and a common prefix or suffix. Each is null when there is none.
+ * word is built from a known word and a common prefix or suffix. {@code chinese} is this meaning in
+ * simple Chinese. Each is null when there is none.
  */
 public record VocabularySense(
     String partOfSpeech,
@@ -20,7 +21,8 @@ public record VocabularySense(
     List<String> antonyms,
     String scene,
     String emoji,
-    String parts) {
+    String parts,
+    String chinese) {
 
   public VocabularySense {
     synonyms = synonyms == null ? List.of() : synonyms;
@@ -50,6 +52,7 @@ public record VocabularySense(
                 collocations,
                 List.of(),
                 List.of(),
+                null,
                 null,
                 null,
                 null));
