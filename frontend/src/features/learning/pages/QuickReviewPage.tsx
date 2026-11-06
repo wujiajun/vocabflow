@@ -93,5 +93,16 @@ function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => v
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [pairs] = useState(() => buildPairs(shuffle(entries)))
 
-  return <PairGame minimum={minPairs} notEnough={<NoDistinctMeanings />} onAgain={onAgain} pairs={pairs} />
+  return <PairGame
+      intro={{
+        icon: '🧩',
+        title: 'Ready to match?',
+        text: ({ words, rounds }) =>
+          `Drag each of today’s ${words} words onto its meaning, in ${rounds === 1 ? 'one round' : `${rounds} rounds`}. A word that goes right the first time keeps your streak going.`,
+      }}
+      minimum={minPairs}
+      notEnough={<NoDistinctMeanings />}
+      onAgain={onAgain}
+      pairs={pairs}
+    />
 }

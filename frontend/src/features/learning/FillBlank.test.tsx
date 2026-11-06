@@ -85,12 +85,26 @@ test('on a device that cannot speak it says so', async () => {
   expect(await screen.findByText(/cannot read words aloud/)).toBeInTheDocument()
 })
 
+test('opens on a start screen with its icon, and Start begins the first round', async () => {
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/fill')
+
+  expect(await screen.findByRole('heading', { name: 'Ready to fill in the blanks?' })).toBeInTheDocument()
+  expect(screen.getByText(/No word is shown until you place it/)).toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Start' }))
+  expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
+  expect(screen.getByLabelText('0 right on the first try')).toBeInTheDocument()
+})
+
 test('sounds are tapped to be heard, never show their word, and are placed on the sentence they fit', async () => {
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/fill')
 
+  await startGame()
   expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
   const tray = () => screen.getByRole('group', { name: 'Sounds' })
   // The chips carry a number and nothing that gives the word away.
@@ -128,3 +142,8 @@ test('sounds are tapped to be heard, never show their word, and are placed on th
   expect(screen.getByRole('heading', { name: /4 of 5 on the first try/ })).toBeInTheDocument()
   expect(screen.getByText(`Worth another look: ${missedTerm}.`)).toBeInTheDocument()
 })
+
+// Every game opens on its start screen, which is also the press that lets a voice begin.
+async function startGame() {
+  await userEvent.setup().click(await screen.findByRole('button', { name: 'Start' }))
+}
