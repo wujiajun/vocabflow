@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.4.1] - 2026-11-06
+
+### Changed
+
+- **Article recordings play inside the article**: an article with a VOA recording now has a player at the top of the page, so you no longer leave the app to listen. It loads the sound only when you press play. The page's content policy (`frontend/Caddyfile`) now allows sound from `voa-audio.voanews.eu` only.
+
 ## [1.4.0] - 2026-11-06
 
 ### Added

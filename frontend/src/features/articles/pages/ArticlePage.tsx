@@ -88,6 +88,9 @@ export function ArticlePage() {
           {current.albumTitle} · {current.readingMinutes} min read
         </p>
         <p className="mt-1 text-sm text-slate-600">Tap any word to add it to your list.</p>
+        {current.audioUrl ? (
+          <audio aria-label="Original recording" className="mt-4 w-full" controls preload="none" src={current.audioUrl} />
+        ) : null}
 
         <PassageReader source={{ title: current.title, link: `/app/reading/articles/a/${current.id}` }} text={current.text} />
 
@@ -124,15 +127,6 @@ export function ArticlePage() {
             {current.source}
           </a>{' '}
           (learningenglish.voanews.com), published {new Date(`${current.publishedOn}T12:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })}. VOA text is in the public domain.
-          {current.audioUrl ? (
-            <>
-              {' '}
-              <a className="font-semibold text-indigo-700 underline underline-offset-4" href={current.audioUrl} rel="noopener noreferrer" target="_blank">
-                Listen to the original recording
-              </a>
-              .
-            </>
-          ) : null}
         </p>
       </article>
     )

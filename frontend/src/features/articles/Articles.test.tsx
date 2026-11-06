@@ -132,7 +132,7 @@ test('the article shows its text, credit and glossary; a tapped word keeps the s
 
   await screen.findByRole('heading', { name: 'Sew and Knit' })
   expect(screen.getByRole('link', { name: 'VOA Learning English' })).toHaveAttribute('href', 'https://learningenglish.voanews.com/a/sew-and-knit-/101.html')
-  expect(screen.getByRole('link', { name: 'Listen to the original recording' })).toHaveAttribute('href', 'https://voa-audio.example/101.mp3')
+  expect(screen.getByLabelText('Original recording')).toHaveAttribute('src', 'https://voa-audio.example/101.mp3')
   expect(screen.getByText('Unread')).toBeInTheDocument()
 
   await browserUser.click(screen.getByText('knitted'))
