@@ -67,7 +67,10 @@ export function AlbumPage() {
     // the page does not jump under the learner's thumb.
     const rank = (video: { id: string; watched: boolean; positionSeconds: number | null }) =>
       video.watched && video.id !== playing ? 2 : video.positionSeconds !== null || video.id === playing ? 0 : 1
-    const list = [...(length === 'short' ? short : long)].sort((a, b) => rank(a) - rank(b))
+    // Among those started, the one watched last comes first, and the one playing now before them all.
+    const lastWatched = (video: { id: string; positionUpdatedAt: string | null }) =>
+      video.id === playing ? Number.POSITIVE_INFINITY : Date.parse(video.positionUpdatedAt ?? '') || 0
+    const list = [...(length === 'short' ? short : long)].sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? lastWatched(b) - lastWatched(a) : 0))
     const share = data.videos.length > 0 ? (data.watchedCount / data.videos.length) * 100 : 0
 
     return (

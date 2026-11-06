@@ -28,7 +28,7 @@ export function useSetWatched(albumId: string | undefined) {
       await queryClient.cancelQueries({ queryKey: albumKey })
       const before = queryClient.getQueryData<AlbumDetail>(albumKey)
       if (before) {
-        const videos = before.videos.map((video) => (video.id === videoId ? { ...video, watched, positionSeconds: null } : video))
+        const videos = before.videos.map((video) => (video.id === videoId ? { ...video, watched, positionSeconds: null, positionUpdatedAt: null } : video))
         queryClient.setQueryData<AlbumDetail>(albumKey, { ...before, videos, watchedCount: videos.filter((video) => video.watched).length })
       }
       return { before }
@@ -61,9 +61,10 @@ export function useSavePosition(albumId: string | undefined) {
             return video
           }
           if (seconds >= video.durationSeconds * finishedShare) {
-            return { ...video, watched: true, positionSeconds: null }
+            return { ...video, watched: true, positionSeconds: null, positionUpdatedAt: null }
           }
-          return { ...video, positionSeconds: seconds < minPositionSeconds ? null : seconds }
+          const kept = seconds >= minPositionSeconds
+          return { ...video, positionSeconds: kept ? seconds : null, positionUpdatedAt: kept ? new Date().toISOString() : null }
         })
         return { ...album, videos, watchedCount: videos.filter((video) => video.watched).length }
       })

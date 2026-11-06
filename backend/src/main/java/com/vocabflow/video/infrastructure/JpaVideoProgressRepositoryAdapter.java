@@ -1,6 +1,7 @@
 package com.vocabflow.video.infrastructure;
 
 import com.vocabflow.video.application.VideoProgressRepository;
+import com.vocabflow.video.domain.VideoPlace;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.Map;
@@ -54,11 +55,12 @@ public class JpaVideoProgressRepositoryAdapter implements VideoProgressRepositor
   }
 
   @Override
-  public Map<String, Integer> positions(long userId) {
+  public Map<String, VideoPlace> positions(long userId) {
     return positions.findByUserId(userId).stream()
         .collect(
             Collectors.toUnmodifiableMap(
-                entity -> entity.videoId, entity -> entity.positionSeconds));
+                entity -> entity.videoId,
+                entity -> new VideoPlace(entity.positionSeconds, entity.updatedAt)));
   }
 
   @Override

@@ -2,8 +2,10 @@ package com.vocabflow.video.adapter;
 
 import com.vocabflow.video.application.VideoService;
 import com.vocabflow.video.domain.VideoAlbum;
+import com.vocabflow.video.domain.VideoPlace;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +37,8 @@ public class VideoController {
       String channel,
       int durationSeconds,
       boolean watched,
-      Integer positionSeconds) {}
+      Integer positionSeconds,
+      Instant positionUpdatedAt) {}
 
   record PositionRequest(@NotNull(message = "Seconds are required") @Min(0) Integer seconds) {}
 
@@ -76,14 +79,17 @@ public class VideoController {
     List<Video> videos =
         album.videos().stream()
             .map(
-                video ->
-                    new Video(
-                        video.id(),
-                        video.title(),
-                        video.channel(),
-                        video.durationSeconds(),
-                        detail.watchedVideoIds().contains(video.id()),
-                        detail.positions().get(video.id())))
+                video -> {
+                  VideoPlace place = detail.positions().get(video.id());
+                  return new Video(
+                      video.id(),
+                      video.title(),
+                      video.channel(),
+                      video.durationSeconds(),
+                      detail.watchedVideoIds().contains(video.id()),
+                      place == null ? null : place.seconds(),
+                      place == null ? null : place.updatedAt());
+                })
             .toList();
     return new AlbumDetail(
         album.id(),

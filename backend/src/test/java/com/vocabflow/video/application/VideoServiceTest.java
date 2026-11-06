@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.vocabflow.shared.web.NotFoundException;
 import com.vocabflow.video.domain.VideoAlbum;
 import com.vocabflow.video.domain.VideoItem;
+import com.vocabflow.video.domain.VideoPlace;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -30,7 +31,7 @@ class VideoServiceTest {
               new VideoItem("IEA9LMy-N3M", "Two", "Channel", 900)));
 
   private final Map<Long, Set<String>> marks = new HashMap<>();
-  private final Map<Long, Map<String, Integer>> places = new HashMap<>();
+  private final Map<Long, Map<String, VideoPlace>> places = new HashMap<>();
   private final VideoProgressRepository progress =
       new VideoProgressRepository() {
         @Override
@@ -49,13 +50,15 @@ class VideoServiceTest {
         }
 
         @Override
-        public Map<String, Integer> positions(long userId) {
+        public Map<String, VideoPlace> positions(long userId) {
           return places.getOrDefault(userId, Map.of());
         }
 
         @Override
         public void savePosition(long userId, String videoId, int seconds, Instant at) {
-          places.computeIfAbsent(userId, id -> new HashMap<>()).put(videoId, seconds);
+          places
+              .computeIfAbsent(userId, id -> new HashMap<>())
+              .put(videoId, new VideoPlace(seconds, at));
         }
 
         @Override
@@ -100,7 +103,8 @@ class VideoServiceTest {
     service.savePosition(1, "IEA9LMy-N3M", 120);
     service.savePosition(1, "IEA9LMy-N3M", 300);
 
-    assertThat(service.album(1, "demo").positions()).containsEntry("IEA9LMy-N3M", 300);
+    assertThat(service.album(1, "demo").positions().get("IEA9LMy-N3M"))
+        .isEqualTo(new VideoPlace(300, Instant.parse("2026-11-05T12:00:00Z")));
     assertThat(service.album(2, "demo").positions()).isEmpty();
     assertThat(service.album(1, "demo").watchedVideoIds()).isEmpty();
   }

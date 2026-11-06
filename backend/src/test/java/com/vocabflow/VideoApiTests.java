@@ -118,6 +118,9 @@ class VideoApiTests {
         .andExpect(
             jsonPath("$.videos[?(@.id=='" + video + "' && @.positionSeconds==200)]").isNotEmpty())
         .andExpect(
+            jsonPath("$.videos[?(@.id=='" + video + "' && @.positionUpdatedAt != null)]")
+                .isNotEmpty())
+        .andExpect(
             jsonPath("$.videos[0].positionSeconds").value(org.hamcrest.Matchers.nullValue()));
     mvc.perform(get("/api/v1/videos/albums/voa-lle-1").header("Authorization", bob))
         .andExpect(

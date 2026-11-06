@@ -3,6 +3,7 @@ package com.vocabflow.video.application;
 import com.vocabflow.shared.web.NotFoundException;
 import com.vocabflow.video.domain.VideoAlbum;
 import com.vocabflow.video.domain.VideoItem;
+import com.vocabflow.video.domain.VideoPlace;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class VideoService {
   public record AlbumProgress(VideoAlbum album, int watchedCount) {}
 
   public record AlbumDetail(
-      VideoAlbum album, Set<String> watchedVideoIds, Map<String, Integer> positions) {}
+      VideoAlbum album, Set<String> watchedVideoIds, Map<String, VideoPlace> positions) {}
 
   /** Seconds before which a place is not kept. */
   static final int MIN_POSITION_SECONDS = 10;

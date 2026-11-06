@@ -19,6 +19,8 @@ export interface AlbumVideo {
   watched: boolean
   // Where the learner stopped, in seconds; null for a video not started (or watched).
   positionSeconds: number | null
+  // When that place was saved, to put the video watched last first.
+  positionUpdatedAt: string | null
 }
 
 export interface AlbumDetail {

@@ -1,5 +1,6 @@
 package com.vocabflow.video.application;
 
+import com.vocabflow.video.domain.VideoPlace;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -12,10 +13,8 @@ public interface VideoProgressRepository {
 
   void unmarkWatched(long userId, String videoId);
 
-  /**
-   * Where each video the user has started stands, in seconds; a video without a place is absent.
-   */
-  Map<String, Integer> positions(long userId);
+  /** Where each video the user has started stands; a video without a place is absent. */
+  Map<String, VideoPlace> positions(long userId);
 
   /** Keeps the one place of the user's video: a new one replaces the old. */
   void savePosition(long userId, String videoId, int seconds, Instant at);

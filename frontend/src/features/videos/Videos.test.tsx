@@ -45,9 +45,10 @@ const fixtures: Fixture[] = [
 
 // A small stand-in for the server that remembers what was marked and where each video stands. It applies
 // the rules of the real one: below ten seconds nothing is kept, and nine tenths counts as watched.
-function server(watched = new Set<string>(), seen: string[] = [], places = new Map<string, number>()) {
+function server(watched = new Set<string>(), seen: string[] = [], places = new Map<string, number>(), times = new Map<string, string>()) {
+  let clock = 0
   const detail = (fixture: Fixture) => {
-    const videos = fixture.videos.map((video) => ({ ...video, channel: 'A channel', watched: watched.has(video.id), positionSeconds: places.get(video.id) ?? null }))
+    const videos = fixture.videos.map((video) => ({ ...video, channel: 'A channel', watched: watched.has(video.id), positionSeconds: places.get(video.id) ?? null, positionUpdatedAt: places.has(video.id) ? (times.get(video.id) ?? '2026-11-01T00:00:00Z') : null }))
     return { id: fixture.id, title: fixture.title, source: 'A source', description: `About ${fixture.title}.`, clbMin: fixture.clbMin, clbMax: fixture.clbMax, watchedCount: videos.filter((video) => video.watched).length, videos }
   }
   const routes: Record<string, (request: { init: RequestInit }) => Response> = {
@@ -85,6 +86,8 @@ function server(watched = new Set<string>(), seen: string[] = [], places = new M
           places.delete(video.id)
         } else {
           places.set(video.id, seconds)
+          clock += 1
+          times.set(video.id, `2026-11-05T12:00:${String(clock).padStart(2, '0')}Z`)
         }
         return new Response(null, { status: 204 })
       }
@@ -397,4 +400,20 @@ test('marking a video by hand clears where the learner stopped', async () => {
 
   expect(await screen.findByText('✓ Watched')).toBeInTheDocument()
   expect(screen.queryByText(/Continue from/)).not.toBeInTheDocument()
+})
+
+test('among the videos started, the one watched last comes first, ahead of those not yet watched', async () => {
+  const places = new Map([['BBBBBBBBB01', 30], ['BBBBBBBBB04', 20]])
+  const times = new Map([['BBBBBBBBB01', '2026-11-03T09:00:00Z'], ['BBBBBBBBB04', '2026-11-04T09:00:00Z']])
+  stubApi(server(new Set(), [], places, times))
+  renderApp('/app/reading/videos/middle')
+  await screen.findByRole('heading', { name: 'Middle lessons' })
+
+  const items = within(screen.getByRole('list', { name: 'Short videos' })).getAllByRole('listitem')
+  // Shopping was stopped after Greetings, so it is first; At the bank, not started, follows.
+  expect(items.map((item) => within(item).getAllByRole('button')[0].textContent)).toEqual([
+    expect.stringContaining('Shopping'),
+    expect.stringContaining('Greetings'),
+    expect.stringContaining('At the bank'),
+  ])
 })
