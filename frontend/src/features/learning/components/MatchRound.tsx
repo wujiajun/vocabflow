@@ -1,6 +1,7 @@
 import { type PointerEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
-import { playWrong } from '../../../shared/sound/effects'
+import { playRight, playWrong } from '../../../shared/sound/effects'
+import { GameProgress, ScorePills, gamePrimaryButton } from './GameParts'
 import { type MatchPair, shuffle } from './matching'
 
 export interface RoundResult {
@@ -8,6 +9,17 @@ export interface RoundResult {
   // Words matched on the first try; the rest are named so they can be looked at again.
   firstTry: number
   missed: string[]
+  // The run of words placed right the first time, at the end of the round and the longest in it.
+  streak: number
+  bestStreak: number
+}
+
+// What the earlier rounds of the game added up to, so the score, the streak and the bar run on across rounds.
+export interface GameSoFar {
+  placed: number
+  firstTry: number
+  streak: number
+  total: number
 }
 
 // How long a wrong answer stays red.
@@ -21,11 +33,15 @@ const dragDistance = 6
 // keyboard and a screen reader play).
 export function MatchRound({
   pairs,
+  heading,
+  before,
   continueLabel,
   onContinue,
   sounds = false,
 }: {
   pairs: MatchPair[]
+  heading: string
+  before: GameSoFar
   continueLabel: string
   onContinue: (result: RoundResult) => void
   // The chips are sounds, not words: a chip says its word when tapped and shows only a number, and
@@ -39,6 +55,8 @@ export function MatchRound({
   // The word and the meaning of the last wrong answer, red for a moment.
   const [wrong, setWrong] = useState<{ wordId: number; cardId: number } | null>(null)
   const [message, setMessage] = useState('')
+  const [streak, setStreak] = useState(before.streak)
+  const [bestStreak, setBestStreak] = useState(before.streak)
   const [drag, setDrag] = useState<{ id: number; dx: number; dy: number; over: number | null } | null>(null)
   const press = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null)
   const swallowClick = useRef(false)
@@ -49,6 +67,7 @@ export function MatchRound({
   const doneRef = useRef<HTMLHeadingElement>(null)
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const done = matched.size === pairs.length
+  const firstTryNow = before.firstTry + [...matched].filter((id) => !missed.has(id)).length
   const remaining = chips.filter((pair) => !matched.has(pair.id))
 
   // The word just placed leaves the tray, and the control pressed with it: keep the keyboard in the game.
@@ -70,11 +89,19 @@ export function MatchRound({
     if (wordId === cardId) {
       setMatched((current) => new Set(current).add(wordId))
       setWrong(null)
+      // Only a word placed right the first time keeps the streak going.
+      if (!missed.has(wordId)) {
+        const next = streak + 1
+        setStreak(next)
+        setBestStreak((best) => Math.max(best, next))
+      }
+      playRight()
       setMessage(`Correct: ${word?.term}.`)
       if (word && isSpeechSupported()) {
         speakText(word.term, { onStart: () => {}, onEnd: () => {} })
       }
     } else {
+      setStreak(0)
       setMissed((current) => new Set(current).add(wordId))
       setWrong({ wordId, cardId })
       clearTimeout(wrongTimer.current)
@@ -184,7 +211,12 @@ export function MatchRound({
 
   return (
     <div>
-      <p className="text-xs text-slate-600">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">{heading}</h2>
+        <ScorePills score={firstTryNow} scoreLabel="right on the first try" streak={streak} />
+      </div>
+      <GameProgress max={before.total} value={before.placed + matched.size} />
+      <p className="mt-3 text-xs text-slate-600">
         {sounds
           ? 'Tap a sound to hear it, then drag it onto the sentence it fits, or tap the sentence.'
           : 'Drag each word onto its meaning, or tap a word and then a meaning.'}
@@ -233,17 +265,20 @@ export function MatchRound({
           {message}
         </p>
         {done ? (
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl bg-indigo-50 px-4 py-3">
-            <h3 className="text-lg font-bold tracking-tight outline-none" ref={doneRef} tabIndex={-1}>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 motion-safe:animate-pop">
+            <h3 className="text-lg font-bold tracking-tight text-emerald-950 outline-none" ref={doneRef} tabIndex={-1}>
+              <span aria-hidden="true">✓ </span>
               {missed.size === 0 ? 'All matched on the first try!' : 'All matched!'}
             </h3>
             <button
-              className="shrink-0 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+              className={`shrink-0 ${gamePrimaryButton}`}
               onClick={() =>
                 onContinue({
                   total: pairs.length,
                   firstTry: pairs.length - missed.size,
                   missed: pairs.filter((pair) => missed.has(pair.id)).map((pair) => pair.term),
+                  streak,
+                  bestStreak,
                 })
               }
               type="button"

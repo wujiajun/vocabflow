@@ -89,11 +89,26 @@ test('five words that share a meaning say so, instead of asking for more words',
   expect(await screen.findByText(/do not have 5 different meanings/)).toBeInTheDocument()
 })
 
+test('opens on a start screen with its icon, saying how many words and rounds, and Start begins the first round', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/review')
+
+  expect(await screen.findByRole('heading', { name: 'Ready to match?' })).toBeInTheDocument()
+  expect(screen.getByText(/today’s 5 words onto its meaning, in one round/)).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: 'Round 1 of 1' })).not.toBeInTheDocument()
+  await browserUser.click(screen.getByRole('button', { name: 'Start' }))
+  expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
+  expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveAttribute('aria-valuenow', '0')
+  expect(screen.getByLabelText('0 right on the first try')).toBeInTheDocument()
+})
+
 test('tapping a word and then its meaning places it, a wrong meaning shakes it back, and the results name the slips', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/review')
 
+  await startGame()
   expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
   await expectNoAxeViolations()
   const tray = screen.getByRole('group', { name: 'Words' })
@@ -111,14 +126,20 @@ test('tapping a word and then its meaning places it, a wrong meaning shakes it b
   }
 
   expect(screen.getByRole('heading', { name: 'All matched!' })).toHaveFocus()
+  // Four words went right the first time, in a row after the slip; the score and the bar ran with them.
+  expect(screen.getByLabelText('4 right on the first try')).toBeInTheDocument()
+  expect(screen.getByLabelText('4 in a row')).toBeInTheDocument()
+  expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveAttribute('aria-valuenow', '5')
   // Placed words sit on their meanings, with the answer's own word blanked out where it was in it.
   expect(screen.getByText('To rent a home for a fixed time, as in a _____.')).toBeInTheDocument()
 
   await browserUser.click(screen.getByRole('button', { name: 'See results' }))
   expect(screen.getByRole('heading', { name: /4 of 5 on the first try/ })).toBeInTheDocument()
   expect(screen.getByText('Worth another look: cope.')).toBeInTheDocument()
+  expect(screen.getByText(/Longest streak: 4 in a row/)).toBeInTheDocument()
 
   await browserUser.click(screen.getByRole('button', { name: 'Play again' }))
+  await startGame()
   expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
 })
 
@@ -154,6 +175,7 @@ test('a right match says the word aloud; a wrong one turns the meaning and the w
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/review')
+  await startGame()
   await screen.findByRole('heading', { name: 'Round 1 of 1' })
   const chip = (term: string) => within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: term })
 
@@ -169,6 +191,8 @@ test('a right match says the word aloud; a wrong one turns the meaning and the w
   await browserUser.click(chip('cope'))
   await browserUser.click(screen.getByRole('button', { name: meaning(words[0]) }))
   expect(speech.spoken.map((utterance) => utterance.text)).toEqual(['cope'])
+  // A right answer also rings a short ding: the buzz and the ding are the two sounds so far.
+  expect(buzzes).toHaveLength(2)
   // A right answer clears the red at once.
   expect(screen.getByRole('button', { name: meaning(words[1]) })).not.toHaveAttribute('data-wrong')
 
@@ -176,7 +200,7 @@ test('a right match says the word aloud; a wrong one turns the meaning and the w
   window.localStorage.setItem('vocabflow.gameSound', 'off')
   await browserUser.click(chip('budget'))
   await browserUser.click(screen.getByRole('button', { name: meaning(words[2]) }))
-  expect(buzzes).toHaveLength(1)
+  expect(buzzes).toHaveLength(2)
   window.localStorage.removeItem('vocabflow.gameSound')
 })
 
@@ -184,6 +208,7 @@ test('the red goes away by itself', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/review')
+  await startGame()
   await screen.findByRole('heading', { name: 'Round 1 of 1' })
 
   await browserUser.click(within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: 'cope' }))
@@ -197,6 +222,7 @@ test('choosing a meaning before a word asks for a word first', async () => {
   stubApi(routes())
   const browserUser = userEvent.setup()
   renderApp('/app/study/review')
+  await startGame()
 
   await browserUser.click(await screen.findByRole('button', { name: meaning(words[0]) }))
 
@@ -207,6 +233,7 @@ test('a word dragged onto its meaning is placed, and one dropped on the wrong me
   const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
   stubApi(routes())
   renderApp('/app/study/review')
+  await startGame()
   await screen.findByRole('heading', { name: 'Round 1 of 1' })
   const tray = () => screen.getByRole('group', { name: 'Words' })
 
@@ -246,6 +273,7 @@ test('a word dragged onto its meaning is placed, and one dropped on the wrong me
 test('a small movement is a tap, not a drag', async () => {
   stubApi(routes())
   renderApp('/app/study/review')
+  await startGame()
   await screen.findByRole('heading', { name: 'Round 1 of 1' })
   const chip = within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: 'cope' })
 
@@ -266,4 +294,9 @@ function pointerEvent(type: string, clientX: number, clientY: number) {
 // The click after a drag is dropped by a timer; give it its turn.
 function swallowedClicks() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0))
+}
+
+// Every game opens on its start screen, which is also the press that lets a voice begin.
+async function startGame() {
+  await userEvent.setup().click(await screen.findByRole('button', { name: 'Start' }))
 }

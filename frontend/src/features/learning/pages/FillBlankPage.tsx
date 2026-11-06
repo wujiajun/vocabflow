@@ -90,5 +90,17 @@ function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => v
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [pairs] = useState(() => buildSoundPairs(entries))
 
-  return <PairGame minimum={minQuestions} notEnough={<NotEnough />} onAgain={onAgain} pairs={pairs} sounds />
+  return <PairGame
+      intro={{
+        icon: '🎯',
+        title: 'Ready to fill in the blanks?',
+        text: ({ words, rounds }) =>
+          `Tap a numbered sound to hear a word, then drag it onto the sentence it fits: ${words} sentences in ${rounds === 1 ? 'one round' : `${rounds} rounds`}. No word is shown until you place it.`,
+      }}
+      minimum={minQuestions}
+      notEnough={<NotEnough />}
+      onAgain={onAgain}
+      pairs={pairs}
+      sounds
+    />
 }
