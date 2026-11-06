@@ -39,7 +39,8 @@ class VocabularySenseJsonTest {
             List.of("stop"),
             "The talk starts again after lunch.",
             "▶️",
-            "re- (again) + sume");
+            "re- (again) + sume",
+            "恢复");
 
     VocabularySense back =
         VocabularySenseJson.read(VocabularySenseJson.write(List.of(sense))).getFirst();

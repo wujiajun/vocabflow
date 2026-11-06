@@ -56,6 +56,7 @@ public record EnrichmentResult(
                 List.of(),
                 null,
                 null,
+                null,
                 null)));
   }
 

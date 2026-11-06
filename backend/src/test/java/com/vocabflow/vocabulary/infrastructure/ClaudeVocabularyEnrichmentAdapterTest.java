@@ -58,6 +58,8 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     assertThat(second.collocations()).containsExactly("resume work");
     assertThat(second.synonyms()).containsExactly("restart", "continue");
     assertThat(second.antonyms()).containsExactly("stop");
+    assertThat(result.senses().get(0).chinese()).isEqualTo("简历");
+    assertThat(second.chinese()).isEqualTo("恢复；重新开始");
     assertThat(result.senses().get(0).antonyms()).isEmpty();
     assertThat(result.senses().get(0).scene()).isEqualTo("You hand your paper to a manager.");
     assertThat(result.senses().get(0).emoji()).isEqualTo("📄");
@@ -262,6 +264,12 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     Map<String, Object> noSceneField = sense("noun", "x");
     noSceneField.remove("scene");
     assertRejected(noSceneField);
+    Map<String, Object> overlongChinese = sense("noun", "x");
+    overlongChinese.put("chinese", "字".repeat(101));
+    assertRejected(overlongChinese);
+    Map<String, Object> noChineseField = sense("noun", "x");
+    noChineseField.remove("chinese");
+    assertRejected(noChineseField);
     Map<String, Object> noSynonymsField = sense("noun", "x");
     noSynonymsField.remove("synonyms");
     assertRejected(noSynonymsField);
@@ -344,6 +352,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     first.put("scene", "You hand your paper to a manager.");
     first.put("emoji", "📄");
     first.put("parts", "");
+    first.put("chinese", "简历");
     Map<String, Object> second = new HashMap<>();
     second.put("partOfSpeech", "verb");
     second.put("label", "start again");
@@ -356,6 +365,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     second.put("scene", "The talk starts again after lunch.");
     second.put("emoji", "");
     second.put("parts", "");
+    second.put("chinese", "恢复；重新开始");
     Map<String, Object> entry = new HashMap<>();
     entry.put("term", "resume");
     entry.put("baseForm", "");
@@ -380,6 +390,7 @@ class ClaudeVocabularyEnrichmentAdapterTest {
     sense.put("scene", "");
     sense.put("emoji", "");
     sense.put("parts", "");
+    sense.put("chinese", "");
     return sense;
   }
 

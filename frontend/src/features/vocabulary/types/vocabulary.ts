@@ -20,6 +20,8 @@ export interface VocabularySense {
   scene?: string | null
   emoji?: string | null
   parts?: string | null
+  // This meaning in simple Chinese; empty for a word saved before it existed.
+  chinese?: string | null
 }
 
 export interface VocabularyEntry {

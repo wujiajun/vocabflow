@@ -149,6 +149,7 @@ class VocabularyApiTests {
         .andExpect(jsonPath("$.senses[0].antonyms").isEmpty())
         .andExpect(jsonPath("$.senses[0].scene").isNotEmpty())
         .andExpect(jsonPath("$.senses[0].emoji").value("📄🙋"))
+        .andExpect(jsonPath("$.senses[0].chinese").value("简历"))
         .andExpect(jsonPath("$.definition").value(org.hamcrest.Matchers.startsWith("A short")));
     mvc.perform(get("/api/v1/vocabulary/" + other).header("Authorization", "Bearer " + token))
         .andExpect(jsonPath("$.senses.length()").value(1));

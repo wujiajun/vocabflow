@@ -114,6 +114,10 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
       "open + -ness (state of being)": one short line naming each part and the idea they make \
       together. Use an empty string for anything else. Never use Latin or Greek roots, and never \
       invent how a word is built.
+        - chinese: this meaning in simple Simplified Chinese, as a bilingual dictionary gives it: one \
+      to three short equivalents separated by "；" (for example 吞咽；咽下). It translates this \
+      meaning of the text for its part of speech, not the example sentences and not the English \
+      definition word for word. Use an empty string when you are not sure of a good equivalent.
       If the input is not a real English word or phrase, return the best entry you can for the \
       text as written.""";
 
@@ -134,6 +138,7 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
     properties.put("scene", text);
     properties.put("emoji", text);
     properties.put("parts", text);
+    properties.put("chinese", text);
     return Map.of(
         "type",
         "object",
@@ -318,7 +323,8 @@ public class ClaudeVocabularyEnrichmentAdapter implements VocabularyEnrichmentPr
         strings(sense, "antonyms", 0, 5, 60),
         optional(sense, "scene", 300),
         optional(sense, "emoji", 40),
-        optional(sense, "parts", 200));
+        optional(sense, "parts", 200),
+        optional(sense, "chinese", 100));
   }
 
   private static String text(JsonNode node, String field) {

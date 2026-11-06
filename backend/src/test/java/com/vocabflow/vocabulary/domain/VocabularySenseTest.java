@@ -20,6 +20,7 @@ class VocabularySenseTest {
             null,
             null,
             null,
+            null,
             null);
 
     assertThat(sense.synonyms()).isEmpty();

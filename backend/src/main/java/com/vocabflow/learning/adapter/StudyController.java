@@ -46,7 +46,8 @@ public class StudyController {
       List<String> antonyms,
       String scene,
       String emoji,
-      String parts) {}
+      String parts,
+      String chinese) {}
 
   record Card(
       long userVocabularyId,
@@ -155,7 +156,8 @@ public class StudyController {
                         sense.antonyms(),
                         sense.scene(),
                         sense.emoji(),
-                        sense.parts()))
+                        sense.parts(),
+                        sense.chinese()))
             .toList(),
         content.baseForm(),
         next.card().state().name(),

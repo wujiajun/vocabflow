@@ -294,3 +294,18 @@ test('how a study card starts is chosen among the word, the picture and the soun
   expect(window.localStorage.getItem('vocabflow.cardStart')).toBe('word')
   window.localStorage.removeItem('vocabflow.cardStart')
 })
+
+test('the Chinese meaning can be shown by default, a choice kept on this device', async () => {
+  window.localStorage.removeItem('vocabflow.showChinese')
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/settings')
+
+  const box = await screen.findByRole('checkbox', { name: /Show the Chinese meaning/ })
+  expect(box).not.toBeChecked()
+  await browserUser.click(box)
+  expect(window.localStorage.getItem('vocabflow.showChinese')).toBe('on')
+  await browserUser.click(box)
+  expect(window.localStorage.getItem('vocabflow.showChinese')).toBe('off')
+  window.localStorage.removeItem('vocabflow.showChinese')
+})

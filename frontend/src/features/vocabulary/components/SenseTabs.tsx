@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useId, useRef, useState } from 'react'
 import type { VocabularySense } from '../types/vocabulary'
+import { getShowChinese } from '../../../shared/showChinese'
 import { PronounceButton } from '../../../shared/speech/PronounceButton'
 import { MemoryHook } from './MemoryHook'
 import { TappablePhrase } from './TappablePhrase'
@@ -22,6 +23,8 @@ export function SenseTabs({
   initial?: number
 }) {
   const [selected, setSelected] = useState(initial)
+  // One choice for all the meanings of the word, so it stays as the learner moves between tabs.
+  const [showChinese, setShowChinese] = useState(getShowChinese)
   // How the word is built is written once, on one meaning, and belongs to all of them.
   const parts = senses.find((sense) => sense.parts)?.parts
   const id = useId()
@@ -31,7 +34,7 @@ export function SenseTabs({
     return null
   }
   if (senses.length === 1) {
-    return <SenseContent headingLevel={headingLevel} parts={parts} sense={senses[0]} speakExamples={speakExamples} />
+    return <SenseContent chinese={{ shown: showChinese, toggle: () => setShowChinese((on) => !on) }} headingLevel={headingLevel} parts={parts} sense={senses[0]} speakExamples={speakExamples} />
   }
 
   const current = Math.min(selected, senses.length - 1)
@@ -79,7 +82,13 @@ export function SenseTabs({
         ))}
       </div>
       <div aria-labelledby={`${id}-tab-${current}`} className="mt-4" id={`${id}-panel`} role="tabpanel">
-        <SenseContent headingLevel={headingLevel} parts={parts} sense={senses[current]} speakExamples={speakExamples} />
+        <SenseContent
+          chinese={{ shown: showChinese, toggle: () => setShowChinese((on) => !on) }}
+          headingLevel={headingLevel}
+          parts={parts}
+          sense={senses[current]}
+          speakExamples={speakExamples}
+        />
       </div>
     </div>
   )
@@ -90,11 +99,13 @@ function SenseContent({
   parts,
   headingLevel,
   speakExamples,
+  chinese,
 }: {
   sense: VocabularySense
   parts: string | null | undefined
   headingLevel: 'h2' | 'h3'
   speakExamples: boolean
+  chinese: { shown: boolean; toggle: () => void }
 }) {
   return (
     <div>
@@ -102,6 +113,24 @@ function SenseContent({
       <p className="mt-2 leading-7 text-slate-800">
         <TappableText text={sense.definition} />
       </p>
+      {sense.chinese ? (
+        <div className="mt-2">
+          <button
+            aria-expanded={chinese.shown}
+            className="inline-flex min-h-11 items-center rounded-full border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
+            lang="zh-Hans"
+            onClick={chinese.toggle}
+            type="button"
+          >
+            中文
+          </button>
+          {chinese.shown ? (
+            <p className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-lg leading-7 font-medium text-amber-950" lang="zh-Hans">
+              {sense.chinese}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <MemoryHook headingLevel={headingLevel} parts={parts} sense={sense} speak={speakExamples} />
       <SenseList headingLevel={headingLevel} items={sense.examples} speakable={speakExamples} tappable title="Examples" />
       <SenseWords headingLevel={headingLevel} items={sense.synonyms} title="Similar words" />

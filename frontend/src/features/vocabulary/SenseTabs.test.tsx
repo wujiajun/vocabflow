@@ -144,3 +144,38 @@ test('has no read-aloud buttons unless the page asks for them', () => {
 
   expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })
+
+test('a meaning with a Chinese equivalent has a 中文 button that shows and hides it, and the choice stays across the tabs', async () => {
+  window.localStorage.removeItem('vocabflow.showChinese')
+  const browserUser = userEvent.setup()
+  const withChinese = (text: string, chinese: string | null): VocabularySense => ({ ...sense('noun', text, `${text} definition`), chinese })
+  render(<SenseTabs headingLevel="h2" senses={[withChinese('first', '吞咽；咽下'), withChinese('second', '燕子')]} />)
+
+  const button = screen.getByRole('button', { name: '中文' })
+  expect(button).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByText('吞咽；咽下')).not.toBeInTheDocument()
+
+  await browserUser.click(button)
+  expect(screen.getByText('吞咽；咽下')).toHaveAttribute('lang', 'zh-Hans')
+  expect(button).toHaveAttribute('aria-expanded', 'true')
+
+  // The other meaning shows its own Chinese straight away.
+  await browserUser.click(screen.getByRole('tab', { name: /second/ }))
+  expect(screen.getByText('燕子')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('button', { name: '中文' }))
+  expect(screen.queryByText('燕子')).not.toBeInTheDocument()
+})
+
+test('a meaning without a Chinese equivalent has no 中文 button, and the setting shows it without tapping', () => {
+  window.localStorage.removeItem('vocabflow.showChinese')
+  render(<SenseTabs headingLevel="h2" senses={[{ ...sense('noun', 'old', 'An old word.'), chinese: null }]} />)
+  expect(screen.queryByRole('button', { name: '中文' })).not.toBeInTheDocument()
+  cleanup()
+
+  window.localStorage.setItem('vocabflow.showChinese', 'on')
+  render(<SenseTabs headingLevel="h2" senses={[{ ...sense('noun', 'new', 'A new word.'), chinese: '新词' }]} />)
+  expect(screen.getByText('新词')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '中文' })).toHaveAttribute('aria-expanded', 'true')
+  window.localStorage.removeItem('vocabflow.showChinese')
+})
