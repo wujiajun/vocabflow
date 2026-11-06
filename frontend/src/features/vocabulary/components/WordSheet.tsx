@@ -1,7 +1,8 @@
-import { type FormEvent, type KeyboardEvent, type Ref, useEffect, useId, useRef, useState } from 'react'
+import { type FormEvent, type Ref, useEffect, useId, useRef, useState } from 'react'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useAddVocabulary } from '../hooks/useVocabulary'
+import { wordSheetTimings } from './wordSheetTimings'
 
 const maxTermLength = 255
 
@@ -14,6 +15,10 @@ export function WordSheet({ initialWord, onClose }: { initialWord: string; onClo
   const inputRef = useRef<HTMLInputElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const sheetRef = useRef<HTMLElement>(null)
+  const onCloseRef = useRef(onClose)
+  // While a word is being sent, or the learner has typed something, a tap elsewhere must not close the panel.
+  const guard = useRef({ busy: false })
   const [term, setTerm] = useState(initialWord)
   const [validationError, setValidationError] = useState<string>()
   const [added, setAdded] = useState<string>()
@@ -29,6 +34,65 @@ export function WordSheet({ initialWord, onClose }: { initialWord: string; onClo
   useEffect(() => {
     if (added !== undefined) {
       closeRef.current?.focus()
+    }
+  }, [added])
+
+  const typed = term.trim() !== '' && term.trim() !== initialWord.trim()
+  useEffect(() => {
+    onCloseRef.current = onClose
+    guard.current.busy = add.isPending || (typed && added === undefined)
+  })
+
+  // A tap anywhere outside closes the panel, so a thumb need not travel down to the Close button. A tap on
+  // a word or phrase that opens the panel (or the "+ Add" buttons) is left to them: they switch it to that
+  // word. Taps that were a text selection, and the tap that opened the panel, do not count. A click is
+  // used rather than a press, so starting to scroll the page does not close it.
+  useEffect(() => {
+    const mountedAt = performance.now()
+    function onClick(event: MouseEvent) {
+      const target = event.target
+      if (!(target instanceof Element) || !target.isConnected || event.timeStamp <= mountedAt) {
+        // A control that vanished while it was pressed (the panel's own Add button) is not "outside".
+        return
+      }
+      if (
+        sheetRef.current?.contains(target) ||
+        target.closest('[data-opens-word-sheet]') ||
+        window.getSelection()?.toString() ||
+        guard.current.busy
+      ) {
+        return
+      }
+      onCloseRef.current()
+    }
+    // Escape closes it wherever the focus is: after a tap on the page the focus is no longer in the panel.
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onCloseRef.current()
+      }
+    }
+    document.addEventListener('click', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('click', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
+
+  // Once the word is added, the notice goes by itself after a few seconds, unless the learner touches the panel.
+  useEffect(() => {
+    if (added === undefined) {
+      return
+    }
+    const sheet = sheetRef.current
+    const timer = setTimeout(() => onCloseRef.current(), wordSheetTimings.dismissAfterMs)
+    const keep = () => clearTimeout(timer)
+    sheet?.addEventListener('pointerdown', keep)
+    sheet?.addEventListener('keydown', keep)
+    return () => {
+      clearTimeout(timer)
+      sheet?.removeEventListener('pointerdown', keep)
+      sheet?.removeEventListener('keydown', keep)
     }
   }, [added])
 
@@ -53,19 +117,13 @@ export function WordSheet({ initialWord, onClose }: { initialWord: string; onClo
     add.mutate({ term: trimmed }, { onSuccess: () => setAdded(trimmed) })
   }
 
-  function onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      onClose()
-    }
-  }
-
   const error = validationError ?? (add.isError ? failureMessage(add.error, term.trim()) : undefined)
 
   return (
     <section
       aria-label="Add a word"
       className="sticky inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(15,23,42,0.12)] sm:px-8"
-      onKeyDown={onKeyDown}
+      ref={sheetRef}
       role="dialog"
     >
       <div className="mx-auto max-w-5xl">

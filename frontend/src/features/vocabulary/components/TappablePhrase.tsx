@@ -15,6 +15,7 @@ export function TappablePhrase({ text }: { text: string }) {
   return (
     <span
       className={`cursor-pointer rounded-sm ${selected ? 'bg-indigo-200' : 'hover:bg-indigo-50 active:bg-indigo-100'}`}
+      data-opens-word-sheet=""
       data-selected={selected ? true : undefined}
       onClick={() => {
         // A drag to select some text also ends in a click.
