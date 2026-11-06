@@ -24,6 +24,7 @@ export function TappableText({ text }: { text: string }) {
         return (
           <span
             className={`cursor-pointer rounded-sm ${selected ? 'bg-indigo-200' : 'hover:bg-indigo-50 active:bg-indigo-100'}`}
+            data-opens-word-sheet=""
             data-selected={selected ? true : undefined}
             key={index}
             onClick={() => {

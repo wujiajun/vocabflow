@@ -1,9 +1,10 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { expectNoAxeViolations } from '../../test/axe'
 import { errorResponse, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
+import { wordSheetTimings } from './components/wordSheetTimings'
 import type { VocabularyEntry } from './types/vocabulary'
 
 beforeEach(() => {
@@ -13,6 +14,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  wordSheetTimings.dismissAfterMs = 3000
   vi.unstubAllGlobals()
   expectNoUnexpectedRequests()
 })
@@ -294,4 +296,87 @@ test('opening the panel with “Add a word” highlights nothing', async () => {
   await browserUser.click(screen.getByRole('button', { name: 'Add a word' }))
 
   expect(document.querySelector('[data-selected]')).toBeNull()
+})
+
+const emptyList = () => jsonResponse({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 })
+
+test('a tap anywhere outside the panel closes it, and a tap inside does not', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByText('Add a word or phrase'))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('heading', { level: 1 }))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('a tap on the button that opens the panel, or on another word, does not close it first', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+
+  await browserUser.click(screen.getByRole('button', { name: 'Add a word' }))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('')
+
+  await browserUser.click(screen.getByText('property'))
+  expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('property')
+})
+
+test('what the learner has typed is not lost to a tap outside; the Close button and Escape still close', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await screen.findByRole('heading', { level: 1 })
+  await browserUser.click(screen.getByRole('button', { name: 'Add a word' }))
+  await browserUser.type(screen.getByRole('textbox', { name: 'Add a word or phrase' }), 'abc')
+
+  await browserUser.click(screen.getByRole('heading', { level: 1 }))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'Add a word or phrase' })).toHaveValue('abc')
+
+  await browserUser.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('once a word is added, the notice closes the panel by itself after a few seconds', async () => {
+  wordSheetTimings.dismissAfterMs = 50
+  stubApi(routes({ 'POST /api/v1/vocabulary': () => jsonResponse(added('rent'), 201), 'GET /api/v1/vocabulary': emptyList }))
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+
+  expect(await screen.findByText('Added “rent” to your list.')).toBeInTheDocument()
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+})
+
+test('touching the panel while the notice shows keeps it open, and an error never closes it by itself', async () => {
+  wordSheetTimings.dismissAfterMs = 150
+  stubApi(routes({ 'POST /api/v1/vocabulary': () => jsonResponse(added('rent'), 201), 'GET /api/v1/vocabulary': emptyList }))
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+  await screen.findByText('Added “rent” to your list.')
+
+  fireEvent.pointerDown(screen.getByRole('dialog'))
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+  cleanup()
+  vi.unstubAllGlobals()
+
+  stubApi(routes({ 'POST /api/v1/vocabulary': () => errorResponse(500, 'INTERNAL_ERROR', 'Something went wrong'), 'GET /api/v1/vocabulary': emptyList }))
+  renderApp('/app/vocabulary/7')
+  await browserUser.click(await screen.findByText('rent'))
+  await browserUser.click(screen.getByRole('button', { name: 'Add' }))
+  expect(await screen.findByRole('alert')).toBeInTheDocument()
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
 })

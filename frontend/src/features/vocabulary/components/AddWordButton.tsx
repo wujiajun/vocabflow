@@ -12,6 +12,7 @@ export function AddWordButton() {
   return (
     <button
       aria-label="Add a word"
+      data-opens-word-sheet=""
       className="ml-auto inline-flex min-h-11 items-center px-2 text-sm font-semibold whitespace-nowrap text-indigo-700 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
       onClick={() => tap.open()}
       type="button"
