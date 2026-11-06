@@ -38,6 +38,12 @@ public class VocabularyService {
   // entry is saved before enrichment is scheduled, because a finished enrichment may turn the item
   // into its base word and must find this user's entry among the holders.
   public UserVocabulary add(long userId, String rawTerm) {
+    return add(userId, rawTerm, null);
+  }
+
+  // `source` is where the user tapped the word, if they did. Adding a word that is already in the
+  // list is a conflict and changes nothing, so the first sentence is the one that stays.
+  public UserVocabulary add(long userId, String rawTerm, SourceContext source) {
     VocabularyTerm term = new VocabularyTerm(rawTerm);
     VocabularyItem item =
         items.findByNormalizedTerm(term.normalized()).orElseGet(() -> create(term));
@@ -47,7 +53,8 @@ public class VocabularyService {
     }
     UserVocabulary saved =
         userItems
-            .saveIfAbsent(new UserVocabulary(0, userId, item, LearningStatus.NEW, Instant.now()))
+            .saveIfAbsent(
+                new UserVocabulary(0, userId, item, LearningStatus.NEW, Instant.now(), source))
             .orElse(null);
     scheduleIfUnfinished(item, userId);
     if (saved == null) {

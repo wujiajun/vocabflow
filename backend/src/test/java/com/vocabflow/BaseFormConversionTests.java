@@ -12,6 +12,7 @@ import com.vocabflow.vocabulary.application.VocabularyItemRepository;
 import com.vocabflow.vocabulary.application.VocabularyService;
 import com.vocabflow.vocabulary.domain.EnrichmentResult;
 import com.vocabflow.vocabulary.domain.EnrichmentStatus;
+import com.vocabflow.vocabulary.domain.SourceContext;
 import com.vocabflow.vocabulary.domain.UserVocabulary;
 import com.vocabflow.vocabulary.domain.VocabularyItem;
 import com.vocabflow.vocabulary.domain.VocabularyTerm;
@@ -81,6 +82,38 @@ class BaseFormConversionTests {
     }
     assertThat(userItems.findByIdAndUserId(base.id(), owner).orElseThrow().item().id())
         .isEqualTo(base.item().id());
+  }
+
+  @Test
+  void everyHolderKeepsItsOwnSentenceWhenRenamedOrMerged() throws Exception {
+    long first = user("src-first@example.com");
+    long second = user("src-second@example.com");
+    long third = user("src-third@example.com");
+    SourceContext one = SourceContext.of("She jogs7 daily.", "jogs7", "Story", "/app/reading/1");
+    SourceContext two = SourceContext.of("He jogs7 too.", "jogs7", null, null);
+    UserVocabulary mine = vocabulary.add(first, "jogs7", one);
+    UserVocabulary theirs = vocabulary.add(second, "jogs7", two);
+    UserVocabulary typed = vocabulary.add(third, "jogs7");
+
+    // Renamed in place: the entries stay, and so do their sentences.
+    assertThat(convert(mine, "jog7")).isTrue();
+    assertThat(userItems.findByIdAndUserId(mine.id(), first).orElseThrow().source()).isEqualTo(one);
+    assertThat(userItems.findByIdAndUserId(theirs.id(), second).orElseThrow().source())
+        .isEqualTo(two);
+    assertThat(userItems.findByIdAndUserId(typed.id(), third).orElseThrow().source()).isNull();
+
+    // Merged into an existing base item: the entries move, each keeping its own sentence.
+    long fourth = user("src-fourth@example.com");
+    long fifth = user("src-fifth@example.com");
+    vocabulary.add(fourth, "swim7");
+    SourceContext three = SourceContext.of("Fish swims7 fast.", "swims7", null, null);
+    SourceContext four = SourceContext.of("A duck swims7 here.", "swims7", null, null);
+    UserVocabulary a = vocabulary.add(fifth, "swims7", three);
+    long sixth = user("src-sixth@example.com");
+    UserVocabulary b = vocabulary.add(sixth, "swims7", four);
+    assertThat(convert(a, "swim7")).isTrue();
+    assertThat(userItems.findByIdAndUserId(a.id(), fifth).orElseThrow().source()).isEqualTo(three);
+    assertThat(userItems.findByIdAndUserId(b.id(), sixth).orElseThrow().source()).isEqualTo(four);
   }
 
   @Test

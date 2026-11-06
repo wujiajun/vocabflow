@@ -41,6 +41,17 @@ export interface VocabularyEntry {
   failureReason: string | null
   learningStatus: LearningStatus
   createdAt: string
+  // Where the learner tapped the word, if they did; absent for a typed word and for older words.
+  source?: WordSource | null
+}
+
+// The sentence a word was tapped in, kept on the learner's own entry. `form` is the word as written
+// there, which may differ from the saved word (walked, walk).
+export interface WordSource {
+  sentence: string
+  form: string | null
+  title: string | null
+  link: string | null
 }
 
 export interface VocabularyPage {
@@ -53,4 +64,17 @@ export interface VocabularyPage {
 
 export interface CreateVocabularyRequest {
   term: string
+  sentence?: string
+  form?: string
+  sourceTitle?: string
+  sourceLink?: string
+}
+
+// What a tap passes on: the sentence around the word, the word as written, and optionally the text
+// it came from (a title and an in-app path).
+export interface TapSource {
+  sentence: string
+  form: string
+  title?: string
+  link?: string
 }

@@ -38,7 +38,8 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
               userVocabulary.userId(),
               userVocabulary.item(),
               userVocabulary.learningStatus(),
-              userVocabulary.createdAt()));
+              userVocabulary.createdAt(),
+              userVocabulary.source()));
     } catch (DataIntegrityViolationException exception) {
       if (isDuplicateKeyViolation(exception)) {
         return Optional.empty();
@@ -100,6 +101,13 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
     entity.item = vocabularyItems.getReferenceById(userVocabulary.item().id());
     entity.learningStatus = userVocabulary.learningStatus().name();
     entity.createdAt = userVocabulary.createdAt();
+    SourceContext source = userVocabulary.source();
+    if (source != null) {
+      entity.sourceSentence = source.sentence();
+      entity.sourceForm = source.form();
+      entity.sourceTitle = source.title();
+      entity.sourceLink = source.link();
+    }
     return entity;
   }
 
@@ -124,7 +132,11 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
             item.baseForm,
             item.spellingSuggestion),
         LearningStatus.valueOf(entity.learningStatus),
-        entity.createdAt);
+        entity.createdAt,
+        entity.sourceSentence == null
+            ? null
+            : new SourceContext(
+                entity.sourceSentence, entity.sourceForm, entity.sourceTitle, entity.sourceLink));
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {
