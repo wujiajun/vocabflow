@@ -661,6 +661,7 @@ function queue(overrides: Partial<StudyQueue> = {}): StudyQueue {
     finished: false,
     moreNewWords: false,
     studiedToday: [],
+    recentlyStudied: [],
     ...overrides,
   }
 }

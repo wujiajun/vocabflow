@@ -54,7 +54,7 @@ function routes(count = 5) {
   }
 }
 
-test('the study-complete page offers the exercise only with a voice and four words studied', async () => {
+test('the study-complete page offers the exercise only with a voice and five words studied', async () => {
   stubApi(routes(5))
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'Today’s study is complete' })
@@ -62,13 +62,13 @@ test('the study-complete page offers the exercise only with a voice and four wor
   cleanup()
 
   installSpeechSynthesis([voice('Samantha', 'en-US')])
-  stubApi(routes(3))
+  stubApi(routes(4))
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'Today’s study is complete' })
   expect(screen.queryByRole('link', { name: 'Fill in the blank' })).not.toBeInTheDocument()
   cleanup()
 
-  stubApi(routes(4))
+  stubApi(routes(5))
   renderApp('/app/study')
   const link = await screen.findByRole('link', { name: 'Fill in the blank' })
   expect(link).toHaveAttribute('href', '/app/study/fill')

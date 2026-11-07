@@ -28,4 +28,7 @@ public interface ReviewCardRepository {
 
   /** The words rated on {@code date}, in the order they were first rated. */
   List<Long> findStudiedOn(long userId, LocalDate date);
+
+  /** The words rated from {@code from} to {@code to}, both included, the latest rated first. */
+  List<Long> findStudiedBetween(long userId, LocalDate from, LocalDate to);
 }

@@ -30,6 +30,7 @@ export const emptyStudyQueue = {
   finished: false,
   moreNewWords: false,
   studiedToday: [],
+  recentlyStudied: [],
 }
 
 export function jsonResponse(body: unknown, status = 200) {

@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.6.0] - 2026-11-07
+
+### Changed
+
+- **Every practice game uses ten words, and tops up from the last week**: Quick review, Fill in the blank, Listen and choose and Spell it all have ten words a round (Spell it had six, the others ten but with different limits), and each is offered once you have at least five words to play with. The words are today's first (mixed up), and when today has fewer than ten they are topped up with words you studied in the last 7 days, the most recent days first, never twice. A day with seven studied words now gives a game of ten. The "not enough words" messages say so. Practice only: nothing is sent and the review schedule is untouched.
+- **Study queue (API)**: `GET /api/v1/learning/study-queue` and the other queue replies carry a new `recentlyStudied` list (`userVocabularyId`, `term`, `learningStatus`): words rated in the 7 days before the study day, not today, latest first, only words whose details are complete. No migration.
+
 ## [1.5.1] - 2026-11-07
 
 ### Fixed

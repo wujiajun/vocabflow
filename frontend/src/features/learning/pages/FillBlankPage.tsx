@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { hasEnoughWords, minGameWords, notEnoughWords, pickGameWordIds } from '../gameWords'
 import { BackLink } from '../../../shared/BackLink'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
@@ -6,14 +7,10 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
 import { useVocabularyDetails } from '../../vocabulary/hooks/useVocabulary'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
-import { buildSoundPairs, minQuestions } from '../components/cloze'
+import { buildSoundPairs } from '../components/cloze'
 import { PairGame } from '../components/PairGame'
-import { shuffle } from '../components/matching'
 import { useStudyQueue } from '../hooks/useStudy'
-import type { StudiedWord } from '../types/study'
-
-// More than the exercise needs, because a word without a usable example is left out.
-const wordsToFetch = 15
+import type { StudyQueue } from '../types/study'
 
 const studyPage = { path: '/app/study', label: 'Back to study' }
 
@@ -38,16 +35,16 @@ export function FillBlankPage() {
           </p>
         ) : queue.isPending ? (
           <p className="text-sm text-slate-600" role="status">
-            Loading today’s words…
+            Loading your words…
           </p>
         ) : queue.isError ? (
           <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-            {authErrorMessage(queue.error, 'Unable to load today’s words.')}
+            {authErrorMessage(queue.error, 'Unable to load your words.')}
           </p>
-        ) : queue.data.studiedToday.length < minQuestions ? (
+        ) : !hasEnoughWords(queue.data) ? (
           <NotEnough />
         ) : (
-          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} studied={queue.data.studiedToday} />
+          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} queue={queue.data} />
         )}
       </div>
     </div>
@@ -57,13 +54,13 @@ export function FillBlankPage() {
 function NotEnough() {
   return (
     <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
-      Study at least {minQuestions} words today, with example sentences, to practise this.
+      {notEnoughWords}
     </p>
   )
 }
 
-function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => void }) {
-  const [ids] = useState(() => shuffle(studied).slice(0, wordsToFetch).map((word) => word.userVocabularyId))
+function Loaded({ queue, onAgain }: { queue: StudyQueue; onAgain: () => void }) {
+  const [ids] = useState(() => pickGameWordIds(queue))
   const details = useVocabularyDetails(ids)
 
   if (details.some((detail) => detail.isPending)) {
@@ -79,7 +76,7 @@ function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => v
     const failure = details.find((detail) => detail.isError)
     return (
       <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-        {authErrorMessage(failure?.error, 'Unable to load today’s words.')}
+        {authErrorMessage(failure?.error, 'Unable to load your words.')}
       </p>
     )
   }
@@ -97,7 +94,7 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
         text: ({ words, rounds }) =>
           `Tap a numbered sound to hear a word, then drag it onto the sentence it fits: ${words} sentences in ${rounds === 1 ? 'one round' : `${rounds} rounds`}. No word is shown until you place it.`,
       }}
-      minimum={minQuestions}
+      minimum={minGameWords}
       notEnough={<NotEnough />}
       onAgain={onAgain}
       pairs={pairs}
