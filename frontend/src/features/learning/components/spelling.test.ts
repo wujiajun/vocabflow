@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
-import { applyInput, buildSpellItems, check, isComplete, lettersOf, pickSpellWords, slotsFor, starsFor } from './spelling'
+import { applyInput, buildSpellItems, check, isComplete, isFull, lettersOf, pickSpellWords, slotsFor, starsFor } from './spelling'
 
 function entry(id: number, term: string, extra: Partial<VocabularyEntry['senses'][number]> = {}, status = 'COMPLETED'): VocabularyEntry {
   return {
@@ -34,35 +34,29 @@ test('letters match whatever their case or accent', () => {
   expect(check(lettersOf('cope'), [...'cxp'])).toEqual([true, false, true])
 })
 
-test('typing only adds at the end and deleting only takes from the end', () => {
-  const answer = [...'cope']
-  const type = (previous: string, value: string, composing = false) => {
-    const result = applyInput([...previous], value, answer, composing)
-    return { typed: result.typed.join(''), mistake: result.mistake }
-  }
-  expect(type('c', 'co')).toEqual({ typed: 'co', mistake: false })
-  expect(type('co', 'xco').typed).toBe('cox')
-  expect(type('co', 'c')).toEqual({ typed: 'c', mistake: false })
-  expect(type('co', 'co!')).toEqual({ typed: 'co', mistake: false })
-  expect(type('cope', 'copes').typed).toBe('cope')
-})
-
-test('a wrong letter is judged at once and stays as the last letter; the next letter replaces it', () => {
-  const answer = [...'cope']
-  expect(applyInput(['c'], 'cx', answer)).toEqual({ typed: ['c', 'x'], mistake: true })
-  // Typing on from the wrong letter replaces it, so nothing is ever typed beyond a wrong letter.
-  expect(applyInput(['c', 'x'], 'cxo', answer)).toEqual({ typed: ['c', 'o'], mistake: false })
-  expect(applyInput(['c', 'x'], 'cxz', answer)).toEqual({ typed: ['c', 'z'], mistake: true })
-  // Several letters at once (a paste) stop at the first wrong one.
-  expect(applyInput([], 'cxpe', answer)).toEqual({ typed: ['c', 'x'], mistake: true })
-  expect(applyInput(['c', 'x'], 'c', answer)).toEqual({ typed: ['c'], mistake: false })
+test('typing only adds at the end and deleting only takes from the end, and nothing is judged on the way', () => {
+  const type = (previous: string, value: string, composing = false) => applyInput([...previous], value, 4, composing).join('')
+  expect(type('c', 'co')).toBe('co')
+  expect(type('co', 'xco')).toBe('cox')
+  expect(type('co', 'c')).toBe('c')
+  expect(type('co', 'co!')).toBe('co')
+  expect(type('cope', 'copes')).toBe('cope')
+  // A wrong letter is simply a letter until the row is full.
+  expect(type('c', 'cx')).toBe('cx')
 })
 
 test('a keyboard still building a word is read as it stands, letter by letter', () => {
+  expect(applyInput([], 'c', 4, true)).toEqual(['c'])
+  expect(applyInput(['c'], "c'o", 4, true)).toEqual(['c', 'o'])
+  expect(applyInput(['c', 'o'], "c'o'p'e's", 4, true)).toEqual(['c', 'o', 'p', 'e'])
+})
+
+test('the word is judged only when every slot is full', () => {
   const answer = [...'cope']
-  expect(applyInput([], "c", answer, true)).toEqual({ typed: ['c'], mistake: false })
-  expect(applyInput(['c'], "c'x", answer, true)).toEqual({ typed: ['c', 'x'], mistake: true })
-  expect(applyInput(['c', 'x'], "c'xe", answer, true)).toEqual({ typed: ['c', 'x'], mistake: false })
+  expect(isFull(answer, [...'cox'])).toBe(false)
+  expect(isFull(answer, [...'coxe'])).toBe(true)
+  expect(isComplete(answer, [...'coxe'])).toBe(false)
+  expect(isComplete(answer, [...'COPE'])).toBe(true)
 })
 
 test('stars fall with mistakes and shown letters, never below one for a spelled word, and a skip earns none', () => {

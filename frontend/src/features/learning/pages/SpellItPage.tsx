@@ -15,6 +15,7 @@ import {
   buildSpellItems,
   check,
   isComplete,
+  isFull,
   lettersOf,
   minSpellWords,
   slotsFor,
@@ -122,7 +123,7 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
           unlockGameSound()
           setStarted(true)
         }}
-        text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and spell it letter by letter. A wrong letter turns red until you fix it.`}
+        text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and type all its letters. If some are wrong they turn red until you fix them.`}
         title="Ready to spell?"
       />
     )
@@ -188,7 +189,7 @@ function Word({
   const playTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const done = isComplete(answer, typed)
   const finished = done || skipped
-  const wrongNow = check(answer, typed).filter((right) => !right).length
+  const wrongNow = isFull(answer, typed) ? check(answer, typed).filter((right) => !right).length : 0
   const hasHook = Boolean(item.emoji || item.scene || item.parts)
   const earned = done ? starsFor({ mistakes, hints, skipped: false }) : 0
 
@@ -228,9 +229,10 @@ function Word({
     if (finished) {
       return
     }
-    // Judged at once: the letter just typed is red (with its line) the moment it is wrong.
-    const { typed: next, mistake } = applyInput(typed, value, answer, composing)
-    if (mistake) {
+    const next = applyInput(typed, value, answer.length, composing)
+    // Judged when the last slot is filled: a wrong row turns its wrong letters red (and costs a mistake) once
+    // for each time it is filled; it is judged again when it is filled again.
+    if (isFull(answer, next) && !isFull(answer, typed) && !isComplete(answer, next)) {
       setMistakes((current) => current + 1)
       playWrong()
     }
@@ -256,11 +258,11 @@ function Word({
   }
 
   const status = done
-    ? `Correct! ${earned === 3 ? 'No mistakes.' : mistakes > 0 ? `${mistakes} wrong ${mistakes === 1 ? 'letter' : 'letters'}.` : ''} The word is “${item.term}”.`
+    ? `Correct! ${earned === 3 ? 'No mistakes.' : mistakes > 0 ? `${mistakes} wrong ${mistakes === 1 ? 'try' : 'tries'}.` : ''} The word is “${item.term}”.`
     : skipped
       ? `Skipped. The word was “${item.term}”.`
       : wrongNow > 0
-        ? 'A red letter is wrong. Delete it and try again.'
+        ? 'The red letters are wrong. Press Backspace and try again.'
         : 'Type the word you heard.'
 
   return (

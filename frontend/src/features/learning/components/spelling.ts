@@ -40,34 +40,21 @@ export function lettersOf(term: string): string[] {
   return slotsFor(term).flatMap((slot) => (slot.kind === 'letter' ? [slot.char] : []))
 }
 
-// What the field holds after a change, and whether a new wrong letter was typed. Each letter is judged the
-// moment it is typed. Letters are only added at the end and taken from the end, wherever the caret was. A wrong
-// letter stays (red) as the last letter: the next letter typed replaces it, so the learner can simply type again,
-// and nothing is ever typed beyond a wrong letter. `composing` is for a keyboard that is still building a word
-// (its text is not final yet): the field's text is then read as it stands.
-export function applyInput(
-  previous: readonly string[],
-  value: string,
-  answer: readonly string[],
-  composing = false,
-): { typed: string[]; mistake: boolean } {
+// What the field holds after a change. Nothing is judged while the learner types: letters only fill the slots,
+// added at the end and taken from the end, wherever the caret was, and the word is judged when every slot is
+// full (see `isFull`). `composing` is for a keyboard that is still building a word (its text is not final
+// yet): the field's text is then read as it stands, so the slots fill as the letters appear.
+export function applyInput(previous: readonly string[], value: string, limit: number, composing = false): string[] {
   const next = [...value].filter(isTyped)
-  const untilWrong = (letters: readonly string[]) => {
-    const wrong = check(answer, letters).indexOf(false)
-    return letters.slice(0, Math.min(answer.length, wrong === -1 ? letters.length : wrong + 1))
-  }
-  const endsWrong = (letters: readonly string[]) => letters.length > 0 && !check(answer, letters)[letters.length - 1]
-
   if (composing) {
-    const typed = untilWrong(next)
-    return { typed, mistake: typed.length > previous.length && endsWrong(typed) }
+    return next.slice(0, limit)
   }
   // A shorter field is a deletion; anything else that adds no letter (a symbol typed) changes nothing.
   if ([...value].length < previous.length) {
-    return { typed: previous.slice(0, next.length), mistake: false }
+    return previous.slice(0, next.length)
   }
   if (next.length <= previous.length) {
-    return { typed: [...previous], mistake: false }
+    return [...previous]
   }
   let common = 0
   while (common < previous.length && previous[common] === next[common]) {
@@ -75,10 +62,12 @@ export function applyInput(
   }
   // Inserted text is taken as typed at the end, whichever place in the field it landed.
   const added = next.slice(common, common + (next.length - previous.length))
-  const wrongAt = check(answer, previous).indexOf(false)
-  const base = wrongAt === -1 ? [...previous] : previous.slice(0, wrongAt)
-  const typed = untilWrong([...base, ...added])
-  return { typed, mistake: typed.length > base.length && endsWrong(typed) }
+  return [...previous, ...added].slice(0, limit)
+}
+
+// Every slot holds a letter: the moment the word is judged.
+export function isFull(answer: readonly string[], typed: readonly string[]) {
+  return typed.length === answer.length
 }
 
 // Which of the typed letters are right, one per typed letter.

@@ -9,14 +9,14 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 
 ### Fixed
 
-- **Spell it judges each letter as you type it**, also on keyboards that build a word before they commit it (the field no longer waits for the whole word). A wrong letter and its line turn red at once and stay; the next letter you type takes its place, so you can type again without Backspace (nothing is ever typed beyond a wrong letter).
-- **Spell it makes its sounds on a phone**: the ding for a finished word and the buzz for a wrong letter were blocked because a typed letter is not a press. The sound is now unlocked by the presses before it (Start, Next, Show a letter, a tap on the letters).
+- **Spell it judges the word when every letter is typed**: letters just fill the underlined slots as you type, and you can change them with Backspace. When the last slot is filled, a wrong word shows its wrong letters and their lines in red (with the buzz) and keeps them there until you delete and type again; it is judged again each time the row is full, and a right word is done. A wrong row counts as one wrong try for the stars. This also works on keyboards that build a word before committing it (the field no longer waits for them to finish).
+- **Spell it makes its sounds on a phone**: the ding for a finished word and the buzz for a wrong word were blocked because a typed letter is not a press. The sound is now unlocked by the presses before it (Start, Next, Show a letter, a tap on the letters).
 
 ## [1.5.0] - 2026-11-07
 
 ### Added
 
-- **"Spell it" game**: a fourth practice game on the study-complete page (✍️, from four words studied). You hear a word, read its meaning (with the word hidden) and can open its memory hook; you never see the word. Type it into one underlined slot per letter (a phrase shows a gap; apostrophes and hyphens are filled in; capitals do not matter). A wrong letter and its line turn red and stay until you delete it, and the word is finished only when every letter is right. Each word is worth up to 3 stars (a wrong letter or "Show a letter" costs a star, never below 1; "Skip" earns none); a round is up to 6 of today's words. Practice only: nothing is sent and the review schedule is untouched. Frontend only.
+- **"Spell it" game**: a fourth practice game on the study-complete page (✍️, from four words studied). You hear a word, read its meaning (with the word hidden) and can open its memory hook; you never see the word. Type it into one underlined slot per letter (a phrase shows a gap; apostrophes and hyphens are filled in; capitals do not matter). When all the letters are typed, a wrong word turns its wrong letters red until you fix them. Each word is worth up to 3 stars (a wrong try or "Show a letter" costs a star, never below 1; "Skip" earns none); a round is up to 6 of today's words. Practice only: nothing is sent and the review schedule is untouched. Frontend only.
 
 ## [1.4.1] - 2026-11-06
 
