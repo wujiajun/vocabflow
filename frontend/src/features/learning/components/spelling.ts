@@ -92,7 +92,13 @@ export interface SpellItem {
   id: number
   term: string
   // The clues: the meaning with the word hidden, and the memory hook of that meaning when it has one.
+  // The meaning with the word hidden: the clue for a meaning that has no memory hook.
   definition: string
+  // The meaning as it is, and its Chinese: shown once the word is spelled or skipped.
+  fullDefinition: string
+  chinese: string | null
+  // The meaning has a memory hook (emoji or scene), which is then the clue instead of the English meaning.
+  hooked: boolean
   emoji: string | null
   scene: string | null
   parts: string | null
@@ -101,12 +107,10 @@ export interface SpellItem {
 // Which words are played: the first ones, in the order given, with something to spell and a meaning to show. Kept
 // apart so that the choice can change later.
 export function pickSpellWords(entries: readonly VocabularyEntry[], random: () => number = Math.random): VocabularyEntry[] {
-  return shuffle(
-    entries
-      .filter((entry) => entry.enrichmentStatus === 'COMPLETED' && lettersOf(entry.term).length >= 2 && hasMeaning(entry))
-      .slice(0, wordsPerRound),
-    random,
-  )
+  const playable = entries.filter((entry) => entry.enrichmentStatus === 'COMPLETED' && lettersOf(entry.term).length >= 2 && hasMeaning(entry))
+  // Words with a memory hook go first, since the hook is the clue; the others fill the round up to its size.
+  const hooked = playable.filter((entry) => entry.senses.some((sense) => sense.scene || sense.emoji))
+  return shuffle([...hooked, ...playable.filter((entry) => !hooked.includes(entry))].slice(0, wordsPerRound), random)
 }
 
 function hasMeaning(entry: VocabularyEntry) {
@@ -121,7 +125,8 @@ export function buildSpellItems(entries: readonly VocabularyEntry[], random: () 
 
   return picked.map((entry) => {
     const senses = entry.senses.filter((sense) => sense.definition.trim() !== '')
-    // A meaning with a memory hook is taken when the word has one, so the hook is there to open.
+    // A meaning with a memory hook is taken when the word has one, so there is a hook to show. The meaning that is
+    // shown afterwards is that same meaning.
     const hooked = senses.filter((sense) => sense.scene || sense.emoji)
     const pool = hooked.length > 0 ? hooked : senses
     const sense = pool.length > 0 ? pool[Math.floor(random() * pool.length)] : null
@@ -130,6 +135,9 @@ export function buildSpellItems(entries: readonly VocabularyEntry[], random: () 
       id: entry.id,
       term: entry.term,
       definition: hide(sense ? sense.definition : entry.definition) ?? '',
+      fullDefinition: (sense ? sense.definition : entry.definition) ?? '',
+      chinese: sense?.chinese?.trim() || null,
+      hooked: Boolean(sense?.scene || sense?.emoji),
       emoji: sense?.emoji ?? null,
       scene: hide(sense?.scene),
       parts: hide(entry.senses[0]?.parts),

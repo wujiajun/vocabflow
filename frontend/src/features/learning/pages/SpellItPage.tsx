@@ -119,7 +119,7 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
           unlockGameSound()
           setStarted(true)
         }}
-        text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and type all its letters. If some are wrong they turn red until you fix them.`}
+        text={`${items.length} of today’s words, one at a time. Hear the word, look at its memory hook, and type all its letters. Its meaning comes after. If some are wrong they turn red until you fix them.`}
         title="Ready to spell?"
       />
     )
@@ -179,14 +179,12 @@ function Word({
   const [mistakes, setMistakes] = useState(0)
   const [hints, setHints] = useState(0)
   const [skipped, setSkipped] = useState(false)
-  const [hookOpen, setHookOpen] = useState(false)
   const [playing, setPlaying] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const playTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const done = isComplete(answer, typed)
   const finished = done || skipped
   const wrongNow = isFull(answer, typed) ? check(answer, typed).filter((right) => !right).length : 0
-  const hasHook = Boolean(item.emoji || item.scene || item.parts)
   const earned = done ? starsFor({ mistakes, hints, skipped: false }) : 0
 
   function play() {
@@ -285,12 +283,9 @@ function Word({
             </button>
           </div>
         ) : null}
-        <p className="min-w-0 flex-1 text-base leading-6 font-medium text-slate-900">{item.definition}</p>
-      </div>
-
-      {hasHook ? (
-        hookOpen ? (
-          <div className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50 p-3" role="region" aria-label="Memory hook">
+        {/* The memory hook is the clue. A meaning without one has only its English meaning to go by. */}
+        {item.hooked ? (
+          <div className="min-w-0 flex-1 rounded-2xl border border-indigo-200 bg-indigo-50 p-3" role="region" aria-label="Memory hook">
             {item.emoji ? <p className="text-3xl leading-none">{item.emoji}</p> : null}
             {item.scene ? <p className="mt-2 text-sm leading-6 font-medium text-indigo-950">{item.scene}</p> : null}
             {item.parts ? (
@@ -300,11 +295,17 @@ function Word({
               </p>
             ) : null}
           </div>
-        ) : (
-          <button className={`mt-3 ${secondaryButton}`} onClick={() => setHookOpen(true)} type="button">
-            💡 Memory hook
-          </button>
-        )
+        ) : !finished ? (
+          <p className="min-w-0 flex-1 text-base leading-6 font-medium text-slate-900">{item.definition}</p>
+        ) : null}
+      </div>
+
+      {/* The meanings are the reward: shown once the word is spelled or skipped. */}
+      {finished ? (
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3" role="region" aria-label="Meaning">
+          <p className="text-base leading-6 font-medium text-slate-900">{item.fullDefinition}</p>
+          {item.chinese ? <p className="mt-1 text-sm leading-6 text-slate-700">{item.chinese}</p> : null}
+        </div>
       ) : null}
 
       <div className="mt-6">

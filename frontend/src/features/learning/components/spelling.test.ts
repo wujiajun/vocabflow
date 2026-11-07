@@ -86,3 +86,27 @@ test('only completed words with a meaning are played, with the meaning’s hook 
   expect(cope.emoji).toBe('🧗')
   expect(buildSpellItems(entries.slice(0, 4))).toEqual([])
 })
+
+test('a hooked word is played with the hook of its meaning, then that meaning in English and Chinese; a word without a hook has its meaning as the clue', () => {
+  const entries = [
+    entry(1, 'cope', { emoji: '🧗', scene: 'She can cope with it.', chinese: '应对' }),
+    entry(2, 'budget'),
+    entry(3, 'tenant'),
+    entry(4, 'deposit'),
+    entry(5, 'rent'),
+    entry(6, 'lease'),
+  ]
+  const items = buildSpellItems(entries)
+  const cope = items.find((item) => item.id === 1)!
+  expect(cope).toMatchObject({ hooked: true, definition: '_____ means number 1.', fullDefinition: 'cope means number 1.', chinese: '应对' })
+  const budget = items.find((item) => item.id === 2)!
+  expect(budget).toMatchObject({ hooked: false, chinese: null, fullDefinition: 'budget means number 2.' })
+})
+
+test('words with a hook are taken first, and the others fill the round up', () => {
+  const hooked = (id: number, term: string) => entry(id, term, { emoji: '🧊' })
+  const entries = [entry(1, 'budget'), hooked(2, 'cope'), entry(3, 'tenant'), hooked(4, 'rent')]
+  expect(pickSpellWords(entries).map((word) => word.id).sort()).toEqual([1, 2, 3, 4])
+  const many = [entry(1, 'budget'), ...Array.from({ length: 10 }, (_, index) => hooked(index + 2, `word${index}`))]
+  expect(pickSpellWords(many).map((word) => word.id)).not.toContain(1)
+})
