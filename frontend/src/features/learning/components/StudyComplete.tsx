@@ -11,6 +11,7 @@ import type { StudyQueue } from '../types/study'
 import { minQuestions } from './cloze'
 import { minListenQuestions } from './listening'
 import { minPairs } from './matching'
+import { minSpellWords } from './spelling'
 
 // Shown when no card is due: the day is complete, a learning step is still to come, or there is
 // nothing to study yet.
@@ -114,6 +115,7 @@ export function StudyComplete({
           { show: queue.studiedToday.length >= minPairs, to: '/app/study/review', icon: '🧩', title: 'Quick review game', about: 'Drag words onto their meanings', tone: 'indigo' },
           { show: queue.studiedToday.length >= minQuestions && isSpeechSupported(), to: '/app/study/fill', icon: '🎯', title: 'Fill in the blank', about: 'Drop the right sound into the blank', tone: 'amber' },
           { show: queue.studiedToday.length >= minListenQuestions && isSpeechSupported(), to: '/app/study/listen', icon: '🎧', title: 'Listen and choose', about: 'Hear a word, pick its meaning', tone: 'emerald' },
+          { show: queue.studiedToday.length >= minSpellWords, to: '/app/study/spell', icon: '✍️', title: 'Spell it', about: 'Hear it, read its meaning, type the letters', tone: 'rose' },
         ]}
       />
 
@@ -162,6 +164,7 @@ const tones = {
   indigo: 'border-indigo-200 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200',
   amber: 'border-amber-200 bg-amber-50 hover:bg-amber-100 active:bg-amber-200',
   emerald: 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200',
+  rose: 'border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200',
 } as const
 
 interface Game {
