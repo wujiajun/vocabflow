@@ -21,6 +21,8 @@ import {
   type SpellItem,
 } from '../components/spelling'
 import { GameLoader } from '../components/GameLoader'
+import { starsForShare } from '../starsForShare'
+import { useRecordRound } from '../hooks/useGameRounds'
 import { useRecordPlays } from '../hooks/useGameWords'
 import { useStudyQueue } from '../hooks/useStudy'
 
@@ -74,6 +76,7 @@ function NotEnough() {
 interface Result {
   term: string
   stars: number
+  mistakes: number
   skipped: boolean
 }
 
@@ -335,7 +338,7 @@ function Word({
             className={`mt-2 w-full ${gamePrimaryButton}`}
             onClick={() => {
               unlockGameSound()
-              onDone({ term: item.term, stars: earned, skipped })
+              onDone({ term: item.term, stars: earned, mistakes, skipped })
             }}
             type="button"
           >
@@ -352,6 +355,8 @@ function Summary({ results, onAgain }: { results: Result[]; onAgain: () => void 
   const skipped = results.filter((result) => result.skipped).map((result) => result.term)
   const shaky = results.filter((result) => !result.skipped && result.stars < 3).map((result) => result.term)
   const share = results.length > 0 ? earned / (results.length * 3) : 0
+  const mistakes = results.reduce((sum, result) => sum + result.mistakes, 0)
+  useRecordRound(({ game: 'spell-it' as const, stars: starsForShare(share), mistakes, wordCount: results.length }))
 
   return (
     <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-8">

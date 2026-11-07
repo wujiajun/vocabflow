@@ -1,6 +1,8 @@
 // The pieces the three practice games share, so they look and feel alike: the start screen with its
 // icon, the score and streak at the top, the progress bar, and the stars at the end.
 
+import { starsForShare } from '../starsForShare'
+
 export const gamePrimaryButton =
   'min-h-11 rounded-lg bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700'
 
@@ -47,7 +49,7 @@ export function GameProgress({ value, max }: { value: number; max: number }) {
 
 // One to three stars for the share of answers that were right (the first time).
 export function Stars({ share }: { share: number }) {
-  const stars = share >= 0.9 ? 3 : share >= 0.6 ? 2 : 1
+  const stars = starsForShare(share)
   return (
     <p aria-hidden="true" className="text-4xl tracking-widest motion-safe:animate-pop">
       {'⭐'.repeat(stars)}

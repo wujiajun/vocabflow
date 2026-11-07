@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.8.0] - 2026-11-07
+
+### Added
+
+- **Finished game rounds are kept on the server** (nothing changes on screen): when the results screen of Quick review, Fill in the blank, Listen and choose or Spell it appears, the round is recorded once with its game, its stars, its mistakes, how many words it had and the study day. An abandoned round is not recorded, and a failed request is ignored quietly. This is the groundwork for daily tasks such as "play a round" or "get two stars"; nothing reads it yet. Practice only: reviews and the schedule are untouched.
+
 ## [1.7.0] - 2026-11-07
 
 ### Changed

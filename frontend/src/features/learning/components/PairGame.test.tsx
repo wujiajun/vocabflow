@@ -1,11 +1,19 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
+import { AuthTokenProvider } from '../../auth/hooks/AuthTokenProvider'
+import { clearToken } from '../../../shared/api/tokenStorage'
+import { jsonResponse, stubApi } from '../../../test/utils'
 import { PairGame } from './PairGame'
 import type { MatchPair } from './matching'
 
-afterEach(() => cleanup())
+afterEach(() => {
+  cleanup()
+  clearToken()
+  vi.unstubAllGlobals()
+})
 
 const pairs: MatchPair[] = Array.from({ length: 7 }, (_, index) => ({ id: index + 1, term: `word${index + 1}`, definition: `Meaning ${index + 1}.` }))
 
@@ -18,10 +26,17 @@ async function place(browserUser: ReturnType<typeof userEvent.setup>, ids: numbe
 
 test('a game of two rounds carries the score, the streak and the bar from the first round into the second', async () => {
   const browserUser = userEvent.setup()
+  const fetchMock = stubApi({
+    'POST /api/v1/learning/game-rounds': () => jsonResponse({ id: 1 }),
+  })
   render(
-    <MemoryRouter>
-      <PairGame intro={{ icon: '🧩', title: 'Ready?', text: ({ words, rounds }) => `${words} words in ${rounds} rounds` }} minimum={4} notEnough={<p>none</p>} onAgain={vi.fn()} pairs={pairs} />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <AuthTokenProvider>
+        <MemoryRouter>
+          <PairGame game="fill-blank" intro={{ icon: '🧩', title: 'Ready?', text: ({ words, rounds }) => `${words} words in ${rounds} rounds` }} minimum={4} notEnough={<p>none</p>} onAgain={vi.fn()} pairs={pairs} />
+        </MemoryRouter>
+      </AuthTokenProvider>
+    </QueryClientProvider>,
   )
 
   expect(screen.getByText('7 words in 2 rounds')).toBeInTheDocument()
@@ -46,4 +61,10 @@ test('a game of two rounds carries the score, the streak and the bar from the fi
 
   expect(screen.getByRole('heading', { name: 'Perfect! 7 of 7 on the first try' })).toBeInTheDocument()
   expect(screen.getByText(/Longest streak: 7 in a row/)).toBeInTheDocument()
+
+  // The finished round is sent once, with the game, the stars shown and the words that missed first time.
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+  const [url, init] = fetchMock.mock.calls[0]
+  expect(url).toBe('/api/v1/learning/game-rounds')
+  expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({ game: 'fill-blank', stars: 3, mistakes: 0, wordCount: 7 })
 })

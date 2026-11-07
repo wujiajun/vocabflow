@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen } from '@testing-library/react'
+import { cleanup, waitFor, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
@@ -8,7 +8,10 @@ import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, s
 const sounds = vi.hoisted(() => ({ playRight: vi.fn(), playWrong: vi.fn(), unlockGameSound: vi.fn() }))
 vi.mock('../../shared/sound/effects', async (original) => ({ ...(await original<typeof import('../../shared/sound/effects')>()), ...sounds }))
 
+const rounds: unknown[] = []
+
 beforeEach(() => {
+  rounds.length = 0
   sounds.playRight.mockClear()
   sounds.playWrong.mockClear()
   sounds.unlockGameSound.mockClear()
@@ -51,6 +54,10 @@ function routes(count = 5) {
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
     'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied.map((word) => word.userVocabularyId) }),
     'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
+    'POST /api/v1/learning/game-rounds': ({ init }: { init: RequestInit }) => {
+      rounds.push(JSON.parse((init as RequestInit).body as string))
+      return jsonResponse({ id: 1 })
+    },
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied }),
     ...Object.fromEntries(words.map((term, index) => [`GET /api/v1/vocabulary/${index + 1}`, () => jsonResponse(entry(index + 1, term))])),
   }
@@ -129,6 +136,10 @@ test('shows a slot per letter, turns a wrong letter red until it is fixed, and f
   // One mistake costs one star on the first word: 2 + 3 + 3 + 3 + 3 = 14 of 15.
   expect(screen.getByRole('heading', { name: 'Nicely done! 14 of 15 stars' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
+
+  // The finished round was sent once, with the stars the results show.
+  await waitFor(() => expect(rounds).toHaveLength(1))
+  expect(rounds[0]).toEqual({ game: 'spell-it', stars: 3, mistakes: 1, wordCount: 5, date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
 })
 
 test('a full word with a wrong letter stays open, and retyping the end fixes it', async () => {
