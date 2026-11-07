@@ -49,6 +49,8 @@ function routes(count = 5) {
   return {
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+    'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied.map((word) => word.userVocabularyId) }),
+    'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied }),
     ...Object.fromEntries(words.map((term, index) => [`GET /api/v1/vocabulary/${index + 1}`, () => jsonResponse(entry(index + 1, term))])),
   }
@@ -88,7 +90,7 @@ test('the study-complete page offers the game with five words studied', async ()
 test('with fewer than five words it says how many to study', async () => {
   stubApi(routes(4))
   renderApp('/app/study/spell')
-  expect(await screen.findByText(/Study at least 5 words, today or in the last 7 days/)).toBeInTheDocument()
+  expect(await screen.findByText(/Study at least 5 words, today or in the last 30 days/)).toBeInTheDocument()
 })
 
 test('shows a slot per letter, turns a wrong letter red until it is fixed, and finishes with stars', async () => {

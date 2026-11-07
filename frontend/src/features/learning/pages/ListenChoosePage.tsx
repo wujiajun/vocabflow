@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { hasEnoughWords, minGameWords, notEnoughWords, pickGameWordIds } from '../gameWords'
+import { hasEnoughWords, minGameWords, notEnoughWords,  } from '../gameWords'
 import { BackLink } from '../../../shared/BackLink'
 import { playRight, playWrong } from '../../../shared/sound/effects'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
-import { useVocabularyDetails } from '../../vocabulary/hooks/useVocabulary'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
 import { GameProgress, GameStart, ScorePills, Stars, gamePrimaryButton } from '../components/GameParts'
 import { buildListenQuestions, type ListenQuestion } from '../components/listening'
+import { GameLoader } from '../components/GameLoader'
+import { useRecordPlays } from '../hooks/useGameWords'
 import { useStudyQueue } from '../hooks/useStudy'
-import type { StudyQueue } from '../types/study'
 
 const studyPage = { path: '/app/study', label: 'Back to study' }
 
@@ -21,7 +21,8 @@ const primaryButton = gamePrimaryButton
 // word is only heard; its spelling is shown after the answer.
 export function ListenChoosePage() {
   usePageTitle('Listen and choose')
-  const queue = useStudyQueue(useUserToday())
+  const today = useUserToday()
+  const queue = useStudyQueue(today)
   const [game, setGame] = useState(0)
 
   return (
@@ -46,7 +47,11 @@ export function ListenChoosePage() {
         ) : !hasEnoughWords(queue.data) ? (
           <NotEnough />
         ) : (
-          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} queue={queue.data} />
+          <GameLoader
+            date={today}
+            key={game}
+            render={(entries) => <Game entries={entries} onAgain={() => setGame((current) => current + 1)} />}
+          />
         )}
       </div>
     </div>
@@ -59,31 +64,6 @@ function NotEnough() {
       {notEnoughWords}
     </p>
   )
-}
-
-function Loaded({ queue, onAgain }: { queue: StudyQueue; onAgain: () => void }) {
-  const [ids] = useState(() => pickGameWordIds(queue))
-  const details = useVocabularyDetails(ids)
-
-  if (details.some((detail) => detail.isPending)) {
-    return (
-      <p className="text-sm text-slate-600" role="status">
-        Getting your words ready…
-      </p>
-    )
-  }
-
-  const entries = details.flatMap((detail) => (detail.data ? [detail.data] : []))
-  if (entries.length === 0) {
-    const failure = details.find((detail) => detail.isError)
-    return (
-      <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-        {authErrorMessage(failure?.error, 'Unable to load your words.')}
-      </p>
-    )
-  }
-
-  return <Game entries={entries} onAgain={onAgain} />
 }
 
 interface Answered {
@@ -106,6 +86,8 @@ function Speaker({ size }: { size: number }) {
 
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [questions] = useState(() => buildListenQuestions(entries))
+  // The words this round really uses, so the next rounds rotate away from them.
+  useRecordPlays(questions.map((question) => question.id))
   const [started, setStarted] = useState(false)
   const [position, setPosition] = useState(0)
   const [answers, setAnswers] = useState<Answered[]>([])

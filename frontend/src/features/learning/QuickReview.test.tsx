@@ -54,6 +54,8 @@ function routes(count = 5) {
   return {
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+    'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied(count).map((word) => word.userVocabularyId) }),
+    'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
     'GET /api/v1/learning/study-queue': () =>
       jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied(count) }),
     ...Object.fromEntries(words.map((word) => [`GET /api/v1/vocabulary/${word.id}`, () => jsonResponse(entry(word))])),
@@ -78,7 +80,7 @@ test('with too few words studied the game says so', async () => {
   stubApi(routes(4))
   renderApp('/app/study/review')
 
-  expect(await screen.findByText('Study at least 5 words, today or in the last 7 days, to play this.')).toBeInTheDocument()
+  expect(await screen.findByText('Study at least 5 words, today or in the last 30 days, to play this.')).toBeInTheDocument()
 })
 
 test('five words that share a meaning say so, instead of asking for more words', async () => {
@@ -301,7 +303,7 @@ async function startGame() {
   await userEvent.setup().click(await screen.findByRole('button', { name: 'Start' }))
 }
 
-test('a day with few studied words is topped up with the last week’s words', async () => {
+test('a day with few studied words is topped up with the earlier words', async () => {
   const route = 'GET /api/v1/learning/study-queue'
   stubApi({
     ...routes(),
@@ -312,4 +314,75 @@ test('a day with few studied words is topped up with the last week’s words', a
 
   expect(await screen.findByRole('heading', { name: 'Ready to match?' })).toBeInTheDocument()
   expect(screen.getByText(/these 5 words onto its meaning, in one round/)).toBeInTheDocument()
+})
+
+test('the game draws its words from the server’s ranking and tells the server which ones it used', async () => {
+  const fetched: string[] = []
+  const played: unknown[] = []
+  let asked = ''
+  stubApi({
+    ...routes(),
+    'GET /api/v1/learning/game-words': ({ url }) => {
+      asked = url.search
+      return jsonResponse({ date: '2026-11-01', wordIds: [4, 2, 5, 1, 3] })
+    },
+    'POST /api/v1/learning/game-words/played': ({ init }) => {
+      played.push(JSON.parse(String(init.body)))
+      return new Response(null, { status: 204 })
+    },
+    ...Object.fromEntries(
+      words.map((word) => [`GET /api/v1/vocabulary/${word.id}`, () => {
+        fetched.push(word.term)
+        return jsonResponse(entry(word))
+      }]),
+    ),
+  })
+  renderApp('/app/study/review')
+
+  expect(await screen.findByRole('heading', { name: 'Ready to match?' })).toBeInTheDocument()
+  expect(asked).toMatch(/^\?date=\d{4}-\d{2}-\d{2}$/)
+  expect([...fetched].sort()).toEqual(words.map((word) => word.term).sort())
+  await waitFor(() => expect(played).toHaveLength(1))
+  expect((played[0] as { wordIds: number[] }).wordIds.slice().sort()).toEqual([1, 2, 3, 4, 5])
+})
+
+test('a game still works when recording the words fails', async () => {
+  let posts = 0
+  stubApi({
+    ...routes(),
+    'POST /api/v1/learning/game-words/played': () => {
+      posts += 1
+      return jsonResponse({ code: 'INTERNAL_ERROR', message: 'Nope', timestamp: '2026-11-01T00:00:00Z' }, 500)
+    },
+  })
+  renderApp('/app/study/review')
+
+  await startGame()
+  expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
+  await waitFor(() => expect(posts).toBeGreaterThan(0))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+test('playing again asks the server for a new ranking', async () => {
+  let rankings = 0
+  stubApi({
+    ...routes(),
+    'GET /api/v1/learning/game-words': () => {
+      rankings += 1
+      return jsonResponse({ date: '2026-11-01', wordIds: [1, 2, 3, 4, 5] })
+    },
+  })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/review')
+
+  await startGame()
+  for (const word of words) {
+    await browserUser.click(within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: word.term }))
+    await browserUser.click(screen.getByRole('button', { name: meaning(word) }))
+  }
+  await browserUser.click(screen.getByRole('button', { name: 'See results' }))
+  await browserUser.click(await screen.findByRole('button', { name: /play again/i }))
+
+  await screen.findByRole('heading', { name: 'Ready to match?' })
+  expect(rankings).toBe(2)
 })
