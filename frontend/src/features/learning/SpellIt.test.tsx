@@ -34,7 +34,7 @@ function entry(id: number, term: string) {
     definition: null,
     examples: null,
     collocations: null,
-    senses: [{ partOfSpeech: null, label: null, phonetic: null, definition: `Number ${id} means ${term}.`, examples: null, collocations: null, emoji: '🧊', scene: `A scene with ${term}.` }],
+    senses: [{ partOfSpeech: null, label: null, phonetic: null, definition: `Number ${id} means ${term}.`, examples: null, collocations: null, chinese: `中文${id}`, ...(id === 5 ? {} : { emoji: '🧊', scene: `Scene ${id} with ${term}.` }) }],
     baseForm: null,
     spellingSuggestion: null,
     enrichmentStatus: 'COMPLETED',
@@ -54,10 +54,12 @@ function routes(count = 5) {
   }
 }
 
-// The word being asked is read from the meaning on the card, as the learner would never see it.
+// The word being asked, found from what is on the card (a hook scene or a meaning, each with its number), as
+// the learner would never see the word itself. Only before the word is finished.
 function currentWord() {
-  const meaning = screen.getByText(/^Number \d+ means /).textContent!
-  return words[Number(/Number (\d+)/.exec(meaning)![1]) - 1]
+  const text = document.body.textContent ?? ''
+  const id = /Scene (\d+) with/.exec(text)?.[1] ?? /Number (\d+) means/.exec(text)![1]
+  return words[Number(id) - 1]
 }
 
 function slotStates() {
@@ -158,19 +160,41 @@ test('Show a letter replaces a wrong letter with the right one, and costs a star
   expect(screen.getByLabelText('2 stars so far')).toBeInTheDocument()
 })
 
-test('Skip shows the word, earns nothing and moves on; the memory hook opens on request', async () => {
+test('the memory hook is the clue and the meanings come after the word: English and Chinese', async () => {
   stubApi(routes())
   const browserUser = await start()
-  const word = currentWord()
 
-  expect(screen.queryByRole('region', { name: 'Memory hook' })).not.toBeInTheDocument()
-  await browserUser.click(screen.getByRole('button', { name: /Memory hook/ }))
-  expect(screen.getByRole('region', { name: 'Memory hook' })).toHaveTextContent('A scene with _____.')
-  await browserUser.click(screen.getByRole('button', { name: 'Skip' }))
+  for (let number = 1; number <= 5; number += 1) {
+    await screen.findByRole('region', { name: `Word ${number} of 5` })
+    const word = currentWord()
+    const id = words.indexOf(word) + 1
+    const letters = [...word].filter((char) => /[a-z]/.test(char))
 
-  expect(screen.getByRole('status')).toHaveTextContent(`Skipped. The word was “${word}”.`)
-  expect(screen.getByLabelText('0 stars so far')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+    // While spelling: a word with a hook shows only the hook (the scene with the word hidden), and the word
+    // without one shows its meaning (word hidden) as its only clue. The Chinese is never shown yet.
+    if (id === 5) {
+      expect(screen.queryByRole('region', { name: 'Memory hook' })).not.toBeInTheDocument()
+      expect(screen.getByText('Number 5 means _____.')).toBeInTheDocument()
+    } else {
+      expect(screen.getByRole('region', { name: 'Memory hook' })).toHaveTextContent(`Scene ${id} with _____.`)
+      expect(screen.queryByText(/Number \d+ means/)).not.toBeInTheDocument()
+    }
+    expect(screen.queryByRole('region', { name: 'Meaning' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/中文/)).not.toBeInTheDocument()
+
+    if (number === 2) {
+      // Skipping reveals them too.
+      await browserUser.click(screen.getByRole('button', { name: 'Skip' }))
+      expect(screen.getByRole('status')).toHaveTextContent(`Skipped. The word was “${word}”.`)
+    } else {
+      await browserUser.keyboard(letters.join(''))
+    }
+
+    const meaning = screen.getByRole('region', { name: 'Meaning' })
+    expect(meaning).toHaveTextContent(`Number ${id} means ${word}.`)
+    expect(meaning).toHaveTextContent(`中文${id}`)
+    await browserUser.click(screen.getByRole('button', { name: number === 5 ? 'See results' : 'Next' }))
+  }
 })
 
 test('nothing is judged until the row is full; then a wrong row is red with a buzz, and refilling it right gives the ding', async () => {

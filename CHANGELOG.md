@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.6.1] - 2026-11-07
+
+### Changed
+
+- **Spell it shows the memory hook first and the meanings after**: while you spell, the clues are the sound and the memory hook (emoji, scene and word parts), shown straight away instead of behind a button. The English meaning and the Chinese meaning appear once you have spelled the word (or skipped it), from the same meaning the hook belongs to; the Chinese line is left out when the meaning has none. A meaning without a memory hook shows its English meaning as the clue instead. Words with a hook are chosen first, and the round still has ten words.
+
 ## [1.6.0] - 2026-11-07
 
 ### Changed
