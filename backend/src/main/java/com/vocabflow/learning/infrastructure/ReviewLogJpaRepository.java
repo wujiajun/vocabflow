@@ -1,6 +1,7 @@
 package com.vocabflow.learning.infrastructure;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,4 +35,12 @@ public interface ReviewLogJpaRepository extends JpaRepository<ReviewLogEntity, L
       """)
   List<Long> findStudiedBetween(
       @Param("userId") long userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
+
+  @Query(
+      """
+      select r.userVocabularyId, r.rating, count(r) from ReviewLogEntity r
+       where r.userId = :userId and r.userVocabularyId in :ids
+       group by r.userVocabularyId, r.rating
+      """)
+  List<Object[]> countRatings(@Param("userId") long userId, @Param("ids") Collection<Long> ids);
 }

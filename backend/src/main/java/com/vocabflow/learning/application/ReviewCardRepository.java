@@ -31,4 +31,7 @@ public interface ReviewCardRepository {
 
   /** The words rated from {@code from} to {@code to}, both included, the latest rated first. */
   List<Long> findStudiedBetween(long userId, LocalDate from, LocalDate to);
+
+  /** How often each of the words was rated, in all and Again and Hard; unrated words are absent. */
+  Map<Long, RatingCounts> findRatingCounts(long userId, Collection<Long> userVocabularyIds);
 }

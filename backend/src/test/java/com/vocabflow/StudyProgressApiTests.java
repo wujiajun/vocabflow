@@ -228,7 +228,7 @@ class StudyProgressApiTests {
   }
 
   @Test
-  void recentlyStudiedHoldsTheLastSevenDaysWithoutTodaysWordsOrDuplicates() throws Exception {
+  void recentlyStudiedHoldsTheLastThirtyDaysWithoutTodaysWordsOrDuplicates() throws Exception {
     String token = token("progress-recent@example.com", 20);
     long today = add(token, "recent today");
     long yesterday = add(token, "recent yesterday");
@@ -238,8 +238,8 @@ class StudyProgressApiTests {
     long failed = add(token, "recent failed");
     long never = add(token, "recent never rated");
     // Rated out of order on purpose: the order must follow the study day, not the rating order.
-    reviewOn(token, tooOld, "EASY", 0, DAY.minusDays(8).toString());
-    reviewOn(token, weekAgo, "EASY", 0, DAY.minusDays(7).toString());
+    reviewOn(token, tooOld, "EASY", 0, DAY.minusDays(31).toString());
+    reviewOn(token, weekAgo, "EASY", 0, DAY.minusDays(30).toString());
     reviewOn(token, yesterday, "EASY", 0, DAY.minusDays(1).toString());
     reviewOn(token, again, "AGAIN", 0, DAY.minusDays(3).toString());
     reviewOn(token, again, "AGAIN", 1, DAY.minusDays(2).toString());

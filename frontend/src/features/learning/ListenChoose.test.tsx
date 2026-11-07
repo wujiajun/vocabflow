@@ -43,6 +43,8 @@ function routes(count = 5) {
   return {
     'GET /api/v1/auth/me': () => jsonResponse(user),
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+    'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied.map((word) => word.userVocabularyId) }),
+    'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied }),
     ...Object.fromEntries(words.map((term, index) => [`GET /api/v1/vocabulary/${index + 1}`, () => jsonResponse(entry(index + 1, term))])),
   }

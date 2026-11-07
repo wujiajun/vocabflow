@@ -1,22 +1,23 @@
 import { useState } from 'react'
-import { hasEnoughWords, wordsPerRound, minGameWords, notEnoughWords, pickGameWordIds } from '../gameWords'
+import { hasEnoughWords, wordsPerRound, minGameWords, notEnoughWords } from '../gameWords'
 import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
-import { useVocabularyDetails } from '../../vocabulary/hooks/useVocabulary'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
 import { PairGame } from '../components/PairGame'
 import { buildPairs, shuffle } from '../components/matching'
+import { GameLoader } from '../components/GameLoader'
+import { useRecordPlays } from '../hooks/useGameWords'
 import { useStudyQueue } from '../hooks/useStudy'
-import type { StudyQueue } from '../types/study'
 
 const studyPage = { path: '/app/study', label: 'Back to study' }
 
 // Practice only: nothing here is sent to the server, so it never changes what comes back for review.
 export function QuickReviewPage() {
   usePageTitle('Quick review')
-  const queue = useStudyQueue(useUserToday())
+  const today = useUserToday()
+  const queue = useStudyQueue(today)
   const [game, setGame] = useState(0)
 
   return (
@@ -37,7 +38,11 @@ export function QuickReviewPage() {
         ) : !hasEnoughWords(queue.data) ? (
           <NotEnough />
         ) : (
-          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} queue={queue.data} />
+          <GameLoader
+            date={today}
+            key={game}
+            render={(entries) => <Game entries={entries} onAgain={() => setGame((current) => current + 1)} />}
+          />
         )}
       </div>
     </div>
@@ -61,35 +66,10 @@ function NotEnough() {
   )
 }
 
-// Fetches the meanings of a sample of the words (today's first, see `pickGameWordIds`), and starts the game once they are in. The sample
-// and the game are fixed at that point, so words studied or refreshed meanwhile do not reshuffle them.
-function Loaded({ queue, onAgain }: { queue: StudyQueue; onAgain: () => void }) {
-  const [ids] = useState(() => pickGameWordIds(queue))
-  const details = useVocabularyDetails(ids)
-
-  if (details.some((detail) => detail.isPending)) {
-    return (
-      <p className="text-sm text-slate-600" role="status">
-        Getting your words ready…
-      </p>
-    )
-  }
-
-  const entries = details.flatMap((detail) => (detail.data ? [detail.data] : []))
-  if (entries.length === 0) {
-    const failure = details.find((detail) => detail.isError)
-    return (
-      <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-        {authErrorMessage(failure?.error, 'Unable to load your words.')}
-      </p>
-    )
-  }
-
-  return <Game entries={entries} onAgain={onAgain} />
-}
-
 function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () => void }) {
   const [pairs] = useState(() => shuffle(buildPairs(entries).slice(0, wordsPerRound)))
+  // The words this round really uses, so the next rounds rotate away from them.
+  useRecordPlays(pairs.map((pair) => pair.id))
 
   return <PairGame
       intro={{

@@ -1,5 +1,6 @@
 package com.vocabflow.learning.infrastructure;
 
+import com.vocabflow.learning.application.RatingCounts;
 import com.vocabflow.learning.application.ReviewCardRepository;
 import com.vocabflow.learning.application.ReviewLogEntry;
 import com.vocabflow.learning.application.StoredCard;
@@ -122,6 +123,27 @@ public class JpaReviewCardRepositoryAdapter implements ReviewCardRepository {
   @Override
   public List<Long> findStudiedBetween(long userId, LocalDate from, LocalDate to) {
     return logs.findStudiedBetween(userId, from, to);
+  }
+
+  @Override
+  public Map<Long, RatingCounts> findRatingCounts(long userId, Collection<Long> ids) {
+    if (ids.isEmpty()) {
+      return Map.of();
+    }
+    Map<Long, int[]> sums = new java.util.HashMap<>();
+    for (Object[] row : logs.countRatings(userId, ids)) {
+      int[] sum = sums.computeIfAbsent((Long) row[0], k -> new int[3]);
+      int count = ((Number) row[2]).intValue();
+      sum[0] += count;
+      if ("AGAIN".equals(row[1])) {
+        sum[1] += count;
+      } else if ("HARD".equals(row[1])) {
+        sum[2] += count;
+      }
+    }
+    Map<Long, RatingCounts> result = new java.util.HashMap<>();
+    sums.forEach((id, sum) -> result.put(id, new RatingCounts(sum[0], sum[1], sum[2])));
+    return result;
   }
 
   private void copy(ReviewCard card, LearningCardEntity entity) {

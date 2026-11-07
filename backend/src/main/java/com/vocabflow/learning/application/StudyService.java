@@ -23,7 +23,7 @@ public class StudyService {
   // As in Anki: with nothing else left, a learning step this close is shown early instead of making
   // the learner wait for it.
   /** How far back the practice games look for words when today has too few. */
-  public static final int RECENT_DAYS = 7;
+  public static final int RECENT_DAYS = 30;
 
   static final Duration LEARN_AHEAD = Duration.ofMinutes(20);
 

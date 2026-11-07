@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.7.0] - 2026-11-07
+
+### Changed
+
+- **The practice games rotate through your words instead of repeating**: Quick review, Fill in the blank, Listen and choose and Spell it now choose their words together. A word never played in any game comes first, then the ones played longest ago, and the words of the last round come last, so a round no longer repeats the one before it. Words that were hard for you (rated Again or Hard, forgotten, or with a low ease) are favoured, but never ahead of a word you have not played yet, and words studied today get a small bonus. The pool is today's words and everything you studied in the last 30 days (it was 7), with a little randomness among near-equal words. What you played is kept on the server, so a round on your phone changes what the computer offers next. Practice only: reviews and the schedule are untouched.
+- **API**: `GET /api/v1/learning/game-words?date=` returns the ranked word ids (up to 15); `POST /api/v1/learning/game-words/played` (`{wordIds}`, up to 30, your own words only, 404 otherwise) records a round. `recentlyStudied` in the study queue now covers 30 days. Migration V17 adds `game_word_plays`.
+
 ## [1.6.1] - 2026-11-07
 
 ### Changed
