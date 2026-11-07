@@ -24,6 +24,24 @@ function audio() {
   }
 }
 
+// Browsers (iPhone above all) let the page start audio only from inside a press, and typing a letter is not one:
+// the field's input event does not count. A game whose sounds come from typing calls this from a press (Start,
+// Next, a tap on the letters) so the sound that follows a typed letter is allowed. It plays one silent sample.
+export function unlockGameSound() {
+  const sound = audio()
+  if (!sound) {
+    return
+  }
+  try {
+    const source = sound.createBufferSource()
+    source.buffer = sound.createBuffer(1, 1, 22050)
+    source.connect(sound.destination)
+    source.start(0)
+  } catch {
+    // The sound then plays only if the browser allows it anyway.
+  }
+}
+
 // Whether the games make sounds. On unless turned off; kept in this browser.
 export function getGameSound() {
   try {

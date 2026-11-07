@@ -1,11 +1,17 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
+const sounds = vi.hoisted(() => ({ playRight: vi.fn(), playWrong: vi.fn(), unlockGameSound: vi.fn() }))
+vi.mock('../../shared/sound/effects', async (original) => ({ ...(await original<typeof import('../../shared/sound/effects')>()), ...sounds }))
+
 beforeEach(() => {
+  sounds.playRight.mockClear()
+  sounds.playWrong.mockClear()
+  sounds.unlockGameSound.mockClear()
   clearToken()
   setToken('valid-token')
 })
@@ -99,13 +105,13 @@ test('shows a slot per letter, turns a wrong letter red until it is fixed, and f
     expect(input).toHaveFocus()
 
     if (number === 1) {
-      // A wrong letter first: it stays, red, and the word cannot finish over it.
+      // A wrong first letter: nothing is red until the row is full, then it is, and the word cannot finish over it.
       const wrong = letters[0] === 'z' ? 'y' : 'z'
-      await browserUser.keyboard(wrong)
+      await browserUser.keyboard(`${wrong}${letters.slice(1).join('')}`)
       expect(slotStates()[0]).toBe('wrong')
-      expect(screen.getByRole('status')).toHaveTextContent('A red letter is wrong')
-      await browserUser.keyboard('{Backspace}')
-      expect(slotStates()[0]).toBe('empty')
+      expect(screen.getByRole('status')).toHaveTextContent('The red letters are wrong')
+      await browserUser.keyboard('{Backspace}'.repeat(letters.length))
+      expect(slotStates().every((state) => state === 'empty')).toBe(true)
       await browserUser.keyboard(letters.join('').toUpperCase())
     } else {
       await browserUser.keyboard(letters.join(''))
@@ -135,21 +141,21 @@ test('a full word with a wrong letter stays open, and retyping the end fixes it'
   expect(screen.getByRole('button', { name: /Next|See results/ })).toBeInTheDocument()
 })
 
-test('Show a letter writes the next right letter, replacing a wrong one, and costs a star', async () => {
+test('Show a letter replaces a wrong letter with the right one, and costs a star', async () => {
   stubApi(routes())
   const browserUser = await start()
   const word = currentWord()
   const letters = [...word].filter((char) => /[a-z]/.test(char))
   await browserUser.keyboard(letters[0] === 'q' ? 'x' : 'q')
+  expect(slotStates()[0]).toBe('filled')
   await browserUser.click(screen.getByRole('button', { name: /Show a letter/ }))
 
-  expect(slotStates()[0]).toBe('right')
+  expect(slotStates()[0]).toBe('filled')
   expect(screen.getByRole('textbox', { name: 'Type the word' })).toHaveValue(letters[0])
   await browserUser.keyboard(letters.slice(1).join(''))
   expect(screen.getByRole('status')).toHaveTextContent('Correct!')
-  // One mistake and one shown letter: two stars minus one is one.
-  expect(document.body.textContent).toContain('⭐')
-  expect(screen.getByLabelText('1 stars so far')).toBeInTheDocument()
+  // No wrong row was ever full, and one letter was shown: three stars minus one.
+  expect(screen.getByLabelText('2 stars so far')).toBeInTheDocument()
 })
 
 test('Skip shows the word, earns nothing and moves on; the memory hook opens on request', async () => {
@@ -165,4 +171,54 @@ test('Skip shows the word, earns nothing and moves on; the memory hook opens on 
   expect(screen.getByRole('status')).toHaveTextContent(`Skipped. The word was “${word}”.`)
   expect(screen.getByLabelText('0 stars so far')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+})
+
+test('nothing is judged until the row is full; then a wrong row is red with a buzz, and refilling it right gives the ding', async () => {
+  stubApi(routes())
+  const browserUser = await start()
+  // The sound is unlocked by the press of Start, because a typed letter is not a press.
+  expect(sounds.unlockGameSound).toHaveBeenCalled()
+  const word = currentWord()
+  const letters = [...word].filter((char) => /[a-z]/.test(char))
+  const wrong = letters.at(-1) === 'q' ? 'x' : 'q'
+
+  // Wrong letters on the way are plain letters: no red, no sound, and Backspace changes them.
+  await browserUser.keyboard(`${letters.slice(0, -2).join('')}${wrong}`)
+  expect(slotStates().includes('wrong')).toBe(false)
+  expect(sounds.playWrong).not.toHaveBeenCalled()
+  await browserUser.keyboard('{Backspace}')
+  await browserUser.keyboard(letters.at(-2)!)
+
+  // The last slot is filled with a wrong letter: judged now.
+  await browserUser.keyboard(wrong)
+  expect(slotStates().at(-1)).toBe('wrong')
+  expect(slotStates().slice(0, -1).every((state) => state === 'right')).toBe(true)
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
+  expect(sounds.playRight).not.toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: /Next|See results/ })).not.toBeInTheDocument()
+
+  // Fixed by Backspace and the right letter: judged again, and right.
+  await browserUser.keyboard('{Backspace}')
+  expect(slotStates().includes('wrong')).toBe(false)
+  await browserUser.keyboard(letters.at(-1)!)
+  expect(sounds.playRight).toHaveBeenCalledTimes(1)
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('status')).toHaveTextContent('Correct! 1 wrong try.')
+})
+
+test('a row filled while the keyboard is still building the word is judged at once', async () => {
+  stubApi(routes())
+  await start()
+  const word = currentWord()
+  const letters = [...word].filter((char) => /[a-z]/.test(char))
+  const input = screen.getByRole('textbox', { name: 'Type the word' })
+  const wrong = letters[0] === 'q' ? 'x' : 'q'
+
+  fireEvent.compositionStart(input)
+  fireEvent.change(input, { target: { value: letters.slice(0, -1).join('') } })
+  expect(slotStates().includes('wrong')).toBe(false)
+  fireEvent.change(input, { target: { value: `${wrong}${letters.slice(1).join('')}` } })
+
+  expect(slotStates()[0]).toBe('wrong')
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
 })

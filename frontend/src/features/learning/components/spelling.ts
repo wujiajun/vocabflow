@@ -40,16 +40,21 @@ export function lettersOf(term: string): string[] {
   return slotsFor(term).flatMap((slot) => (slot.kind === 'letter' ? [slot.char] : []))
 }
 
-// What the field holds after a change. Letters are only added at the end and taken from the end, wherever the
-// caret was: the slots fill in order, and a mistake is fixed from the last letter back.
-export function applyInput(previous: string[], value: string, limit: number): string[] {
+// What the field holds after a change. Nothing is judged while the learner types: letters only fill the slots,
+// added at the end and taken from the end, wherever the caret was, and the word is judged when every slot is
+// full (see `isFull`). `composing` is for a keyboard that is still building a word (its text is not final
+// yet): the field's text is then read as it stands, so the slots fill as the letters appear.
+export function applyInput(previous: readonly string[], value: string, limit: number, composing = false): string[] {
   const next = [...value].filter(isTyped)
+  if (composing) {
+    return next.slice(0, limit)
+  }
   // A shorter field is a deletion; anything else that adds no letter (a symbol typed) changes nothing.
   if ([...value].length < previous.length) {
     return previous.slice(0, next.length)
   }
   if (next.length <= previous.length) {
-    return previous
+    return [...previous]
   }
   let common = 0
   while (common < previous.length && previous[common] === next[common]) {
@@ -58,6 +63,11 @@ export function applyInput(previous: string[], value: string, limit: number): st
   // Inserted text is taken as typed at the end, whichever place in the field it landed.
   const added = next.slice(common, common + (next.length - previous.length))
   return [...previous, ...added].slice(0, limit)
+}
+
+// Every slot holds a letter: the moment the word is judged.
+export function isFull(answer: readonly string[], typed: readonly string[]) {
+  return typed.length === answer.length
 }
 
 // Which of the typed letters are right, one per typed letter.

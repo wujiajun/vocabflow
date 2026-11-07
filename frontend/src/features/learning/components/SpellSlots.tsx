@@ -1,5 +1,6 @@
-import type { RefObject } from 'react'
-import { check, type Slot } from './spelling'
+import { useRef, useState, type RefObject } from 'react'
+import { unlockGameSound } from '../../../shared/sound/effects'
+import { check, isFull, type Slot } from './spelling'
 
 // One underlined place per letter. A real text field lies invisibly over them, so a tap anywhere on the slots
 // opens the phone's keyboard, and what is typed fills the slots in order. The slots are for the eye: the field
@@ -22,9 +23,14 @@ export function SpellSlots({
   done: boolean
   label: string
   inputRef: RefObject<HTMLInputElement | null>
-  onType: (value: string) => void
+  onType: (value: string, composing: boolean) => void
 }) {
+  // While a keyboard builds a word (composition) the field keeps its own text: giving it another would end the
+  // composition and the letters would only arrive when it ends.
+  const composing = useRef(false)
+  const [raw, setRaw] = useState<string | null>(null)
   const right = check(answer, typed)
+  const judged = isFull(answer, typed)
   // The place of each letter slot among the letters, so a slot knows which typed letter is its own.
   const places = slots.map((_, index) => slots.slice(0, index).filter((slot) => slot.kind === 'letter').length)
 
@@ -53,13 +59,16 @@ export function SpellSlots({
           }
           const position = places[index]
           const shown = position < typed.length ? typed[position] : revealed ? answer[position] : ''
-          const wrong = position < typed.length && !right[position]
+          // Only a full row is judged; until then nothing is red and the learner can change any letter at the end.
+          const wrong = judged && !right[position]
           const state = done
             ? 'border-emerald-500 text-emerald-700'
             : wrong
               ? 'border-rose-500 text-rose-600 motion-safe:animate-shake'
               : position < typed.length
-                ? 'border-emerald-500 text-slate-900'
+                ? judged
+                  ? 'border-emerald-500 text-slate-900'
+                  : 'border-slate-500 text-slate-900'
                 : revealed
                   ? 'border-amber-400 text-amber-700'
                   : position === typed.length
@@ -68,7 +77,7 @@ export function SpellSlots({
           return (
             <span
               className={`flex h-11 w-7 items-end justify-center border-b-4 pb-0.5 text-2xl leading-none font-bold transition-colors ${state}`}
-              data-state={done ? 'done' : wrong ? 'wrong' : shown ? 'right' : 'empty'}
+              data-state={done ? 'done' : wrong ? 'wrong' : shown ? (judged ? 'right' : 'filled') : 'empty'}
               key={index}
             >
               {shown.toLowerCase()}
@@ -86,13 +95,27 @@ export function SpellSlots({
         className="absolute inset-0 h-full w-full cursor-text opacity-0"
         enterKeyHint="done"
         inputMode="text"
-        onChange={(event) => onType(event.target.value)}
+        onChange={(event) => {
+          setRaw(composing.current ? event.target.value : null)
+          onType(event.target.value, composing.current)
+        }}
+        onCompositionEnd={(event) => {
+          composing.current = false
+          setRaw(null)
+          onType(event.currentTarget.value, false)
+        }}
+        onCompositionStart={() => {
+          composing.current = true
+        }}
+        // A tap is a press; the sound after a typed letter is allowed only once there has been one.
+        onClick={unlockGameSound}
+        onTouchEnd={unlockGameSound}
         readOnly={done || revealed}
         ref={inputRef}
         spellCheck={false}
         style={{ fontSize: '16px' }}
         type="text"
-        value={typed.join('')}
+        value={raw ?? typed.join('')}
       />
     </div>
   )

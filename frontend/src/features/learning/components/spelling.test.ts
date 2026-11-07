@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
-import { applyInput, buildSpellItems, check, isComplete, lettersOf, pickSpellWords, slotsFor, starsFor } from './spelling'
+import { applyInput, buildSpellItems, check, isComplete, isFull, lettersOf, pickSpellWords, slotsFor, starsFor } from './spelling'
 
 function entry(id: number, term: string, extra: Partial<VocabularyEntry['senses'][number]> = {}, status = 'COMPLETED'): VocabularyEntry {
   return {
@@ -34,12 +34,29 @@ test('letters match whatever their case or accent', () => {
   expect(check(lettersOf('cope'), [...'cxp'])).toEqual([true, false, true])
 })
 
-test('typing only adds at the end and deleting only takes from the end', () => {
-  expect(applyInput(['c'], 'co', 4)).toEqual(['c', 'o'])
-  expect(applyInput(['c', 'o'], 'xco', 4)).toEqual(['c', 'o', 'x'])
-  expect(applyInput(['c', 'o'], 'c', 4)).toEqual(['c'])
-  expect(applyInput(['c', 'o'], 'c!', 4)).toEqual(['c', 'o'])
-  expect(applyInput(['c', 'o', 'p', 'e'], 'copes', 4)).toEqual(['c', 'o', 'p', 'e'])
+test('typing only adds at the end and deleting only takes from the end, and nothing is judged on the way', () => {
+  const type = (previous: string, value: string, composing = false) => applyInput([...previous], value, 4, composing).join('')
+  expect(type('c', 'co')).toBe('co')
+  expect(type('co', 'xco')).toBe('cox')
+  expect(type('co', 'c')).toBe('c')
+  expect(type('co', 'co!')).toBe('co')
+  expect(type('cope', 'copes')).toBe('cope')
+  // A wrong letter is simply a letter until the row is full.
+  expect(type('c', 'cx')).toBe('cx')
+})
+
+test('a keyboard still building a word is read as it stands, letter by letter', () => {
+  expect(applyInput([], 'c', 4, true)).toEqual(['c'])
+  expect(applyInput(['c'], "c'o", 4, true)).toEqual(['c', 'o'])
+  expect(applyInput(['c', 'o'], "c'o'p'e's", 4, true)).toEqual(['c', 'o', 'p', 'e'])
+})
+
+test('the word is judged only when every slot is full', () => {
+  const answer = [...'cope']
+  expect(isFull(answer, [...'cox'])).toBe(false)
+  expect(isFull(answer, [...'coxe'])).toBe(true)
+  expect(isComplete(answer, [...'coxe'])).toBe(false)
+  expect(isComplete(answer, [...'COPE'])).toBe(true)
 })
 
 test('stars fall with mistakes and shown letters, never below one for a spelled word, and a skip earns none', () => {

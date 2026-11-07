@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackLink } from '../../../shared/BackLink'
-import { playRight, playWrong } from '../../../shared/sound/effects'
+import { playRight, playWrong, unlockGameSound } from '../../../shared/sound/effects'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -15,6 +15,7 @@ import {
   buildSpellItems,
   check,
   isComplete,
+  isFull,
   lettersOf,
   minSpellWords,
   slotsFor,
@@ -118,8 +119,11 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
     return (
       <GameStart
         icon="✍️"
-        onStart={() => setStarted(true)}
-        text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and spell it letter by letter. A wrong letter turns red until you fix it.`}
+        onStart={() => {
+          unlockGameSound()
+          setStarted(true)
+        }}
+        text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and type all its letters. If some are wrong they turn red until you fix them.`}
         title="Ready to spell?"
       />
     )
@@ -185,7 +189,7 @@ function Word({
   const playTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const done = isComplete(answer, typed)
   const finished = done || skipped
-  const wrongNow = check(answer, typed).filter((right) => !right).length
+  const wrongNow = isFull(answer, typed) ? check(answer, typed).filter((right) => !right).length : 0
   const hasHook = Boolean(item.emoji || item.scene || item.parts)
   const earned = done ? starsFor({ mistakes, hints, skipped: false }) : 0
 
@@ -221,18 +225,16 @@ function Word({
     }
   }
 
-  function type(value: string) {
+  function type(value: string, composing: boolean) {
     if (finished) {
       return
     }
-    const next = applyInput(typed, value, answer.length)
-    if (next.length > typed.length) {
-      const added = check(answer, next).slice(typed.length)
-      const wrong = added.filter((right) => !right).length
-      if (wrong > 0) {
-        setMistakes((current) => current + wrong)
-        playWrong()
-      }
+    const next = applyInput(typed, value, answer.length, composing)
+    // Judged when the last slot is filled: a wrong row turns its wrong letters red (and costs a mistake) once
+    // for each time it is filled; it is judged again when it is filled again.
+    if (isFull(answer, next) && !isFull(answer, typed) && !isComplete(answer, next)) {
+      setMistakes((current) => current + 1)
+      playWrong()
     }
     finish(next)
   }
@@ -256,11 +258,11 @@ function Word({
   }
 
   const status = done
-    ? `Correct! ${earned === 3 ? 'No mistakes.' : mistakes > 0 ? `${mistakes} wrong ${mistakes === 1 ? 'letter' : 'letters'}.` : ''} The word is “${item.term}”.`
+    ? `Correct! ${earned === 3 ? 'No mistakes.' : mistakes > 0 ? `${mistakes} wrong ${mistakes === 1 ? 'try' : 'tries'}.` : ''} The word is “${item.term}”.`
     : skipped
       ? `Skipped. The word was “${item.term}”.`
       : wrongNow > 0
-        ? 'A red letter is wrong. Delete it and try again.'
+        ? 'The red letters are wrong. Press Backspace and try again.'
         : 'Type the word you heard.'
 
   return (
@@ -324,7 +326,10 @@ function Word({
 
       {!finished ? (
         <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-          <button className={secondaryButton} onClick={showLetter} onMouseDown={(event) => event.preventDefault()} type="button">
+          <button className={secondaryButton} onClick={() => {
+              unlockGameSound()
+              showLetter()
+            }} onMouseDown={(event) => event.preventDefault()} type="button">
             Show a letter (−1 ⭐)
           </button>
           <button className={secondaryButton} onClick={skip} onMouseDown={(event) => event.preventDefault()} type="button">
@@ -349,7 +354,10 @@ function Word({
         {finished ? (
           <button
             className={`mt-2 w-full ${gamePrimaryButton}`}
-            onClick={() => onDone({ term: item.term, stars: earned, skipped })}
+            onClick={() => {
+              unlockGameSound()
+              onDone({ term: item.term, stars: earned, skipped })
+            }}
             type="button"
           >
             {last ? 'See results' : 'Next'}
