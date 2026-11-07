@@ -1,5 +1,6 @@
 import { useContext, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { hasEnoughWords } from '../gameWords'
 import { backState } from '../../../shared/navigation'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -8,10 +9,6 @@ import { formatLearningStatus } from '../../vocabulary/components/formatVocabula
 import { WordTapContext } from '../../vocabulary/components/wordTapContext'
 import { useStudyMore } from '../hooks/useStudy'
 import type { StudyQueue } from '../types/study'
-import { minQuestions } from './cloze'
-import { minListenQuestions } from './listening'
-import { minPairs } from './matching'
-import { minSpellWords } from './spelling'
 
 // Shown when no card is due: the day is complete, a learning step is still to come, or there is
 // nothing to study yet.
@@ -31,6 +28,8 @@ export function StudyComplete({
   const [listOpen, setListOpen] = useState(false)
   const listId = useId()
   const addWord = useContext(WordTapContext)
+  // Today's words, topped up with the last week's, as the games use them.
+  const enough = hasEnoughWords(queue)
 
   // Only on mount: pressing "Study more" must leave focus on the button if the request fails.
   useEffect(() => {
@@ -112,10 +111,10 @@ export function StudyComplete({
 
       <GameMenu
         games={[
-          { show: queue.studiedToday.length >= minPairs, to: '/app/study/review', icon: '🧩', title: 'Quick review game', about: 'Drag words onto their meanings', tone: 'indigo' },
-          { show: queue.studiedToday.length >= minQuestions && isSpeechSupported(), to: '/app/study/fill', icon: '🎯', title: 'Fill in the blank', about: 'Drop the right sound into the blank', tone: 'amber' },
-          { show: queue.studiedToday.length >= minListenQuestions && isSpeechSupported(), to: '/app/study/listen', icon: '🎧', title: 'Listen and choose', about: 'Hear a word, pick its meaning', tone: 'emerald' },
-          { show: queue.studiedToday.length >= minSpellWords, to: '/app/study/spell', icon: '✍️', title: 'Spell it', about: 'Hear it, read its meaning, type the letters', tone: 'rose' },
+          { show: enough, to: '/app/study/review', icon: '🧩', title: 'Quick review game', about: 'Drag words onto their meanings', tone: 'indigo' },
+          { show: enough && isSpeechSupported(), to: '/app/study/fill', icon: '🎯', title: 'Fill in the blank', about: 'Drop the right sound into the blank', tone: 'amber' },
+          { show: enough && isSpeechSupported(), to: '/app/study/listen', icon: '🎧', title: 'Listen and choose', about: 'Hear a word, pick its meaning', tone: 'emerald' },
+          { show: enough, to: '/app/study/spell', icon: '✍️', title: 'Spell it', about: 'Hear it, read its meaning, type the letters', tone: 'rose' },
         ]}
       />
 

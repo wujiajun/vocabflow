@@ -1,9 +1,8 @@
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
+import { wordsPerRound } from '../gameWords'
 import { findTerm, type MatchPair, maskTerm, shuffle } from './matching'
 
 export const blank = '_____'
-export const maxQuestions = 10
-export const minQuestions = 4
 
 // One sentence per word, from a random example of a random meaning: an example is a sentence the
 // learner has seen, so it is the context the word is placed in. The word, or a form of it, is left out
@@ -41,5 +40,6 @@ export function buildSoundPairs(entries: readonly VocabularyEntry[], random: () 
     })
   }
 
-  return shuffle(pairs, random).slice(0, maxQuestions)
+  // The entries come best first, so the first ones are kept and only then mixed.
+  return shuffle(pairs.slice(0, wordsPerRound), random)
 }

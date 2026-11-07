@@ -13,7 +13,9 @@ import java.util.Map;
  * What to study now. {@code nextCard} is null when nothing is due; {@code nextDueAt} then says when
  * a learning step comes up, if any does. {@code unavailable} counts words that are waiting for
  * their details and so cannot be studied yet. {@code finished} means the day's study ended, so
- * words added from now on wait for the next batch or the next day.
+ * words added from now on wait for the next batch or the next day. {@code recentlyStudied} are the
+ * words rated in the {@value StudyService#RECENT_DAYS} days before {@code date} and not today, most
+ * recently studied first, with their details complete; practice games top up from them.
  */
 public record StudyQueue(
     LocalDate date,
@@ -28,7 +30,8 @@ public record StudyQueue(
     int goalShortfall,
     boolean finished,
     boolean moreNewWords,
-    List<StudiedWord> studiedToday) {
+    List<StudiedWord> studiedToday,
+    List<StudiedWord> recentlyStudied) {
   /**
    * Every word of this study is in exactly one group, whether it is new or a review: {@code
    * studied} will not come back in this study, {@code learning} has been rated and will, and {@code

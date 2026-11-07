@@ -78,7 +78,7 @@ test('with too few words studied the game says so', async () => {
   stubApi(routes(4))
   renderApp('/app/study/review')
 
-  expect(await screen.findByText('Study at least 5 words today to play this game.')).toBeInTheDocument()
+  expect(await screen.findByText('Study at least 5 words, today or in the last 7 days, to play this.')).toBeInTheDocument()
 })
 
 test('five words that share a meaning say so, instead of asking for more words', async () => {
@@ -95,7 +95,7 @@ test('opens on a start screen with its icon, saying how many words and rounds, a
   renderApp('/app/study/review')
 
   expect(await screen.findByRole('heading', { name: 'Ready to match?' })).toBeInTheDocument()
-  expect(screen.getByText(/today’s 5 words onto its meaning, in one round/)).toBeInTheDocument()
+  expect(screen.getByText(/these 5 words onto its meaning, in one round/)).toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Round 1 of 1' })).not.toBeInTheDocument()
   await browserUser.click(screen.getByRole('button', { name: 'Start' }))
   expect(await screen.findByRole('heading', { name: 'Round 1 of 1' })).toBeInTheDocument()
@@ -300,3 +300,16 @@ function swallowedClicks() {
 async function startGame() {
   await userEvent.setup().click(await screen.findByRole('button', { name: 'Start' }))
 }
+
+test('a day with few studied words is topped up with the last week’s words', async () => {
+  const route = 'GET /api/v1/learning/study-queue'
+  stubApi({
+    ...routes(),
+    [route]: () =>
+      jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: 2, studiedToday: studied(2), recentlyStudied: studied(5).slice(2) }),
+  })
+  renderApp('/app/study/review')
+
+  expect(await screen.findByRole('heading', { name: 'Ready to match?' })).toBeInTheDocument()
+  expect(screen.getByText(/these 5 words onto its meaning, in one round/)).toBeInTheDocument()
+})

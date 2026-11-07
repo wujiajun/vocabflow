@@ -227,6 +227,58 @@ class StudyProgressApiTests {
     assertThat(queue.path("unavailableCount").asInt()).isEqualTo(1);
   }
 
+  @Test
+  void recentlyStudiedHoldsTheLastSevenDaysWithoutTodaysWordsOrDuplicates() throws Exception {
+    String token = token("progress-recent@example.com", 20);
+    long today = add(token, "recent today");
+    long yesterday = add(token, "recent yesterday");
+    long weekAgo = add(token, "recent week ago");
+    long tooOld = add(token, "recent too old");
+    long again = add(token, "recent twice");
+    long failed = add(token, "recent failed");
+    long never = add(token, "recent never rated");
+    // Rated out of order on purpose: the order must follow the study day, not the rating order.
+    reviewOn(token, tooOld, "EASY", 0, DAY.minusDays(8).toString());
+    reviewOn(token, weekAgo, "EASY", 0, DAY.minusDays(7).toString());
+    reviewOn(token, yesterday, "EASY", 0, DAY.minusDays(1).toString());
+    reviewOn(token, again, "AGAIN", 0, DAY.minusDays(3).toString());
+    reviewOn(token, again, "AGAIN", 1, DAY.minusDays(2).toString());
+    reviewOn(token, failed, "EASY", 0, DAY.minusDays(2).toString());
+    jdbc.update(
+        "UPDATE vocabulary_items SET enrichment_status = 'FAILED' WHERE normalized_term = ?",
+        "recent failed");
+    reviewOn(token, today, "EASY", 0, DAY.toString());
+    // A word rated both earlier in the week and today belongs to today only.
+    reviewOn(token, again, "AGAIN", 2, DAY.toString());
+
+    JsonNode queue = queue(token);
+
+    assertThat(wordIds(queue.path("studiedToday"))).containsExactlyInAnyOrder(today, again);
+    assertThat(wordIds(queue.path("recentlyStudied"))).containsExactly(yesterday, weekAgo);
+    assertThat(never).isNotEqualTo(failed);
+  }
+
+  @Test
+  void recentlyStudiedKeepsWordsOfADayWithTheLatestFirstAndIsPerUser() throws Exception {
+    String owner = token("progress-recent-owner@example.com", 20);
+    String other = token("progress-recent-other@example.com", 20);
+    long first = add(owner, "recent owner first");
+    long second = add(owner, "recent owner second");
+    long theirs = add(other, "recent other word");
+    reviewOn(owner, first, "EASY", 0, DAY.minusDays(2).toString());
+    reviewOn(owner, second, "EASY", 0, DAY.minusDays(2).toString());
+    reviewOn(other, theirs, "EASY", 0, DAY.minusDays(1).toString());
+
+    assertThat(wordIds(queue(owner).path("recentlyStudied"))).containsExactly(second, first);
+    assertThat(wordIds(queue(other).path("recentlyStudied"))).containsExactly(theirs);
+  }
+
+  private List<Long> wordIds(JsonNode words) {
+    List<Long> ids = new ArrayList<>();
+    words.forEach(word -> ids.add(word.path("userVocabularyId").asLong()));
+    return ids;
+  }
+
   private void assertGroups(JsonNode queue, int studied, int learning, int notStarted) {
     assertThat(queue.path("studiedCount").asInt()).as("studied").isEqualTo(studied);
     assertThat(queue.path("stillLearningCount").asInt()).as("learning").isEqualTo(learning);

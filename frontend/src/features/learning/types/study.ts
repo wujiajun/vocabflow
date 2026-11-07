@@ -48,6 +48,8 @@ export interface StudyQueue {
   finished: boolean
   moreNewWords: boolean
   studiedToday: StudiedWord[]
+  // Rated in the 7 days before today (not today), latest first; the practice games top up from them.
+  recentlyStudied: StudiedWord[]
 }
 
 export interface ReviewRequest {
