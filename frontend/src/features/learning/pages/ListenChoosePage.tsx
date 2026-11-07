@@ -10,6 +10,8 @@ import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
 import { GameProgress, GameStart, ScorePills, Stars, gamePrimaryButton } from '../components/GameParts'
 import { buildListenQuestions, type ListenQuestion } from '../components/listening'
 import { GameLoader } from '../components/GameLoader'
+import { starsForShare } from '../starsForShare'
+import { useRecordRound } from '../hooks/useGameRounds'
 import { useRecordPlays } from '../hooks/useGameWords'
 import { useStudyQueue } from '../hooks/useStudy'
 
@@ -305,6 +307,7 @@ function Summary({ answers, onAgain }: { answers: Answered[]; onAgain: () => voi
   const average = right.length > 0 ? right.reduce((sum, answer) => sum + answer.seconds, 0) / right.length : null
   const slowest = [...right].sort((first, second) => second.seconds - first.seconds)[0]
   const share = answers.length > 0 ? right.length / answers.length : 0
+  useRecordRound(({ game: 'listen-choose' as const, stars: starsForShare(share), mistakes: answers.length - right.length, wordCount: answers.length }))
 
   return (
     <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-8">

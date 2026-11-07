@@ -7,7 +7,10 @@ import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 import type { StudiedWord } from './types/study'
 
+const rounds: unknown[] = []
+
 beforeEach(() => {
+  rounds.length = 0
   clearToken()
   setToken('valid-token')
 })
@@ -56,6 +59,10 @@ function routes(count = 5) {
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
     'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied(count).map((word) => word.userVocabularyId) }),
     'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
+    'POST /api/v1/learning/game-rounds': ({ init }: { init: RequestInit }) => {
+      rounds.push(JSON.parse((init as RequestInit).body as string))
+      return jsonResponse({ id: 1 })
+    },
     'GET /api/v1/learning/study-queue': () =>
       jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied(count) }),
     ...Object.fromEntries(words.map((word) => [`GET /api/v1/vocabulary/${word.id}`, () => jsonResponse(entry(word))])),
@@ -139,6 +146,10 @@ test('tapping a word and then its meaning places it, a wrong meaning shakes it b
   expect(screen.getByRole('heading', { name: /4 of 5 on the first try/ })).toBeInTheDocument()
   expect(screen.getByText('Worth another look: cope.')).toBeInTheDocument()
   expect(screen.getByText(/Longest streak: 4 in a row/)).toBeInTheDocument()
+
+  // The finished round was sent once, with the stars the results show.
+  await waitFor(() => expect(rounds).toHaveLength(1))
+  expect(rounds[0]).toEqual({ game: 'quick-review', stars: 2, mistakes: 1, wordCount: 5, date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
 
   await browserUser.click(screen.getByRole('button', { name: 'Play again' }))
   await startGame()
@@ -385,4 +396,29 @@ test('playing again asks the server for a new ranking', async () => {
 
   await screen.findByRole('heading', { name: 'Ready to match?' })
   expect(rankings).toBe(2)
+})
+
+test('a game still finishes when recording the round fails, after one quiet retry', async () => {
+  let posts = 0
+  stubApi({
+    ...routes(),
+    'POST /api/v1/learning/game-rounds': () => {
+      posts += 1
+      return jsonResponse({ code: 'INTERNAL_ERROR', message: 'Nope', timestamp: '2026-11-01T00:00:00Z' }, 500)
+    },
+  })
+  const browserUser = userEvent.setup()
+  renderApp('/app/study/review')
+
+  await startGame()
+  for (const word of words) {
+    await browserUser.click(within(screen.getByRole('group', { name: 'Words' })).getByRole('button', { name: word.term }))
+    await browserUser.click(screen.getByRole('button', { name: meaning(word) }))
+  }
+  await browserUser.click(screen.getByRole('button', { name: 'See results' }))
+
+  expect(await screen.findByRole('heading', { name: 'Perfect! 5 of 5 on the first try' })).toBeInTheDocument()
+  await waitFor(() => expect(posts).toBeGreaterThan(0))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
 })

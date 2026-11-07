@@ -1,6 +1,9 @@
 import { type ReactNode, useState } from 'react'
 import { BackLink } from '../../../shared/BackLink'
+import { useRecordRound } from '../hooks/useGameRounds'
+import type { GameId } from '../api/gameRoundsApi'
 import { GameStart, Stars, gamePrimaryButton } from './GameParts'
+import { starsForShare } from '../starsForShare'
 import { MatchRound, type RoundResult } from './MatchRound'
 import { type MatchPair, planRounds } from './matching'
 
@@ -22,6 +25,7 @@ export function PairGame({
   intro,
   sounds = false,
   onAgain,
+  game,
 }: {
   pairs: MatchPair[]
   minimum: number
@@ -29,6 +33,7 @@ export function PairGame({
   intro: GameIntro
   sounds?: boolean
   onAgain: () => void
+  game: GameId
 }) {
   const [rounds] = useState(() => planRounds(pairs))
   const [started, setStarted] = useState(false)
@@ -46,7 +51,7 @@ export function PairGame({
   }
 
   if (round >= rounds.length) {
-    return <Summary onAgain={onAgain} results={results} />
+    return <Summary game={game} onAgain={onAgain} results={results} />
   }
 
   const before = {
@@ -74,11 +79,12 @@ export function PairGame({
   )
 }
 
-function Summary({ results, onAgain }: { results: RoundResult[]; onAgain: () => void }) {
+function Summary({ results, onAgain, game }: { results: RoundResult[]; onAgain: () => void; game: GameId }) {
   const total = results.reduce((sum, result) => sum + result.total, 0)
   const firstTry = results.reduce((sum, result) => sum + result.firstTry, 0)
   const missed = results.flatMap((result) => result.missed)
   const longest = Math.max(0, ...results.map((result) => result.bestStreak))
+  useRecordRound(({ game, stars: starsForShare(total > 0 ? firstTry / total : 0), mistakes: total - firstTry, wordCount: total }))
 
   return (
     <section aria-label="Results" className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-8">

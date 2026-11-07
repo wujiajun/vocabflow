@@ -1,11 +1,14 @@
-import { cleanup, screen, within } from '@testing-library/react'
+import { cleanup, waitFor, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
+const rounds: unknown[] = []
+
 beforeEach(() => {
+  rounds.length = 0
   clearToken()
   setToken('valid-token')
 })
@@ -45,6 +48,10 @@ function routes(count = 5) {
     'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
     'GET /api/v1/learning/game-words': () => jsonResponse({ date: '2026-11-01', wordIds: studied.map((word) => word.userVocabularyId) }),
     'POST /api/v1/learning/game-words/played': () => new Response(null, { status: 204 }),
+    'POST /api/v1/learning/game-rounds': ({ init }: { init: RequestInit }) => {
+      rounds.push(JSON.parse((init as RequestInit).body as string))
+      return jsonResponse({ id: 1 })
+    },
     'GET /api/v1/learning/study-queue': () => jsonResponse({ ...emptyStudyQueue, finished: true, studiedCount: count, studiedToday: studied }),
     ...Object.fromEntries(words.map((term, index) => [`GET /api/v1/vocabulary/${index + 1}`, () => jsonResponse(entry(index + 1, term))])),
   }
@@ -113,4 +120,8 @@ test('says each word aloud after a press, takes a pick, shows the word, and sums
   expect(screen.getByText(/Worth another look: /)).toBeInTheDocument()
   expect(screen.getByText(/seconds on average/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument()
+
+  // The finished round was sent once, with the stars the results show.
+  await waitFor(() => expect(rounds).toHaveLength(1))
+  expect(rounds[0]).toEqual({ game: 'listen-choose', stars: 2, mistakes: 1, wordCount: 5, date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
 })

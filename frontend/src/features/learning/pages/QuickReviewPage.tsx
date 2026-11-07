@@ -80,6 +80,7 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
       }}
       minimum={minGameWords}
       notEnough={<NoDistinctMeanings />}
+      game="quick-review"
       onAgain={onAgain}
       pairs={pairs}
     />

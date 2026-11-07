@@ -78,6 +78,7 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
       }}
       minimum={minGameWords}
       notEnough={<NotEnough />}
+      game="fill-blank"
       onAgain={onAgain}
       pairs={pairs}
       sounds
