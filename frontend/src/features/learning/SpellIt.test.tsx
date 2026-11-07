@@ -1,11 +1,17 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { clearToken, setToken } from '../../shared/api/tokenStorage'
 import { installSpeechSynthesis, voice } from '../../test/speech'
 import { emptyStudyQueue, expectNoUnexpectedRequests, jsonResponse, renderApp, stubApi, user } from '../../test/utils'
 
+const sounds = vi.hoisted(() => ({ playRight: vi.fn(), playWrong: vi.fn(), unlockGameSound: vi.fn() }))
+vi.mock('../../shared/sound/effects', async (original) => ({ ...(await original<typeof import('../../shared/sound/effects')>()), ...sounds }))
+
 beforeEach(() => {
+  sounds.playRight.mockClear()
+  sounds.playWrong.mockClear()
+  sounds.unlockGameSound.mockClear()
   clearToken()
   setToken('valid-token')
 })
@@ -165,4 +171,49 @@ test('Skip shows the word, earns nothing and moves on; the memory hook opens on 
   expect(screen.getByRole('status')).toHaveTextContent(`Skipped. The word was “${word}”.`)
   expect(screen.getByLabelText('0 stars so far')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+})
+
+test('each letter is judged as it is typed: a wrong one is red at once, typing the right one replaces it, and the ding comes with the last letter', async () => {
+  stubApi(routes())
+  const browserUser = await start()
+  // The sound is unlocked by the press of Start, because a typed letter is not a press.
+  expect(sounds.unlockGameSound).toHaveBeenCalled()
+  const word = currentWord()
+  const letters = [...word].filter((char) => /[a-z]/.test(char))
+  const wrong = letters[0] === 'q' ? 'x' : 'q'
+
+  await browserUser.keyboard(wrong)
+  expect(slotStates()[0]).toBe('wrong')
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
+  expect(sounds.playRight).not.toHaveBeenCalled()
+
+  // No Backspace needed: the right letter typed next takes the red one's place.
+  await browserUser.keyboard(letters[0])
+  expect(slotStates()[0]).toBe('right')
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
+
+  // A right letter after a right letter stays right, and a wrong one in the middle is red at once.
+  await browserUser.keyboard(letters.slice(1, -1).join(''))
+  expect(sounds.playRight).not.toHaveBeenCalled()
+  await browserUser.keyboard(letters.at(-1) === 'q' ? 'x' : 'q')
+  expect(slotStates().at(-1)).toBe('wrong')
+  expect(sounds.playRight).not.toHaveBeenCalled()
+  await browserUser.keyboard(letters.at(-1)!)
+  expect(sounds.playRight).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('status')).toHaveTextContent('Correct!')
+})
+
+test('a letter typed while the keyboard is still building a word counts at once', async () => {
+  stubApi(routes())
+  await start()
+  const word = currentWord()
+  const letters = [...word].filter((char) => /[a-z]/.test(char))
+  const input = screen.getByRole('textbox', { name: 'Type the word' })
+  const wrong = letters[0] === 'q' ? 'x' : 'q'
+
+  fireEvent.compositionStart(input)
+  fireEvent.change(input, { target: { value: wrong } })
+
+  expect(slotStates()[0]).toBe('wrong')
+  expect(sounds.playWrong).toHaveBeenCalledTimes(1)
 })

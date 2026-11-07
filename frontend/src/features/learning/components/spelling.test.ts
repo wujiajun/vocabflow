@@ -35,11 +35,34 @@ test('letters match whatever their case or accent', () => {
 })
 
 test('typing only adds at the end and deleting only takes from the end', () => {
-  expect(applyInput(['c'], 'co', 4)).toEqual(['c', 'o'])
-  expect(applyInput(['c', 'o'], 'xco', 4)).toEqual(['c', 'o', 'x'])
-  expect(applyInput(['c', 'o'], 'c', 4)).toEqual(['c'])
-  expect(applyInput(['c', 'o'], 'c!', 4)).toEqual(['c', 'o'])
-  expect(applyInput(['c', 'o', 'p', 'e'], 'copes', 4)).toEqual(['c', 'o', 'p', 'e'])
+  const answer = [...'cope']
+  const type = (previous: string, value: string, composing = false) => {
+    const result = applyInput([...previous], value, answer, composing)
+    return { typed: result.typed.join(''), mistake: result.mistake }
+  }
+  expect(type('c', 'co')).toEqual({ typed: 'co', mistake: false })
+  expect(type('co', 'xco').typed).toBe('cox')
+  expect(type('co', 'c')).toEqual({ typed: 'c', mistake: false })
+  expect(type('co', 'co!')).toEqual({ typed: 'co', mistake: false })
+  expect(type('cope', 'copes').typed).toBe('cope')
+})
+
+test('a wrong letter is judged at once and stays as the last letter; the next letter replaces it', () => {
+  const answer = [...'cope']
+  expect(applyInput(['c'], 'cx', answer)).toEqual({ typed: ['c', 'x'], mistake: true })
+  // Typing on from the wrong letter replaces it, so nothing is ever typed beyond a wrong letter.
+  expect(applyInput(['c', 'x'], 'cxo', answer)).toEqual({ typed: ['c', 'o'], mistake: false })
+  expect(applyInput(['c', 'x'], 'cxz', answer)).toEqual({ typed: ['c', 'z'], mistake: true })
+  // Several letters at once (a paste) stop at the first wrong one.
+  expect(applyInput([], 'cxpe', answer)).toEqual({ typed: ['c', 'x'], mistake: true })
+  expect(applyInput(['c', 'x'], 'c', answer)).toEqual({ typed: ['c'], mistake: false })
+})
+
+test('a keyboard still building a word is read as it stands, letter by letter', () => {
+  const answer = [...'cope']
+  expect(applyInput([], "c", answer, true)).toEqual({ typed: ['c'], mistake: false })
+  expect(applyInput(['c'], "c'x", answer, true)).toEqual({ typed: ['c', 'x'], mistake: true })
+  expect(applyInput(['c', 'x'], "c'xe", answer, true)).toEqual({ typed: ['c', 'x'], mistake: false })
 })
 
 test('stars fall with mistakes and shown letters, never below one for a spelled word, and a skip earns none', () => {

@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.5.1] - 2026-11-07
+
+### Fixed
+
+- **Spell it judges each letter as you type it**, also on keyboards that build a word before they commit it (the field no longer waits for the whole word). A wrong letter and its line turn red at once and stay; the next letter you type takes its place, so you can type again without Backspace (nothing is ever typed beyond a wrong letter).
+- **Spell it makes its sounds on a phone**: the ding for a finished word and the buzz for a wrong letter were blocked because a typed letter is not a press. The sound is now unlocked by the presses before it (Start, Next, Show a letter, a tap on the letters).
+
 ## [1.5.0] - 2026-11-07
 
 ### Added

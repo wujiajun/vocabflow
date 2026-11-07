@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackLink } from '../../../shared/BackLink'
-import { playRight, playWrong } from '../../../shared/sound/effects'
+import { playRight, playWrong, unlockGameSound } from '../../../shared/sound/effects'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -118,7 +118,10 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
     return (
       <GameStart
         icon="✍️"
-        onStart={() => setStarted(true)}
+        onStart={() => {
+          unlockGameSound()
+          setStarted(true)
+        }}
         text={`${items.length} of today’s words, one at a time. Hear the word, read what it means, and spell it letter by letter. A wrong letter turns red until you fix it.`}
         title="Ready to spell?"
       />
@@ -221,18 +224,15 @@ function Word({
     }
   }
 
-  function type(value: string) {
+  function type(value: string, composing: boolean) {
     if (finished) {
       return
     }
-    const next = applyInput(typed, value, answer.length)
-    if (next.length > typed.length) {
-      const added = check(answer, next).slice(typed.length)
-      const wrong = added.filter((right) => !right).length
-      if (wrong > 0) {
-        setMistakes((current) => current + wrong)
-        playWrong()
-      }
+    // Judged at once: the letter just typed is red (with its line) the moment it is wrong.
+    const { typed: next, mistake } = applyInput(typed, value, answer, composing)
+    if (mistake) {
+      setMistakes((current) => current + 1)
+      playWrong()
     }
     finish(next)
   }
@@ -324,7 +324,10 @@ function Word({
 
       {!finished ? (
         <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-          <button className={secondaryButton} onClick={showLetter} onMouseDown={(event) => event.preventDefault()} type="button">
+          <button className={secondaryButton} onClick={() => {
+              unlockGameSound()
+              showLetter()
+            }} onMouseDown={(event) => event.preventDefault()} type="button">
             Show a letter (−1 ⭐)
           </button>
           <button className={secondaryButton} onClick={skip} onMouseDown={(event) => event.preventDefault()} type="button">
@@ -349,7 +352,10 @@ function Word({
         {finished ? (
           <button
             className={`mt-2 w-full ${gamePrimaryButton}`}
-            onClick={() => onDone({ term: item.term, stars: earned, skipped })}
+            onClick={() => {
+              unlockGameSound()
+              onDone({ term: item.term, stars: earned, skipped })
+            }}
             type="button"
           >
             {last ? 'See results' : 'Next'}

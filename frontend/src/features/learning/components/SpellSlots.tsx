@@ -1,4 +1,5 @@
-import type { RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
+import { unlockGameSound } from '../../../shared/sound/effects'
 import { check, type Slot } from './spelling'
 
 // One underlined place per letter. A real text field lies invisibly over them, so a tap anywhere on the slots
@@ -22,8 +23,12 @@ export function SpellSlots({
   done: boolean
   label: string
   inputRef: RefObject<HTMLInputElement | null>
-  onType: (value: string) => void
+  onType: (value: string, composing: boolean) => void
 }) {
+  // While a keyboard builds a word (composition) the field keeps its own text: giving it another would end the
+  // composition and the letters would only arrive when it ends.
+  const composing = useRef(false)
+  const [raw, setRaw] = useState<string | null>(null)
   const right = check(answer, typed)
   // The place of each letter slot among the letters, so a slot knows which typed letter is its own.
   const places = slots.map((_, index) => slots.slice(0, index).filter((slot) => slot.kind === 'letter').length)
@@ -86,13 +91,27 @@ export function SpellSlots({
         className="absolute inset-0 h-full w-full cursor-text opacity-0"
         enterKeyHint="done"
         inputMode="text"
-        onChange={(event) => onType(event.target.value)}
+        onChange={(event) => {
+          setRaw(composing.current ? event.target.value : null)
+          onType(event.target.value, composing.current)
+        }}
+        onCompositionEnd={(event) => {
+          composing.current = false
+          setRaw(null)
+          onType(event.currentTarget.value, false)
+        }}
+        onCompositionStart={() => {
+          composing.current = true
+        }}
+        // A tap is a press; the sound after a typed letter is allowed only once there has been one.
+        onClick={unlockGameSound}
+        onTouchEnd={unlockGameSound}
         readOnly={done || revealed}
         ref={inputRef}
         spellCheck={false}
         style={{ fontSize: '16px' }}
         type="text"
-        value={typed.join('')}
+        value={raw ?? typed.join('')}
       />
     </div>
   )
