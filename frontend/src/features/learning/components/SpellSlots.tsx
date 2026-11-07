@@ -28,13 +28,22 @@ export function SpellSlots({
   // The place of each letter slot among the letters, so a slot knows which typed letter is its own.
   const places = slots.map((_, index) => slots.slice(0, index).filter((slot) => slot.kind === 'letter').length)
 
+  const words: { slot: Slot; index: number }[][] = [[]]
+  slots.forEach((slot, index) => {
+    if (slot.kind === 'gap') {
+      words.push([])
+    } else {
+      words[words.length - 1].push({ slot, index })
+    }
+  })
+
   return (
     <div className="relative scroll-mb-48">
-      <div aria-hidden="true" className="flex flex-wrap justify-center gap-x-1 gap-y-3">
-        {slots.map((slot, index) => {
-          if (slot.kind === 'gap') {
-            return <span className="w-4" key={index} />
-          }
+      <div aria-hidden="true" className="flex flex-wrap justify-center gap-x-5 gap-y-3">
+        {words.map((word, wordIndex) => (
+          // A word stays on one line when it fits; only one longer than the screen breaks.
+          <div className="flex max-w-full flex-wrap justify-center gap-x-1 gap-y-3" key={wordIndex}>
+            {word.map(({ slot, index }) => {
           if (slot.kind === 'fixed') {
             return (
               <span className="flex h-11 w-4 items-end justify-center pb-1 text-2xl font-bold text-slate-500" key={index}>
@@ -65,7 +74,9 @@ export function SpellSlots({
               {shown.toLowerCase()}
             </span>
           )
-        })}
+            })}
+          </div>
+        ))}
       </div>
       <input
         aria-label={label}
