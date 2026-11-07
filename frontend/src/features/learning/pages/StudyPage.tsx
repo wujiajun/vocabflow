@@ -5,6 +5,7 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { StudyCardView } from '../components/StudyCardView'
 import { StudyComplete } from '../components/StudyComplete'
 import { StudyProgress } from '../components/StudyProgress'
+import { TodayTasksCard } from '../../tasks/components/TodayTasksCard'
 import { useStudyQueue } from '../hooks/useStudy'
 
 export function StudyPage() {
@@ -16,6 +17,7 @@ export function StudyPage() {
   return (
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Study</h1>
+      <TodayTasksCard compact={reviewedAny && queue.data?.nextCard != null} date={date} />
       {queue.isPending ? (
         <p className="mt-6 text-sm text-slate-600" role="status">
           Loading your cards…

@@ -31,6 +31,12 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
 
   Optional<UserVocabularyEntity> findByIdAndUserId(Long id, Long userId);
 
+  int countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+      Long userId, java.time.Instant from, java.time.Instant to);
+
+  int countByUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThanAndSourceLinkStartingWith(
+      Long userId, java.time.Instant from, java.time.Instant to, String prefix);
+
   boolean existsByItem_Id(Long itemId);
 
   List<UserVocabularyEntity> findByItem_Id(Long itemId);

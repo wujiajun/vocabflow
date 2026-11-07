@@ -1,0 +1,51 @@
+// The server's task types. The card writes the title of each from these.
+export type TaskType =
+  | 'STUDY_PLAN'
+  | 'RATE_CARDS'
+  | 'CLEAR_REVIEWS'
+  | 'ADD_WORDS'
+  | 'ADD_WORD_FROM_ARTICLE'
+  | 'READ_ARTICLE'
+  | 'WATCH_VIDEO'
+  | 'PLAY_ROUND'
+  | 'PLAY_GAME'
+  | 'STARS_ROUND'
+
+export interface DailyTask {
+  key: string
+  type: TaskType
+  category: string
+  // The practice game of a PLAY_GAME task, else null.
+  game: string | null
+  target: number
+  current: number
+  points: number
+  completed: boolean
+  completedAt: string | null
+}
+
+export interface TaskDay {
+  date: string
+  tasks: DailyTask[]
+  allDone: boolean
+  earnedToday: number
+  balance: number
+  streak: number
+  bestStreak: number
+}
+
+export interface LedgerLine {
+  date: string
+  key: string
+  amount: number
+  reason: string
+  createdAt: string
+}
+
+export interface LedgerPage {
+  entries: LedgerLine[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface GameRoundJpaRepository extends JpaRepository<GameRoundEntity, Long> {
+  java.util.List<GameRoundEntity> findByUserIdAndStudyDate(Long userId, LocalDate studyDate);
+
   int countByUserIdAndStudyDate(Long userId, LocalDate studyDate);
 
   @Query(

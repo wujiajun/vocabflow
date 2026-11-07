@@ -16,6 +16,7 @@ import { SpellItPage } from '../../features/learning/pages/SpellItPage'
 import { ListenChoosePage } from '../../features/learning/pages/ListenChoosePage'
 import { QuickReviewPage } from '../../features/learning/pages/QuickReviewPage'
 import { StudyPage } from '../../features/learning/pages/StudyPage'
+import { PointsHistoryPage } from '../../features/tasks/pages/PointsHistoryPage'
 import { SettingsPage } from '../../features/settings/pages/SettingsPage'
 import { VocabularyDetailPage } from '../../features/vocabulary/pages/VocabularyDetailPage'
 import { VocabularyPage } from '../../features/vocabulary/pages/VocabularyPage'
@@ -65,6 +66,7 @@ export function AppRouter() {
         <Route path="study/fill" element={<FillBlankPage />} />
         <Route path="study/listen" element={<ListenChoosePage />} />
         <Route path="study/spell" element={<SpellItPage />} />
+        <Route path="points" element={<PointsHistoryPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/app/study" replace />} />
       </Route>

@@ -50,7 +50,19 @@ let unexpectedRequests: string[] = []
 
 // Routes are keyed "METHOD /path"; a request with no route is recorded so tests fail loudly
 // instead of the UI quietly rendering a network error.
-export function stubApi(routes: Record<string, RouteHandler>) {
+export const emptyTaskDay = {
+  date: '2026-11-01',
+  tasks: [],
+  allDone: false,
+  earnedToday: 0,
+  balance: 0,
+  streak: 0,
+  bestStreak: 0,
+}
+
+export function stubApi(given: Record<string, RouteHandler>) {
+  // Most tests are not about the daily tasks: unless one says otherwise, the day has none.
+  const routes: Record<string, RouteHandler> = { 'GET /api/v1/tasks/today': () => jsonResponse(emptyTaskDay), ...given }
   unexpectedRequests = []
   const fetchMock = vi.fn(async (input: string, init: RequestInit = {}) => {
     const url = new URL(input, 'http://localhost')
