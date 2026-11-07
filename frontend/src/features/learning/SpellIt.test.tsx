@@ -71,22 +71,22 @@ async function start() {
   return browserUser
 }
 
-test('the study-complete page offers the game with four words studied', async () => {
-  stubApi(routes(3))
+test('the study-complete page offers the game with five words studied', async () => {
+  stubApi(routes(4))
   renderApp('/app/study')
   await screen.findByRole('heading', { name: 'Today’s study is complete' })
   expect(screen.queryByRole('link', { name: 'Spell it' })).not.toBeInTheDocument()
   cleanup()
 
-  stubApi(routes(4))
+  stubApi(routes(5))
   renderApp('/app/study')
   expect(await screen.findByRole('link', { name: 'Spell it' })).toHaveAttribute('href', '/app/study/spell')
 })
 
-test('with fewer than four words it says how many to study', async () => {
-  stubApi(routes(3))
+test('with fewer than five words it says how many to study', async () => {
+  stubApi(routes(4))
   renderApp('/app/study/spell')
-  expect(await screen.findByText(/Study at least 4 words today/)).toBeInTheDocument()
+  expect(await screen.findByText(/Study at least 5 words, today or in the last 7 days/)).toBeInTheDocument()
 })
 
 test('shows a slot per letter, turns a wrong letter red until it is fixed, and finishes with stars', async () => {

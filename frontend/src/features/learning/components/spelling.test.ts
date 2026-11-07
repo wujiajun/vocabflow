@@ -76,12 +76,13 @@ test('only completed words with a meaning are played, with the meaning’s hook 
     entry(4, 'deposit'),
     entry(5, 'rent', {}, 'PENDING'),
     entry(6, 'a'),
+    entry(7, 'lease'),
   ]
-  expect(pickSpellWords(entries).map((word) => word.id).sort()).toEqual([1, 2, 3, 4])
+  expect(pickSpellWords(entries).map((word) => word.id).sort()).toEqual([1, 2, 3, 4, 7])
   const items = buildSpellItems(entries)
   const cope = items.find((item) => item.id === 1)!
   expect(cope.definition).toBe('_____ means number 1.')
   expect(cope.scene).toBe('She can _____ with it.')
   expect(cope.emoji).toBe('🧗')
-  expect(buildSpellItems(entries.slice(0, 3))).toEqual([])
+  expect(buildSpellItems(entries.slice(0, 4))).toEqual([])
 })

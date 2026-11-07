@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { hasEnoughWords, minGameWords, notEnoughWords, pickGameWordIds } from '../gameWords'
 import { BackLink } from '../../../shared/BackLink'
 import { playRight, playWrong, unlockGameSound } from '../../../shared/sound/effects'
 import { isSpeechSupported, speakText } from '../../../shared/speech/pronunciation'
@@ -8,7 +9,6 @@ import { useUserToday } from '../../auth/hooks/useUserToday'
 import { useVocabularyDetails } from '../../vocabulary/hooks/useVocabulary'
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
 import { GameProgress, GameStart, ScorePills, Stars, gamePrimaryButton } from '../components/GameParts'
-import { shuffle } from '../components/matching'
 import { SpellSlots } from '../components/SpellSlots'
 import {
   applyInput,
@@ -17,16 +17,12 @@ import {
   isComplete,
   isFull,
   lettersOf,
-  minSpellWords,
   slotsFor,
   starsFor,
   type SpellItem,
 } from '../components/spelling'
 import { useStudyQueue } from '../hooks/useStudy'
-import type { StudiedWord } from '../types/study'
-
-// A few words may turn out to have no usable meaning, so a little more than the game needs is fetched.
-const wordsToFetch = 10
+import type { StudyQueue } from '../types/study'
 
 const studyPage = { path: '/app/study', label: 'Back to study' }
 
@@ -46,16 +42,16 @@ export function SpellItPage() {
       <div className="mt-3">
         {queue.isPending ? (
           <p className="text-sm text-slate-600" role="status">
-            Loading today’s words…
+            Loading your words…
           </p>
         ) : queue.isError ? (
           <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-            {authErrorMessage(queue.error, 'Unable to load today’s words.')}
+            {authErrorMessage(queue.error, 'Unable to load your words.')}
           </p>
-        ) : queue.data.studiedToday.length < minSpellWords ? (
+        ) : !hasEnoughWords(queue.data) ? (
           <NotEnough />
         ) : (
-          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} studied={queue.data.studiedToday} />
+          <Loaded key={game} onAgain={() => setGame((current) => current + 1)} queue={queue.data} />
         )}
       </div>
     </div>
@@ -65,13 +61,13 @@ export function SpellItPage() {
 function NotEnough() {
   return (
     <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
-      Study at least {minSpellWords} words today to practise this.
+      {notEnoughWords}
     </p>
   )
 }
 
-function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => void }) {
-  const [ids] = useState(() => shuffle(studied).slice(0, wordsToFetch).map((word) => word.userVocabularyId))
+function Loaded({ queue, onAgain }: { queue: StudyQueue; onAgain: () => void }) {
+  const [ids] = useState(() => pickGameWordIds(queue))
   const details = useVocabularyDetails(ids)
 
   if (details.some((detail) => detail.isPending)) {
@@ -87,7 +83,7 @@ function Loaded({ studied, onAgain }: { studied: StudiedWord[]; onAgain: () => v
     const failure = details.find((detail) => detail.isError)
     return (
       <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-        {authErrorMessage(failure?.error, 'Unable to load today’s words.')}
+        {authErrorMessage(failure?.error, 'Unable to load your words.')}
       </p>
     )
   }
@@ -107,10 +103,10 @@ function Game({ entries, onAgain }: { entries: VocabularyEntry[]; onAgain: () =>
   const [position, setPosition] = useState(0)
   const [results, setResults] = useState<Result[]>([])
 
-  if (items.length < minSpellWords) {
+  if (items.length < minGameWords) {
     return (
       <p className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
-        Today’s words do not have {minSpellWords} that can be spelled with a meaning yet. Study a few more words and try again.
+        Your words do not have {minGameWords} that can be spelled with a meaning yet. Study a few more words and try again.
       </p>
     )
   }

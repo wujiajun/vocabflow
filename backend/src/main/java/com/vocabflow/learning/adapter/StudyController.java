@@ -83,7 +83,8 @@ public class StudyController {
       int goalShortfall,
       boolean finished,
       boolean moreNewWords,
-      List<StudiedWord> studiedToday) {}
+      List<StudiedWord> studiedToday,
+      List<StudiedWord> recentlyStudied) {}
 
   @GetMapping("/study-queue")
   public QueueResponse queue(
@@ -125,10 +126,14 @@ public class StudyController {
         queue.goalShortfall(),
         queue.finished(),
         queue.moreNewWords(),
-        queue.studiedToday().stream()
-            .map(
-                word -> new StudiedWord(word.userVocabularyId(), word.term(), word.status().name()))
-            .toList());
+        mapWords(queue.studiedToday()),
+        mapWords(queue.recentlyStudied()));
+  }
+
+  private static List<StudiedWord> mapWords(List<StudyQueue.StudiedWord> words) {
+    return words.stream()
+        .map(word -> new StudiedWord(word.userVocabularyId(), word.term(), word.status().name()))
+        .toList();
   }
 
   private Card map(StudyQueue.NextCard next) {

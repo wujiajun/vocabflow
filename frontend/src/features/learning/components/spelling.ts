@@ -1,8 +1,7 @@
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
+import { minGameWords, wordsPerRound } from '../gameWords'
 import { maskTerm, shuffle } from './matching'
 
-export const minSpellWords = 4
-export const maxSpellWords = 6
 
 // A slot is one place in the word: a letter to type, a mark that is filled in (apostrophe, hyphen), or the
 // gap between the words of a phrase.
@@ -99,13 +98,15 @@ export interface SpellItem {
   parts: string | null
 }
 
-// Which of today's words are played: the ones with something to spell and a meaning to show. Kept apart so that
-// the choice can change later (for example to start with the hard words).
+// Which words are played: the first ones, in the order given, with something to spell and a meaning to show. Kept
+// apart so that the choice can change later.
 export function pickSpellWords(entries: readonly VocabularyEntry[], random: () => number = Math.random): VocabularyEntry[] {
   return shuffle(
-    entries.filter((entry) => entry.enrichmentStatus === 'COMPLETED' && lettersOf(entry.term).length >= 2 && hasMeaning(entry)),
+    entries
+      .filter((entry) => entry.enrichmentStatus === 'COMPLETED' && lettersOf(entry.term).length >= 2 && hasMeaning(entry))
+      .slice(0, wordsPerRound),
     random,
-  ).slice(0, maxSpellWords)
+  )
 }
 
 function hasMeaning(entry: VocabularyEntry) {
@@ -114,7 +115,7 @@ function hasMeaning(entry: VocabularyEntry) {
 
 export function buildSpellItems(entries: readonly VocabularyEntry[], random: () => number = Math.random): SpellItem[] {
   const picked = pickSpellWords(entries, random)
-  if (picked.length < minSpellWords) {
+  if (picked.length < minGameWords) {
     return []
   }
 

@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 public class StudyService {
   // As in Anki: with nothing else left, a learning step this close is shown early instead of making
   // the learner wait for it.
+  /** How far back the practice games look for words when today has too few. */
+  public static final int RECENT_DAYS = 7;
+
   static final Duration LEARN_AHEAD = Duration.ofMinutes(20);
 
   private final CurrentDailyPlan plans;
@@ -111,7 +114,31 @@ public class StudyService {
         target - planned.size(),
         plan.finishedAt() != null,
         growth.hasNewWordsBeyond(plan),
-        studiedToday);
+        studiedToday,
+        recentlyStudied(userId, date, studiedToday));
+  }
+
+  /**
+   * Words rated in the {@value #RECENT_DAYS} days before {@code date}, latest first, without those
+   * rated today and without words whose details are not complete.
+   */
+  private List<StudyQueue.StudiedWord> recentlyStudied(
+      long userId, LocalDate date, List<StudyQueue.StudiedWord> today) {
+    Set<Long> skip = new HashSet<>();
+    today.forEach(word -> skip.add(word.userVocabularyId()));
+    List<Long> ids =
+        cards.findStudiedBetween(userId, date.minusDays(RECENT_DAYS), date.minusDays(1)).stream()
+            .filter(id -> !skip.contains(id))
+            .toList();
+    Map<Long, StudyContent> contents = vocabulary.findStudyContent(userId, ids);
+    Map<Long, StoredCard> stored = cards.findByUserVocabularyIds(userId, ids);
+    return ids.stream()
+        .filter(id -> studyable(contents.get(id)) && stored.containsKey(id))
+        .map(
+            id ->
+                new StudyQueue.StudiedWord(
+                    id, contents.get(id).term(), stored.get(id).card().learningStatus()))
+        .toList();
   }
 
   private List<StudyQueue.StudiedWord> studiedToday(long userId, LocalDate date) {

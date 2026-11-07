@@ -1,4 +1,6 @@
 import type { VocabularyEntry } from '../../vocabulary/types/vocabulary'
+import { wordsPerRound } from '../gameWords'
+import { shuffle } from '../shuffle'
 
 export interface MatchPair {
   id: number
@@ -12,19 +14,10 @@ export interface MatchPair {
 
 // Words in a round, and words in a game: the game is one or two rounds.
 export const roundSize = 5
-export const maxPairs = 10
-export const minPairs = 5
 // Characters: about two lines on a phone.
 const shortMeaning = 90
 
-export function shuffle<T>(items: readonly T[], random: () => number = Math.random): T[] {
-  const result = [...items]
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const other = Math.floor(random() * (index + 1))
-    ;[result[index], result[other]] = [result[other], result[index]]
-  }
-  return result
-}
+export { shuffle }
 
 const blank = '_____'
 
@@ -98,9 +91,9 @@ export function buildPairs(entries: readonly VocabularyEntry[], random: () => nu
   return pairs
 }
 
-// Up to ten words in as few rounds as hold them, shared out evenly (7 words are 4 and 3, never 5 and 2).
+// Up to `wordsPerRound` words in as few rounds as hold them, shared out evenly (7 words are 4 and 3, never 5 and 2).
 export function planRounds(pairs: readonly MatchPair[]): MatchPair[][] {
-  const chosen = pairs.slice(0, maxPairs)
+  const chosen = pairs.slice(0, wordsPerRound)
   const rounds = Math.ceil(chosen.length / roundSize)
   const plan: MatchPair[][] = []
   let start = 0

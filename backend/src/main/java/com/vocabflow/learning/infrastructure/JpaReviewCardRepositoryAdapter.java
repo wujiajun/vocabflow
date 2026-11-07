@@ -119,6 +119,11 @@ public class JpaReviewCardRepositoryAdapter implements ReviewCardRepository {
     return logs.findStudiedOn(userId, date);
   }
 
+  @Override
+  public List<Long> findStudiedBetween(long userId, LocalDate from, LocalDate to) {
+    return logs.findStudiedBetween(userId, from, to);
+  }
+
   private void copy(ReviewCard card, LearningCardEntity entity) {
     entity.state = card.state().name();
     entity.stepIndex = card.stepIndex();
