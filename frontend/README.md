@@ -49,7 +49,7 @@ src/
   features/
     auth/                     sign in, register, current user and its settings, route guards
     vocabulary/               add form, paginated list, detail page, meanings (tabs), tap-to-add panel
-    learning/                 study page, flashcards, today's progress, the finished page, the Quick review game
+    learning/                 study page, flashcards, today's progress, the finished page, the Quick review game and the other practice games
     reading/                  reading passages: write, list, read, read aloud
     settings/                 CLB level, time zone, daily goal, per-device switches
       <feature>/{api,hooks,components,pages,types}
@@ -79,6 +79,7 @@ New features go under `src/features/<name>/` with the same layout. Data flows pa
 | `/app/settings` | CLB level, time zone and daily new vocabulary goal (one Save), and, where the browser can speak, the per-device switch “Read the word aloud when I show the answer” |
 | `/app/study` | The home page. Today's progress and flashcards: reveal the answer (the word is read aloud once unless switched off), then rate it Again, Hard, Good or Easy. When nothing is due it lists what was studied (folded until opened) and offers another batch of new words; when the day's study is complete it also offers to write today's reading passage, or to open it if it is written |
 | `/app/study/review` | The “Quick review” matching game, offered on the study-complete page once five words were studied: drag each of today's words onto its meaning (or tap a word, then a meaning). Practice only, nothing is saved |
+| `/app/study/spell` | The “Spell it” game, offered on the study-complete page once four words were studied: hear a word, read its meaning, open its memory hook if needed, and type it letter by letter into underlined slots; wrong letters turn red until fixed. Practice only. |
 | `/app/reading` | The reading passages, newest first, with a clear Unread mark; filter `?show=unread/read` and `?page=N` |
 | `/app/reading/writing?date=` | Where the learner waits while today's passage is written (one request, then it replaces itself with the passage) |
 | `/app/reading/:id` | One passage: the studied words are highlighted, every other word can be tapped to add it, Listen / Pause / Resume / Stop reads it aloud, Mark as read |

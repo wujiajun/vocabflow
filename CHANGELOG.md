@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.5.0] - 2026-11-07
+
+### Added
+
+- **"Spell it" game**: a fourth practice game on the study-complete page (✍️, from four words studied). You hear a word, read its meaning (with the word hidden) and can open its memory hook; you never see the word. Type it into one underlined slot per letter (a phrase shows a gap; apostrophes and hyphens are filled in; capitals do not matter). A wrong letter and its line turn red and stay until you delete it, and the word is finished only when every letter is right. Each word is worth up to 3 stars (a wrong letter or "Show a letter" costs a star, never below 1; "Skip" earns none); a round is up to 6 of today's words. Practice only: nothing is sent and the review schedule is untouched. Frontend only.
+
 ## [1.4.1] - 2026-11-06
 
 ### Changed
