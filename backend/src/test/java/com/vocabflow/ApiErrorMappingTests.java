@@ -117,7 +117,7 @@ class ApiErrorMappingTests {
   void unexpectedExceptionReturnsInternalErrorAndLogsStackTrace(CapturedOutput output)
       throws Exception {
     String token = token("mapping-internal@example.com");
-    when(vocabularyService.list(anyLong(), anyInt(), anyInt(), any(), any()))
+    when(vocabularyService.list(anyLong(), anyInt(), anyInt(), any(), any(), any()))
         .thenThrow(new IllegalStateException("boom-secret-detail"));
 
     String body =

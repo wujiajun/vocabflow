@@ -20,6 +20,9 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
        where u.userId = :userId
          and (:status is null or u.learningStatus = :status)
          and (:anyId = true or u.id in :ids)
+         and (:anySearch = true
+              or lower(u.item.term) like :pattern escape '!'
+              or u.item.normalizedTerm like :pattern escape '!')
        order by u.createdAt desc, u.id desc
       """)
   Page<UserVocabularyEntity> findFiltered(
@@ -27,6 +30,8 @@ public interface UserVocabularyJpaRepository extends JpaRepository<UserVocabular
       @Param("status") String status,
       @Param("anyId") boolean anyId,
       @Param("ids") Collection<Long> ids,
+      @Param("anySearch") boolean anySearch,
+      @Param("pattern") String pattern,
       Pageable pageable);
 
   Optional<UserVocabularyEntity> findByIdAndUserId(Long id, Long userId);

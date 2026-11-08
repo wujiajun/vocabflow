@@ -117,9 +117,9 @@ public class VocabularyController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) LearningStatus status,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate due) {
-    VocabularyPage result = service.list(userId, page, size, status, due);
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate due,
+      @RequestParam(required = false) String q) {
+    VocabularyPage result = service.list(userId, page, size, status, due, q);
     return new PageResponse(
         result.content().stream().map(this::map).toList(),
         result.page(),
