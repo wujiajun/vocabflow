@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
+import { backState } from '../../../shared/navigation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { useUserToday } from '../../auth/hooks/useUserToday'
 import { authErrorMessage } from '../../auth/components/AuthError'
@@ -18,6 +20,9 @@ export function StudyPage() {
     <div>
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Study</h1>
       <TodayTasksCard compact={reviewedAny && queue.data?.nextCard != null} date={date} />
+      <Link className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline underline-offset-4" state={backState('/app/study', 'Back to study')} to="/app/progress">
+        <span aria-hidden="true">📈&nbsp;</span>My progress
+      </Link>
       {queue.isPending ? (
         <p className="mt-6 text-sm text-slate-600" role="status">
           Loading your cards…

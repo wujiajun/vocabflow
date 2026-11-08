@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.11.0] - 2026-11-08
+
+### Added
+
+- **My progress**: a new page (Study page, under Today's tasks, "My progress"; `/app/progress`) shows how far you have come. From the top: three big numbers (words learned, words mastered, days in a row, with the best run), and how many words are still being learned; a bar to the next goal of mastered words (50, 100, 250, 500, 1000) that says how many more words are left; a study calendar of the last 12 weeks, one square per day, darker for more cards studied, where tapping a day shows the cards reviewed, new words learned, game rounds played and points earned on it; and the last 7 days against the 7 days before for cards reviewed, new words and game rounds, with ▲ and ▼ for the change. A word is **mastered** when its review interval is 21 days or more (Anki's "mature"); only words whose details are complete are counted. Days are the learner's study days (their time zone). The numbers refresh after a rating, a game round or any other save. Nothing is compared with other learners and the goals give no points.
+- **API**: `GET /api/v1/progress/summary?date=&zone=` (read-only, the signed-in user's own data; the date and zone follow the same rules as `GET /api/v1/tasks/today`). The streak is the one the daily tasks count. No migration.
+
 ## [1.10.0] - 2026-11-08
 
 ### Added
