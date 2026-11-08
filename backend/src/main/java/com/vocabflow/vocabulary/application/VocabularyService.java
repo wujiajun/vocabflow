@@ -136,19 +136,33 @@ public class VocabularyService {
   }
 
   public VocabularyPage list(long userId, int page, int size) {
-    return list(userId, page, size, null, null);
+    return list(userId, page, size, null, null, null);
   }
 
-  /** {@code dueOn} keeps only words to study by that day; {@code status} keeps only that status. */
   public VocabularyPage list(
       long userId, int page, int size, LearningStatus status, LocalDate dueOn) {
+    return list(userId, page, size, status, dueOn, null);
+  }
+
+  /**
+   * {@code dueOn} keeps only words to study by that day; {@code status} keeps only that status;
+   * {@code search} keeps only words containing that text.
+   */
+  public VocabularyPage list(
+      long userId, int page, int size, LearningStatus status, LocalDate dueOn, String search) {
     int safePage = Math.max(page, 0);
     int safeSize = Math.min(Math.max(size, 1), 100);
-    if (status == null && dueOn == null) {
+    boolean noSearch = search == null || search.isBlank();
+    if (status == null && dueOn == null && noSearch) {
       return userItems.findByUserId(userId, safePage, safeSize);
     }
     return userItems.findFiltered(
-        userId, status, dueOn == null ? null : due.findDueIds(userId, dueOn), safePage, safeSize);
+        userId,
+        status,
+        dueOn == null ? null : due.findDueIds(userId, dueOn),
+        noSearch ? null : search,
+        safePage,
+        safeSize);
   }
 
   public UserVocabulary detail(long userId, long id) {

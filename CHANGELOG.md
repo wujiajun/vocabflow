@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.10.0] - 2026-11-08
+
+### Added
+
+- **Search your vocabulary**: the Vocabulary page has a search box above the lists. It finds the words that contain what you type anywhere in them (`chee` finds *cheese* and *purchase*), ignoring capitals and spaces around the text, and it works together with the list you chose (All, Due today, New, …) and with the pages. It looks only at the word or phrase itself, not at its meaning or Chinese. The search waits about 0.3 s after you stop typing, goes into the address (`?q=`) so a reload or a shared link keeps it, replaces the history step instead of adding one, and starts again from the first page. A × button clears it; with no match the page says so and offers to clear the search. `%`, `_` and `\` are searched as ordinary characters. Adding a word clears the search, like the lists.
+- **API**: `GET /api/v1/vocabulary` takes an optional `q` (up to 100 characters; a blank one means no search), applied to the signed-in user's own words together with `status`, `due`, `page` and `size`. No migration.
+
 ## [1.9.0] - 2026-11-08
 
 ### Added

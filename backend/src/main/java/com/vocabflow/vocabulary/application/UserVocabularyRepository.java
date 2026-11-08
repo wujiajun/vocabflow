@@ -11,9 +11,12 @@ public interface UserVocabularyRepository {
 
   VocabularyPage findByUserId(long userId, int page, int size);
 
-  /** Entries with this status, if given, and among these ids, if given; newest first. */
+  /**
+   * Entries with this status, if given, among these ids, if given, whose word contains {@code
+   * search} (case-insensitive, taken literally), if given; newest first.
+   */
   VocabularyPage findFiltered(
-      long userId, LearningStatus status, Collection<Long> ids, int page, int size);
+      long userId, LearningStatus status, Collection<Long> ids, String search, int page, int size);
 
   Optional<UserVocabulary> findByIdAndUserId(long id, long userId);
 

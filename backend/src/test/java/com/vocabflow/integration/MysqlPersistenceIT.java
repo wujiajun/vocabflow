@@ -157,6 +157,29 @@ class MysqlPersistenceIT extends MysqlIntegrationTest {
   }
 
   @Test
+  void searchTreatsLikeWildcardsAsLiteralCharactersInMysql() {
+    UserEntity user = users.saveAndFlush(user("search-like@example.com"));
+    for (String term : List.of("50% off", "snake_case", "a\\b", "alpha", "Cheese!")) {
+      userVocabularies.saveAndFlush(
+          userVocabulary(user.id, vocabularyItems.saveAndFlush(vocabularyItem(term))));
+    }
+
+    assertThat(search(user.id, "%")).containsExactly("50% off");
+    assertThat(search(user.id, "e_c")).containsExactly("snake_case");
+    assertThat(search(user.id, "\\")).containsExactly("a\\b");
+    assertThat(search(user.id, "!")).containsExactly("Cheese!");
+    assertThat(search(user.id, "CHEESE")).containsExactly("Cheese!");
+    assertThat(search(user.id, "al%")).isEmpty();
+    assertThat(search(user.id, "a_p")).isEmpty();
+  }
+
+  private List<String> search(long userId, String text) {
+    return userVocabularyRepository.findFiltered(userId, null, null, text, 0, 20).content().stream()
+        .map(entry -> entry.item().term().value())
+        .toList();
+  }
+
+  @Test
   void learningPersistenceUsesOldestNewVocabularyAndStablePlans() {
     UserEntity user = users.saveAndFlush(user("learning@example.com"));
     UserEntity otherUser = users.saveAndFlush(user("other-learning@example.com"));

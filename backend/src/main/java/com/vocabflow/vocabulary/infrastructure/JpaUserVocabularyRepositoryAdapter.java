@@ -57,14 +57,25 @@ public class JpaUserVocabularyRepositoryAdapter implements UserVocabularyReposit
 
   @Override
   public VocabularyPage findFiltered(
-      long userId, LearningStatus status, Collection<Long> ids, int page, int size) {
+      long userId, LearningStatus status, Collection<Long> ids, String search, int page, int size) {
+    boolean anySearch = search == null || search.isBlank();
     return page(
         userVocabularies.findFiltered(
             userId,
             status == null ? null : status.name(),
             ids == null,
             ids == null ? List.of(0L) : ids,
+            anySearch,
+            anySearch ? "" : likePattern(search),
             PageRequest.of(page, size)));
+  }
+
+  /** Contains-match on the lower-cased text; {@code !}, {@code %} and {@code _} are literal. */
+  static String likePattern(String search) {
+    String stripped = search.strip();
+    String text =
+        stripped.substring(0, Math.min(stripped.length(), 100)).toLowerCase(java.util.Locale.ROOT);
+    return "%" + text.replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
   }
 
   private VocabularyPage page(Page<UserVocabularyEntity> result) {
