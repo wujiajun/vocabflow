@@ -43,4 +43,15 @@ public interface ReviewLogJpaRepository extends JpaRepository<ReviewLogEntity, L
        group by r.userVocabularyId, r.rating
       """)
   List<Object[]> countRatings(@Param("userId") long userId, @Param("ids") Collection<Long> ids);
+
+  @Query(
+      """
+      select r.reviewDate, count(distinct r.userVocabularyId),
+             count(distinct case when r.stateBefore = 'NEW' then r.userVocabularyId else null end)
+        from ReviewLogEntity r
+       where r.userId = :userId and r.reviewDate between :from and :to
+       group by r.reviewDate
+      """)
+  List<Object[]> countCardsByDay(
+      @Param("userId") long userId, @Param("from") LocalDate from, @Param("to") LocalDate to);
 }
