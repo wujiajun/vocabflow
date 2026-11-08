@@ -307,6 +307,44 @@ class TaskApiTests {
   }
 
   @Test
+  void withoutAStoredZoneTheDevicesZoneSetsTheWindowOfTheDay() throws Exception {
+    String token = token("tasks-device@example.com");
+    long user = userId("tasks-device@example.com");
+    seed(user, TODAY, "STUDY_PLAN", null, "STUDY", 1, 10, 0);
+    seed(user, TODAY, "ADD_WORDS", null, "ADD_WORDS", 1, 3, 1);
+    // A word added 20 hours ago is yesterday for a UTC day only if the window starts later; put it
+    // just after the start of today in a zone far ahead of UTC.
+    java.time.ZoneId far = java.time.ZoneId.of("Pacific/Kiritimati");
+    Instant startOfDay = TODAY.atStartOfDay(far).toInstant().plusSeconds(60);
+    add(token, "device zone word");
+    jdbc.update(
+        "UPDATE user_vocabularies SET created_at = ? WHERE user_id = ?",
+        java.sql.Timestamp.from(startOfDay),
+        user);
+
+    String url = "/api/v1/tasks/today?date=" + TODAY;
+    JsonNode utcWindow =
+        json.readTree(
+            mvc.perform(get(url).header("Authorization", "Bearer " + token))
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+    JsonNode deviceWindow =
+        json.readTree(
+            mvc.perform(
+                    get(url + "&zone=Pacific/Kiritimati")
+                        .header("Authorization", "Bearer " + token))
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+
+    assertThat(utcWindow.path("tasks").get(1).path("completed").asBoolean()).isFalse();
+    assertThat(deviceWindow.path("tasks").get(1).path("completed").asBoolean()).isTrue();
+    mvc.perform(get(url + "&zone=Nowhere/Land").header("Authorization", "Bearer " + token))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void racingFirstReadsMakeOneList() throws Exception {
     String token = token("tasks-race@example.com");
     long user = userId("tasks-race@example.com");

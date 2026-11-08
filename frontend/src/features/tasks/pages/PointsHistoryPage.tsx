@@ -21,7 +21,10 @@ export function PointsHistoryPage() {
 
   return (
     <div>
-      <BackLink fallback={{ path: '/app/study', label: 'Back to study' }} />
+      <BackLink
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline underline-offset-4"
+        fallback={{ path: '/app/study', label: 'Back to study' }}
+      />
       <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">Points</h1>
       {ledger.isPending ? (
         <p className="mt-4 text-sm text-slate-600" role="status">

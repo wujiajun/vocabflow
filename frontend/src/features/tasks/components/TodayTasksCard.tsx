@@ -84,7 +84,7 @@ function SummaryLine({ day }: { day: TaskDay }) {
       <span>
         Total <strong>{day.balance}</strong> points
       </span>
-      <Link className="font-semibold text-indigo-700 underline underline-offset-4" state={backState('/app/study', 'Back to study')} to="/app/points">
+      <Link className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline underline-offset-4" state={backState('/app/study', 'Back to study')} to="/app/points">
         History
       </Link>
     </p>

@@ -60,11 +60,19 @@ public class TaskService {
   }
 
   public TaskDay day(long userId, LocalDate requestedDate) {
+    return day(userId, requestedDate, null);
+  }
+
+  /**
+   * @param deviceZone the device's IANA zone; used for the day's window only when the user has not
+   *     stored a zone, so evening work of a user in a far-from-UTC zone is counted on its own day
+   */
+  public TaskDay day(long userId, LocalDate requestedDate, String deviceZone) {
     User user =
         users
             .findById(userId)
             .orElseThrow(() -> new UnauthorizedException("User no longer exists"));
-    ZoneId zone = user.timeZone() == null ? ZoneOffset.UTC : user.timeZone();
+    ZoneId zone = user.timeZone() != null ? user.timeZone() : device(deviceZone);
     LocalDate utcToday = LocalDate.now(clock.withZone(ZoneOffset.UTC));
     LocalDate date = requestedDate == null ? LocalDate.now(clock.withZone(zone)) : requestedDate;
     if (Math.abs(ChronoUnit.DAYS.between(utcToday, date)) > 1) {
@@ -85,6 +93,17 @@ public class TaskService {
     DayActivity activity = activity(userId, zone, date);
     tasks = award(userId, date, tasks, activity);
     return view(userId, date, tasks, activity);
+  }
+
+  private static ZoneId device(String id) {
+    if (id == null || id.isBlank()) {
+      return ZoneOffset.UTC;
+    }
+    try {
+      return ZoneId.of(id);
+    } catch (java.time.DateTimeException invalid) {
+      throw new BadRequestException("Unknown time zone");
+    }
   }
 
   public PointLedger.Page ledger(long userId, int page, int size) {

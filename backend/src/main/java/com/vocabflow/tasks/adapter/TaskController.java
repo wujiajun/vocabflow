@@ -49,9 +49,9 @@ public class TaskController {
   @GetMapping("/today")
   public DayResponse today(
       @AuthenticationPrincipal Long userId,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate date) {
-    TaskDay day = service.day(userId, date);
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+      @RequestParam(required = false) String zone) {
+    TaskDay day = service.day(userId, date, zone);
     return new DayResponse(
         day.date(),
         day.tasks().stream()
