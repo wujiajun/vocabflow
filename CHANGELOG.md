@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.9.0] - 2026-11-08
+
+### Added
+
+- **Daily tasks, points and a streak**: the Study page now opens with "Today's tasks". The first task is always *finish today's study plan* (10 points); four more come from a pool, each worth 2 to 5 points, with a bar for the ones that take several steps. Tapping a task opens the place where it is done. A finished task shows a check, a ding (if game sounds are on) and a short message; finishing all of them adds 5 points. The line above the list shows the days in a row on which you finished the study plan (🔥), the points earned today and your total, and a link to the **Points** page that lists every award, newest first. Missing a day takes nothing away: the streak just starts again. Bonuses of 5, 10, 20 and 40 points come when the streak reaches 3, 7, 14 and 30 days (a new run can earn them again). Each account sees only its own tasks and points; redeeming points is not built yet.
+- **What the other tasks count** (all for your study day): rate N cards (N follows your daily goal, 5 to 30); clear every review that is due; add N words to your list (2 to 5); add a word by tapping it in an article; finish an article or today's own reading passage; watch one video to the end; play any practice round; play one named game; win 2 or more stars in a round. A task is offered only when it can be done today (no review task when nothing is due, no article task without an article for your level, no game task with fewer than 5 words to play), a kind you have not completed for longer is more likely, and no two tasks are of the same kind. The list is made when the day is first opened, is the same on every device, and does not change afterwards.
+- **API**: `GET /api/v1/tasks/today?date=` returns the day's tasks with progress, today's points, the balance and the streak (reading it makes the list, counts what was done and awards each finished task once); `GET /api/v1/tasks/ledger?page=&size=` pages the points ledger, newest first. Migration V19 adds `daily_task_days`, `daily_tasks` and `point_ledger`.
+
 ## [1.8.0] - 2026-11-07
 
 ### Added

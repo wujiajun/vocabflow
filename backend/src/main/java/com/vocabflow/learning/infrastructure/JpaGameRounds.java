@@ -32,6 +32,22 @@ public class JpaGameRounds implements GameRounds {
   }
 
   @Override
+  public java.util.List<GameRound> roundsOn(long userId, LocalDate date) {
+    return rounds.findByUserIdAndStudyDate(userId, date).stream()
+        .map(
+            e ->
+                new GameRound(
+                    e.userId,
+                    GameRound.Game.fromId(e.game).orElseThrow(),
+                    e.stars,
+                    e.mistakes,
+                    e.wordCount,
+                    e.studyDate,
+                    e.finishedAt))
+        .toList();
+  }
+
+  @Override
   public int bestStars(long userId, LocalDate date) {
     return rounds.bestStars(userId, date);
   }

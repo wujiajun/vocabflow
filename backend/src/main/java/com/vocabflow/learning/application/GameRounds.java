@@ -11,6 +11,9 @@ public interface GameRounds {
   /** How many rounds the user finished on the study date. */
   int countRounds(long userId, LocalDate date);
 
+  /** The rounds the user finished on the study date. */
+  java.util.List<GameRound> roundsOn(long userId, LocalDate date);
+
   /** The most stars any round of that study date earned; 0 when there was none. */
   int bestStars(long userId, LocalDate date);
 }
