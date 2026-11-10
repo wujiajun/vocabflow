@@ -123,7 +123,9 @@ public class TaskService {
             activity.dueReviews(),
             learning.gameWords(userId, date),
             articles.unreadArticleFor(userId, clb),
-            videos.unwatchedVideoFor(userId, clb));
+            videos.unwatchedVideoFor(userId, clb),
+            articles.unreadLongArticleFor(userId, clb, TaskRules.LONG_ARTICLE_MINUTES),
+            videos.unwatchedGrammarVideoFor(userId, clb));
     List<DailyTask> list = new ArrayList<>();
     list.add(new DailyTask(TaskType.STUDY_PLAN, null, 1, TaskType.STUDY_PLAN.points(), null));
     list.addAll(
@@ -147,7 +149,9 @@ public class TaskService {
         vocabulary.addedFromArticles(userId, from, to),
         articles.readBetween(userId, from, to) + passages.readBetween(userId, from, to),
         videos.watchedBetween(userId, from, to),
-        learning.rounds(userId, date));
+        learning.rounds(userId, date),
+        articles.readLongBetween(userId, from, to, TaskRules.LONG_ARTICLE_MINUTES),
+        videos.grammarWatchedBetween(userId, from, to));
   }
 
   /** Awards every finished task not yet awarded, then the day's bonuses; returns the new state. */
@@ -211,6 +215,14 @@ public class TaskService {
       case PLAY_ROUND -> "Played a game round";
       case PLAY_GAME -> "Played " + task.param();
       case STARS_ROUND -> "Won 2 stars in a round";
+      case READ_LONG_ARTICLE -> "Read a long article";
+      case WATCH_GRAMMAR_VIDEO -> "Watched a grammar video";
+      case SPELL_STARS -> "Won 3 stars in Spell it";
+      case PERFECT_ROUND -> "Played a round with no mistakes";
+      case DIFFERENT_GAMES -> "Played " + task.target() + " different games";
+      case CHALLENGE_GAMES -> "Challenge: 2 stars in 3 different games";
+      case CHALLENGE_PERFECT -> "Challenge: " + task.target() + " rounds with no mistakes";
+      case CHALLENGE_READ -> "Challenge: read 2 articles, one of them long";
     };
   }
 

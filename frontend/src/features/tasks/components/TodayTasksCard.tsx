@@ -106,6 +106,11 @@ function TaskRow({ task }: { task: DailyTask }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className={`block text-sm font-semibold ${task.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+            {task.challenge ? (
+              <span className="mr-2 inline-block rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-bold uppercase tracking-wide text-amber-900">
+                Challenge
+              </span>
+            ) : null}
             {taskTitle(task)}
             <span className="sr-only">{task.completed ? ' (done)' : ' (not done yet)'}</span>
           </span>

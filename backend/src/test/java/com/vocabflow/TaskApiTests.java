@@ -34,6 +34,8 @@ class TaskApiTests {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
   @Autowired JdbcTemplate jdbc;
+  @Autowired com.vocabflow.article.application.ArticleCatalog articleCatalog;
+  @Autowired com.vocabflow.video.application.VideoCatalog videoCatalog;
 
   @Test
   void aDayHasTheBaseTaskFirstThenDifferentCategoriesAndStaysTheSame() throws Exception {
@@ -124,6 +126,59 @@ class TaskApiTests {
 
     round(token, "spell-it", 1).andExpect(status().isCreated());
     assertThat(today(token).path("tasks").get(4).path("completed").asBoolean()).isTrue();
+  }
+
+  @Test
+  void longArticlesGrammarVideosAndGameDetailsAreCountedFromTheirData() throws Exception {
+    String token = token("tasks-new-kinds@example.com");
+    long user = userId("tasks-new-kinds@example.com");
+    seed(user, TODAY, "STUDY_PLAN", null, "STUDY", 1, 10, 0);
+    seed(user, TODAY, "READ_LONG_ARTICLE", null, "READING", 1, 5, 1);
+    seed(user, TODAY, "WATCH_GRAMMAR_VIDEO", null, "VIDEO", 1, 4, 2);
+    seed(user, TODAY, "PERFECT_ROUND", null, "GAMES", 1, 5, 3);
+    String shortId =
+        articleCatalog.albums().stream()
+            .flatMap(a -> a.articles().stream())
+            .filter(a -> a.readingMinutes() < 5)
+            .findFirst()
+            .orElseThrow()
+            .id();
+    String longId =
+        articleCatalog.albums().stream()
+            .flatMap(a -> a.articles().stream())
+            .filter(a -> a.readingMinutes() >= 5)
+            .findFirst()
+            .orElseThrow()
+            .id();
+    String grammarId = videoCatalog.album("voa-grammar").orElseThrow().videos().get(0).id();
+    String otherVideoId = videoCatalog.album("voa-lle-1").orElseThrow().videos().get(0).id();
+
+    mvc.perform(
+            put("/api/v1/articles/" + shortId + "/read").header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    mvc.perform(
+            put("/api/v1/videos/" + otherVideoId + "/watched")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    round(token, "spell-it", 3, 2).andExpect(status().isCreated());
+    JsonNode before = today(token);
+    assertThat(before.path("tasks").get(1).path("completed").asBoolean()).as("short").isFalse();
+    assertThat(before.path("tasks").get(2).path("completed").asBoolean()).as("other").isFalse();
+    assertThat(before.path("tasks").get(3).path("completed").asBoolean()).as("mistakes").isFalse();
+
+    mvc.perform(
+            put("/api/v1/articles/" + longId + "/read").header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    mvc.perform(
+            put("/api/v1/videos/" + grammarId + "/watched")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    round(token, "fill-blank", 2, 0).andExpect(status().isCreated());
+    JsonNode after = today(token);
+    assertThat(after.path("tasks").get(1).path("completed").asBoolean()).as("long").isTrue();
+    assertThat(after.path("tasks").get(2).path("completed").asBoolean()).as("grammar").isTrue();
+    assertThat(after.path("tasks").get(3).path("completed").asBoolean()).as("perfect").isTrue();
+    assertThat(after.path("tasks").get(1).path("challenge").asBoolean()).isFalse();
   }
 
   @Test
@@ -482,7 +537,16 @@ class TaskApiTests {
     return round(token, game, stars, TODAY);
   }
 
+  private ResultActions round(String token, String game, int stars, int mistakes) throws Exception {
+    return round(token, game, stars, mistakes, TODAY);
+  }
+
   private ResultActions round(String token, String game, int stars, LocalDate date)
+      throws Exception {
+    return round(token, game, stars, 0, date);
+  }
+
+  private ResultActions round(String token, String game, int stars, int mistakes, LocalDate date)
       throws Exception {
     return mvc.perform(
         post("/api/v1/learning/game-rounds")
@@ -493,7 +557,9 @@ class TaskApiTests {
                     + game
                     + "\",\"stars\":"
                     + stars
-                    + ",\"mistakes\":0,\"wordCount\":10,\"date\":\""
+                    + ",\"mistakes\":"
+                    + mistakes
+                    + ",\"wordCount\":10,\"date\":\""
                     + date
                     + "\"}"));
   }

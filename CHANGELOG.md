@@ -5,6 +5,15 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.12.0] - 2026-11-10
+
+### Changed
+
+- **More varied daily tasks**: the same kind of task now comes in different strengths, so a day is no longer "the same thing with one task left out". Reading 1, 2 or 3 articles (4, 5 or 7 points), watching 1 or 2 videos (3 or 5), 1, 2 or 3 practice games (2, 3 or 5), playing one game 1 or 2 times (3 or 5), adding a few more words (3, 4 or 6), tapping 1 or 3 words in articles (4 or 6) and rating half as many cards again (3 or 5). More points always go with more work. A day has **at most one hard task** (the strongest strength of a kind). The new kinds below make the reading and video tasks more than one kind each.
+- **New kinds of task**: read a **long** article (5 reading minutes or more, 5 points); watch a **grammar** video (Everyday Grammar or 6 Minute Grammar, 4); win **3 stars in Spell it** (6, hard); play a game with **no mistakes** (5); play **3 different games** (6, hard).
+- **Challenge of the day**: every 2 or 3 days (the day is fixed by the user and the date, so every device agrees) one of the four tasks is a **Challenge**, shown with a small tag and worth 8 to 10 points: 2 stars in 3 different games (9), 2 games with no mistakes (8), or 2 articles one of them long (10). It is one of the four, not a fifth, and it is the day's hard task, so the other three are normal ones. A full day is worth at most 40 points (before streak bonuses), against 31 before.
+- Nothing stored changes: tasks already made keep their kind, target and points, and the list of a day, once made, never changes. No migration. `GET /api/v1/tasks/today` has a new `challenge` flag on each task.
+
 ## [1.11.0] - 2026-11-08
 
 ### Added

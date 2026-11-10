@@ -8,4 +8,27 @@ public record TaskFacts(
     int dueReviews,
     int gameWords,
     boolean articleAvailable,
-    boolean videoAvailable) {}
+    boolean videoAvailable,
+    boolean longArticleAvailable,
+    boolean grammarVideoAvailable) {
+  /** Facts without a long article or a grammar video. */
+  public TaskFacts(
+      int dailyGoal,
+      int ratedToday,
+      int studyableWords,
+      int dueReviews,
+      int gameWords,
+      boolean articleAvailable,
+      boolean videoAvailable) {
+    this(
+        dailyGoal,
+        ratedToday,
+        studyableWords,
+        dueReviews,
+        gameWords,
+        articleAvailable,
+        videoAvailable,
+        false,
+        false);
+  }
+}

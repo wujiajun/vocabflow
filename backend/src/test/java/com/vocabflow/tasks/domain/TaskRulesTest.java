@@ -32,7 +32,12 @@ class TaskRulesTest {
             TaskType.WATCH_VIDEO,
             TaskType.PLAY_ROUND,
             TaskType.PLAY_GAME,
-            TaskType.STARS_ROUND);
+            TaskType.STARS_ROUND,
+            TaskType.SPELL_STARS,
+            TaskType.PERFECT_ROUND,
+            TaskType.DIFFERENT_GAMES,
+            TaskType.CHALLENGE_GAMES,
+            TaskType.CHALLENGE_PERFECT);
   }
 
   @Test

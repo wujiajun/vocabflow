@@ -29,7 +29,8 @@ public class TaskController {
       int current,
       int points,
       boolean completed,
-      Instant completedAt) {}
+      Instant completedAt,
+      boolean challenge) {}
 
   record DayResponse(
       LocalDate date,
@@ -66,7 +67,8 @@ public class TaskController {
                         i.current(),
                         i.task().points(),
                         i.task().completed(),
-                        i.task().completedAt()))
+                        i.task().completedAt(),
+                        i.task().type().challenge()))
             .toList(),
         day.allDone(),
         day.earnedToday(),

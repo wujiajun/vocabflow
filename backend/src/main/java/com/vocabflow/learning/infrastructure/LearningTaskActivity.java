@@ -65,7 +65,7 @@ public class LearningTaskActivity implements LearningActivity {
   @Override
   public List<DayActivity.GameResult> rounds(long userId, LocalDate date) {
     return rounds.roundsOn(userId, date).stream()
-        .map(r -> new DayActivity.GameResult(r.game().id(), r.stars()))
+        .map(r -> new DayActivity.GameResult(r.game().id(), r.stars(), r.mistakes(), r.wordCount()))
         .toList();
   }
 }
