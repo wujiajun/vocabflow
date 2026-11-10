@@ -17,7 +17,7 @@ afterEach(() => {
 })
 
 function task(overrides: Partial<DailyTask>): DailyTask {
-  return { key: 'T', type: 'ADD_WORDS', category: 'ADD_WORDS', game: null, target: 1, current: 0, points: 3, completed: false, completedAt: null, ...overrides }
+  return { key: 'T', type: 'ADD_WORDS', category: 'ADD_WORDS', game: null, target: 1, current: 0, points: 3, completed: false, completedAt: null, challenge: false, ...overrides }
 }
 
 function day(overrides: Partial<TaskDay> = {}): TaskDay {
@@ -152,4 +152,27 @@ test('the points page lists the ledger, newest first, with pages', async () => {
   expect(screen.getByText('+10')).toBeInTheDocument()
   await browserUser.click(screen.getByRole('button', { name: 'Next' }))
   expect(await screen.findByText('Finished today’s study plan 1')).toBeInTheDocument()
+})
+
+test('new kinds read well with their targets, link to where they are done and the challenge carries a tag', async () => {
+  const tasks = [
+    task({ key: 'STUDY_PLAN', type: 'STUDY_PLAN', category: 'STUDY', points: 10 }),
+    task({ key: 'READ_ARTICLE', type: 'READ_ARTICLE', category: 'READING', target: 2, points: 5 }),
+    task({ key: 'WATCH_GRAMMAR_VIDEO', type: 'WATCH_GRAMMAR_VIDEO', category: 'VIDEO', points: 4 }),
+    task({ key: 'PLAY_GAME:spell-it', type: 'PLAY_GAME', category: 'GAMES', game: 'spell-it', target: 2, points: 5 }),
+    task({ key: 'CHALLENGE_READ', type: 'CHALLENGE_READ', category: 'READING', target: 2, points: 10, challenge: true }),
+  ]
+  stubApi({ ...signedIn(), 'GET /api/v1/tasks/today': () => jsonResponse(day({ tasks })) })
+  renderApp('/app/study')
+
+  const card = await screen.findByRole('region', { name: /Today’s tasks/ })
+  expect(card).toHaveTextContent('Read 2 articles to the end')
+  expect(card).toHaveTextContent('Watch a grammar video to the end')
+  expect(card).toHaveTextContent('Play Spell it 2 times')
+  expect(within(card).getByText('Challenge')).toBeInTheDocument()
+  expect(card).toHaveTextContent('Read 2 articles, one of them long')
+  expect(within(card).getByRole('link', { name: /Watch a grammar video/ })).toHaveAttribute('href', '/app/reading/videos')
+  expect(within(card).getByRole('link', { name: /Play Spell it 2 times/ })).toHaveAttribute('href', '/app/study/spell')
+  expect(within(card).getByRole('link', { name: /one of them long/ })).toHaveAttribute('href', '/app/reading/articles')
+  expect(within(card).getAllByText('Challenge')).toHaveLength(1)
 })

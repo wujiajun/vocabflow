@@ -9,6 +9,9 @@ public interface VideoProgressJpaRepository extends JpaRepository<VideoProgressE
   int countByUserIdAndWatchedAtGreaterThanEqualAndWatchedAtLessThan(
       Long userId, java.time.Instant from, java.time.Instant to);
 
+  List<VideoProgressEntity> findByUserIdAndWatchedAtGreaterThanEqualAndWatchedAtLessThan(
+      Long userId, java.time.Instant from, java.time.Instant to);
+
   boolean existsByUserIdAndVideoId(Long userId, String videoId);
 
   void deleteByUserIdAndVideoId(Long userId, String videoId);

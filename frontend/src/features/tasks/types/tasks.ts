@@ -10,6 +10,14 @@ export type TaskType =
   | 'PLAY_ROUND'
   | 'PLAY_GAME'
   | 'STARS_ROUND'
+  | 'READ_LONG_ARTICLE'
+  | 'WATCH_GRAMMAR_VIDEO'
+  | 'SPELL_STARS'
+  | 'PERFECT_ROUND'
+  | 'DIFFERENT_GAMES'
+  | 'CHALLENGE_GAMES'
+  | 'CHALLENGE_PERFECT'
+  | 'CHALLENGE_READ'
 
 export interface DailyTask {
   key: string
@@ -22,6 +30,8 @@ export interface DailyTask {
   points: number
   completed: boolean
   completedAt: string | null
+  // The challenge of the day: harder than the others, worth more points.
+  challenge: boolean
 }
 
 export interface TaskDay {

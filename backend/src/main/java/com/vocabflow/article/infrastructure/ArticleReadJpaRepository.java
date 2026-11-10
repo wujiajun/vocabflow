@@ -9,6 +9,9 @@ public interface ArticleReadJpaRepository extends JpaRepository<ArticleReadEntit
   int countByUserIdAndReadAtGreaterThanEqualAndReadAtLessThan(
       Long userId, java.time.Instant from, java.time.Instant to);
 
+  List<ArticleReadEntity> findByUserIdAndReadAtGreaterThanEqualAndReadAtLessThan(
+      Long userId, java.time.Instant from, java.time.Instant to);
+
   boolean existsByUserIdAndArticleId(Long userId, String articleId);
 
   void deleteByUserIdAndArticleId(Long userId, String articleId);
