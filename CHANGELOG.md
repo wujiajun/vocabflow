@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.12.1] - 2026-11-11
+
+### Added
+
+- **Five new article albums** from VOA Learning English, so the library grows from 120 to **303 articles in 8 albums**: Everyday Grammar (40, CLB 4-6), Education Tips (35, CLB 5-7), Health & Lifestyle (40, CLB 5-7), Science & Technology (40, CLB 6-8) and Arts & Culture (28, CLB 6-8). The aim was more to read at CLB 4-5: articles at CLB 4 go from 80 to 120 (long ones, 5 reading minutes or more, from 7 to 39) and at CLB 5 from 120 to 235.
+- Same rules as before: VOA's own text only (public domain, credit and link back), nothing from AP, Reuters, AFP or other wire services (most news items were left out for that reason, so As It Is, whose items almost all carry one, was not added), no images, audio only linked. Nothing in the API or the database changes; no migration.
+- `scripts/article_catalog.py harvest --only <zone,...>` adds the given programs and leaves the other albums as they are.
+
 ## [1.12.0] - 2026-11-10
 
 ### Changed
