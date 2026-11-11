@@ -13,6 +13,14 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 - **It needs three things** that no earlier version needed: the app opened over **https** (a browser allows a service worker and notifications on https only), on an iPhone or iPad the app **added to the Home Screen**, and VAPID keys in `.env` (`scripts/generate_vapid_keys.sh mailto:you@example.com`). Settings says which one is missing. Without the keys the feature is simply off: the server starts as before and the card says reminders are not set up.
 - **Under the hood**: a service worker (`/sw.js`) that only shows the notification and opens the app when it is tapped (no caching and no fetch handler, so updates and `NewVersionNotice` work as before); a `push_subscriptions` table (V20); `GET /api/v1/push/config`, `GET/POST/DELETE /api/v1/push/subscription`; a once-a-minute job inside the backend. A reminder is claimed with one conditional update before it is sent, so it cannot go out twice; a push service answering 404 or 410 deletes the subscription. Web Push (RFC 8291 encryption and VAPID) is written with the JDK's own crypto instead of a library (the usual one brings BouncyCastle and Apache HttpClient); a test reproduces the RFC's worked example byte for byte. The Caddy policy needed no change (`worker-src` falls back to `script-src 'self'`).
 
+## [1.12.1] - 2026-11-11
+
+### Added
+
+- **Five new article albums** from VOA Learning English, so the library grows from 120 to **303 articles in 8 albums**: Everyday Grammar (40, CLB 4-6), Education Tips (35, CLB 5-7), Health & Lifestyle (40, CLB 5-7), Science & Technology (40, CLB 6-8) and Arts & Culture (28, CLB 6-8). The aim was more to read at CLB 4-5: articles at CLB 4 go from 80 to 120 (long ones, 5 reading minutes or more, from 7 to 39) and at CLB 5 from 120 to 235.
+- Same rules as before: VOA's own text only (public domain, credit and link back), nothing from AP, Reuters, AFP or other wire services (most news items were left out for that reason, so As It Is, whose items almost all carry one, was not added), no images, audio only linked. Nothing in the API or the database changes; no migration.
+- `scripts/article_catalog.py harvest --only <zone,...>` adds the given programs and leaves the other albums as they are.
+
 ## [1.12.0] - 2026-11-10
 
 ### Changed

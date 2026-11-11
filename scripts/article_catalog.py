@@ -60,6 +60,54 @@ PROGRAMS = {
         "clbMax": 7,
         "feed": "/api/zyg__l-vomx-tpetmty",
     },
+    "4456": {
+        "id": "voa-everyday-grammar",
+        "title": "Everyday Grammar",
+        "description": "Clear explanations of how Americans really use English grammar, with examples.",
+        "clbMin": 4,
+        "clbMax": 6,
+        "feed": None,
+    },
+    "7468": {
+        "id": "voa-education-tips",
+        "title": "Education Tips",
+        "description": "Advice on studying, schools and learning, for students and families.",
+        "clbMin": 5,
+        "clbMax": 7,
+        "feed": None,
+    },
+    "955": {
+        "id": "voa-health-and-lifestyle",
+        "title": "Health & Lifestyle",
+        "description": "Everyday news about health, food and the way people live.",
+        "clbMin": 5,
+        "clbMax": 7,
+        "feed": None,
+    },
+    "1579": {
+        "id": "voa-science-and-technology",
+        "title": "Science & Technology",
+        "description": "News about science, inventions and technology in clear English.",
+        "clbMin": 6,
+        "clbMax": 8,
+        "feed": None,
+    },
+    "986": {
+        "id": "voa-arts-and-culture",
+        "title": "Arts & Culture",
+        "description": "Stories about music, film, books, food and traditions.",
+        "clbMin": 6,
+        "clbMax": 8,
+        "feed": None,
+    },
+    "3521": {
+        "id": "voa-as-it-is",
+        "title": "As It Is",
+        "description": "Daily news stories written for English learners.",
+        "clbMin": 6,
+        "clbMax": 8,
+        "feed": None,
+    },
 }
 SOURCE = "VOA Learning English"
 WIRE = re.compile(r"\b(AP|Reuters|AFP|Associated Press|Agence France|Getty|Bloomberg)\b")
@@ -257,8 +305,12 @@ def harvest(args):
     known = sitemap_ids(cache)
     print(f"sitemap lists {len(known)} articles")
 
-    queue, seen = [], set()
+    only = set(args.only.split(",")) if args.only else set(PROGRAMS)
+    existing = json.loads(CATALOG.read_text(encoding="utf-8"))["albums"] if CATALOG.exists() else []
+    queue, seen = [], {a["id"] for album in existing for a in album["articles"]}
     for zone, program in PROGRAMS.items():
+        if zone not in only:
+            continue
         urls = [HOST + program["feed"]] if program["feed"] else []
         urls.append(f"{HOST}/z/{zone}")
         for url in urls:
@@ -268,7 +320,7 @@ def harvest(args):
                     seen.add(found)
                     queue.append(found)
 
-    kept = {zone: [] for zone in PROGRAMS}
+    kept = {zone: [] for zone in PROGRAMS if zone in only}
     skipped = []
     fetches = 0
     while queue and fetches < args.max_fetches and any(len(v) < args.per_program for v in kept.values()):
@@ -283,7 +335,7 @@ def harvest(args):
             if found in known and found not in seen:
                 seen.add(found)
                 queue.append(found)
-        if article.zone not in PROGRAMS:
+        if article.zone not in kept:
             continue
         if len(kept[article.zone]) >= args.per_program:
             continue
@@ -317,10 +369,12 @@ def harvest(args):
                 "glossary": article.glossary,
             }
         )
-        print(f"  {PROGRAMS[article.zone]['title']}: {len(kept[article.zone])} {article.title} ({words} words)")
+        print(f"  {PROGRAMS[article.zone]['title']}: {len(kept[article.zone])} {article.title} ({words} words, {letters:.2f} letters, {per_sentence:.1f} per sentence)")
 
-    albums = []
+    albums = [a for a in existing if a["id"] not in {PROGRAMS[z]["id"] for z in kept}]
     for zone, program in PROGRAMS.items():
+        if zone not in kept:
+            continue
         articles = sorted(kept[zone], key=lambda a: a["publishedOn"], reverse=True)
         if articles:
             albums.append(
@@ -374,6 +428,7 @@ def main():
     h.add_argument("--cache", required=True)
     h.add_argument("--per-program", type=int, default=45)
     h.add_argument("--max-fetches", type=int, default=400)
+    h.add_argument("--only", help="comma-separated zone ids to harvest; other albums stay as they are")
     h.set_defaults(run=harvest)
     c = sub.add_parser("check")
     c.set_defaults(run=check)
