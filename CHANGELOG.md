@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.12.2] - 2026-11-10
+
+### Added
+
+- **Five new video albums, 208 more videos** (431 in 15 albums), all from the official channels, played in YouTube's own player. **English at Work** (BBC, CLB 5-7, 46 short workplace scenes: interviews, meetings, phone calls, polite requests), **Real Easy English** (BBC, CLB 4-6, 36 easy everyday chats), **TALK2US: English conversation** (VOA, CLB 5-7, 32 long live shows: conversation starters, idioms, pronunciation), **English @ the Movies** (VOA, CLB 5-7, 30 two-minute phrase lessons) and **English in a Minute** (VOA, CLB 5-7, 32 one-minute idiom lessons). The album **The English We Speak** grows from 2 to 34 videos.
+- No code, API or database change: only `videos/catalog.json`.
+
 ## [1.12.1] - 2026-11-11
 
 ### Added
