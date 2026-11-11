@@ -32,3 +32,9 @@ vocabflow:
       # A passage is one call a day, and the small model often used a word in the wrong sense.
       model: ${VOCABFLOW_READING_MODEL:claude-sonnet-5-5}
       timeout-seconds: 90
+  push:
+    # Daily reminders (Web Push). Off unless all three are set; make the keys with
+    # scripts/generate_vapid_keys.sh. The subject is a mailto: or https: contact for the push services.
+    public-key: ${VOCABFLOW_PUSH_PUBLIC_KEY:}
+    private-key: ${VOCABFLOW_PUSH_PRIVATE_KEY:}
+    subject: ${VOCABFLOW_PUSH_SUBJECT:}
