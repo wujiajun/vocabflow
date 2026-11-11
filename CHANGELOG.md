@@ -13,6 +13,13 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 - **It needs three things** that no earlier version needed: the app opened over **https** (a browser allows a service worker and notifications on https only), on an iPhone or iPad the app **added to the Home Screen**, and VAPID keys in `.env` (`scripts/generate_vapid_keys.sh mailto:you@example.com`). Settings says which one is missing. Without the keys the feature is simply off: the server starts as before and the card says reminders are not set up.
 - **Under the hood**: a service worker (`/sw.js`) that only shows the notification and opens the app when it is tapped (no caching and no fetch handler, so updates and `NewVersionNotice` work as before); a `push_subscriptions` table (V20); `GET /api/v1/push/config`, `GET/POST/DELETE /api/v1/push/subscription`; a once-a-minute job inside the backend. A reminder is claimed with one conditional update before it is sent, so it cannot go out twice; a push service answering 404 or 410 deletes the subscription. Web Push (RFC 8291 encryption and VAPID) is written with the JDK's own crypto instead of a library (the usual one brings BouncyCastle and Apache HttpClient); a test reproduces the RFC's worked example byte for byte. The Caddy policy needed no change (`worker-src` falls back to `script-src 'self'`).
 
+## [1.12.2] - 2026-11-10
+
+### Added
+
+- **Five new video albums, 208 more videos** (431 in 15 albums), all from the official channels, played in YouTube's own player. **English at Work** (BBC, CLB 5-7, 46 short workplace scenes: interviews, meetings, phone calls, polite requests), **Real Easy English** (BBC, CLB 4-6, 36 easy everyday chats), **TALK2US: English conversation** (VOA, CLB 5-7, 32 long live shows: conversation starters, idioms, pronunciation), **English @ the Movies** (VOA, CLB 5-7, 30 two-minute phrase lessons) and **English in a Minute** (VOA, CLB 5-7, 32 one-minute idiom lessons). The album **The English We Speak** grows from 2 to 34 videos.
+- No code, API or database change: only `videos/catalog.json`.
+
 ## [1.12.1] - 2026-11-11
 
 ### Added
