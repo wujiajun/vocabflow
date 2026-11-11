@@ -16,6 +16,7 @@ import { SpellItPage } from '../../features/learning/pages/SpellItPage'
 import { ListenChoosePage } from '../../features/learning/pages/ListenChoosePage'
 import { QuickReviewPage } from '../../features/learning/pages/QuickReviewPage'
 import { StudyPage } from '../../features/learning/pages/StudyPage'
+import { SpeechTestPage } from '../../features/labs/pages/SpeechTestPage'
 import { ProgressPage } from '../../features/progress/pages/ProgressPage'
 import { PointsHistoryPage } from '../../features/tasks/pages/PointsHistoryPage'
 import { SettingsPage } from '../../features/settings/pages/SettingsPage'
@@ -69,6 +70,7 @@ export function AppRouter() {
         <Route path="study/spell" element={<SpellItPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="points" element={<PointsHistoryPage />} />
+        <Route path="labs/speech-test" element={<SpeechTestPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/app/study" replace />} />
       </Route>
