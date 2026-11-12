@@ -31,6 +31,8 @@ export interface ArticleAlbumDetail {
 export interface GlossaryWord {
   word: string
   definition: string
+  // A Chinese meaning, when the list has one (scenarios do).
+  zh?: string
 }
 
 export interface Article {

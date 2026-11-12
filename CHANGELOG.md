@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.14.0] - 2026-11-11
+
+### Added
+
+- **Life in Canada**: a new fourth section in Reading, **Canada** (next to Passages, Videos and Articles), with short scenes of everyday life written for the app: **Renting an Apartment**, **Opening a Bank Account**, **Parent-Teacher Meeting** (CLB 6), **A Job Interview** and **Filing Your Taxes** (CLB 7). Each is a dialogue (about 400 words) with a scene line and a tip, **10 or 11 keywords with Chinese meanings**, a short note about Canada in Chinese, and a **four-question quiz**. It opens in the same reader as passages and articles: tap any word to add it (the sentence and a link back to the scene are kept), listen to it read aloud, or press **Add all** to put every keyword in your list (words you already have are skipped). A scene counts as finished when you reach the end or check the quiz; the best quiz score is kept.
+- **Under the hood**: the scenes are stored in the app (`scenarios/catalog.json`, checked at startup: every keyword must appear in the text, and a price or a number that looks like a phone number is refused) and written to be read, not generated, so they cost nothing to run and can be reviewed. Practical facts differ between provinces, so the text keeps to what holds in general and each scene carries a list of facts to check (`verify`, never shown to a learner). New table `scenario_progress` (V21); `GET /api/v1/scenarios`, `GET /api/v1/scenarios/{id}`, `PUT /api/v1/scenarios/{id}/complete`. Daily tasks and the progress page do not use scenes yet.
+
 ## [1.13.0] - 2026-11-10
 
 ### Added
