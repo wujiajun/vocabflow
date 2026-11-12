@@ -40,13 +40,15 @@ function detail(completed: boolean, bestScore: number | null) {
     completed,
     completedAt: completed ? '2026-11-01T10:00:00Z' : null,
     bestScore,
+    speakingScore: completed ? 85 : null,
+    spokenAt: completed ? '2026-11-02T10:00:00Z' : null,
   }
 }
 
 function server(state = { completed: false, score: null as number | null }, added: unknown[] = [], completions: unknown[] = []) {
   return {
     'GET /api/v1/auth/me': () => jsonResponse(user),
-    'GET /api/v1/scenarios': () => jsonResponse(summaries.map((s, i) => ({ ...s, completed: i === 0 && state.completed, bestScore: i === 0 ? state.score : null }))),
+    'GET /api/v1/scenarios': () => jsonResponse(summaries.map((s, i) => ({ ...s, completed: i === 0 && state.completed, bestScore: i === 0 ? state.score : null, speakingScore: i === 0 && state.completed ? 85 : null, spokenAt: null }))),
     'GET /api/v1/scenarios/renting': () => jsonResponse(detail(state.completed, state.score)),
     'GET /api/v1/scenarios/nope': () => errorResponse(404, 'NOT_FOUND', 'Scenario was not found'),
     'PUT /api/v1/scenarios/renting/complete': ({ init }: { init: RequestInit }) => {
@@ -79,7 +81,9 @@ test('the Canada section lists the scenarios with their level and progress', asy
   expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Passages', 'Videos', 'Articles', 'Canada'])
   expect(within(nav).getByRole('link', { name: 'Canada' })).toHaveAttribute('aria-current', 'true')
   expect(screen.getByText('1 of 2 finished')).toBeInTheDocument()
-  expect(screen.getByText('✓ Finished · 2/2')).toBeInTheDocument()
+  expect(screen.getByText('✓ Finished · Quiz 2/2')).toBeInTheDocument()
+  expect(screen.getByText('🗣️ 85%')).toBeInTheDocument() // the latest Speak this scene result
+  expect(screen.getByText('Unread')).toBeInTheDocument() // the second one
   expect(screen.getByRole('link', { name: /Renting an Apartment/ })).toHaveAttribute('href', '/app/reading/scenarios/renting')
   await expectNoAxeViolations()
 })
@@ -190,4 +194,15 @@ test('a scenario without a conversation has no "Speak this scene"', async () => 
 
   await screen.findByRole('heading', { name: 'Renting an Apartment' })
   expect(screen.queryByRole('button', { name: 'Speak this scene' })).toBeNull()
+})
+
+test('a scenario page shows the latest speaking result next to Speak this scene', async () => {
+  stubApi({
+    ...server({ completed: true, score: 1 }),
+    'GET /api/v1/scenarios/renting': () =>
+      jsonResponse({ ...detail(true, 1), text: 'Ms. Patel: Welcome.\n\nSam: Thank you.\n\nMs. Patel: Come in.\n\nSam: Great.' }),
+  })
+  renderApp('/app/reading/scenarios/renting')
+  await screen.findByRole('button', { name: 'Speak this scene' })
+  expect(screen.getByTestId('last-speaking')).toHaveTextContent('Last time: 85%')
 })

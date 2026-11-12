@@ -100,4 +100,53 @@ class ScenarioApiTests {
                 .content("{\"score\":99}"))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  void theLatestSpeakingScoreIsSavedForTheLearnerAlone() throws Exception {
+    String mine = "Bearer " + token();
+    String other = "Bearer " + token();
+
+    for (int score : new int[] {95, 70}) {
+      mvc.perform(
+              put("/api/v1/scenarios/renting-an-apartment/speaking")
+                  .header("Authorization", mine)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"score\":" + score + "}"))
+          .andExpect(status().isNoContent());
+    }
+
+    mvc.perform(get("/api/v1/scenarios").header("Authorization", mine))
+        .andExpect(jsonPath("$[0].speakingScore").value(70))
+        .andExpect(jsonPath("$[0].spokenAt").isNotEmpty())
+        .andExpect(jsonPath("$[0].completed").value(true));
+    mvc.perform(get("/api/v1/scenarios/renting-an-apartment").header("Authorization", mine))
+        .andExpect(jsonPath("$.speakingScore").value(70))
+        .andExpect(jsonPath("$.bestScore").doesNotExist());
+    // Finishing the quiz afterwards keeps the speaking score.
+    mvc.perform(
+            put("/api/v1/scenarios/renting-an-apartment/complete")
+                .header("Authorization", mine)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"score\":2}"))
+        .andExpect(status().isNoContent());
+    mvc.perform(get("/api/v1/scenarios/renting-an-apartment").header("Authorization", mine))
+        .andExpect(jsonPath("$.speakingScore").value(70))
+        .andExpect(jsonPath("$.bestScore").value(2));
+    mvc.perform(get("/api/v1/scenarios/renting-an-apartment").header("Authorization", other))
+        .andExpect(jsonPath("$.speakingScore").doesNotExist())
+        .andExpect(jsonPath("$.completed").value(false));
+
+    mvc.perform(
+            put("/api/v1/scenarios/renting-an-apartment/speaking")
+                .header("Authorization", mine)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"score\":101}"))
+        .andExpect(status().isBadRequest());
+    mvc.perform(
+            put("/api/v1/scenarios/nope/speaking")
+                .header("Authorization", mine)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"score\":50}"))
+        .andExpect(status().isNotFound());
+  }
 }

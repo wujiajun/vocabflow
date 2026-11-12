@@ -48,7 +48,8 @@ function Words({ score }: { score: LineScore }) {
 // line before (the other person's, or the learner's own as a model), a new recognizer starts 0.4 s later, "Speak
 // now" shows once the microphone is open, and the recognizer ends by itself when the learner pauses; then the line
 // is scored. Nothing is recorded, stored or sent; the result is shown, not kept.
-export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: () => void }) {
+// `onFinished` gets the round's score (0-100) once when it ends, if at least one line was heard and scored.
+export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[]; onClose: () => void; onFinished?: (score: number) => void }) {
   const speakers = speakersOf(lines)
   const [me, setMe] = useState(speakers[0])
   const [phase, setPhase] = useState<Phase>('setup')
@@ -307,6 +308,25 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
       document.body.style.overflow = before
     }
   }, [])
+
+  // Report the round's score once when it ends (only lines the phone heard make it a speaking score).
+  const reported = useRef(false)
+  const onFinishedRef = useRef(onFinished)
+  useEffect(() => {
+    onFinishedRef.current = onFinished
+  })
+  useEffect(() => {
+    if (phase !== 'finished') {
+      reported.current = false
+      return
+    }
+    if (reported.current) return
+    reported.current = true
+    const scored = lines.map((l, i) => ({ l, i })).filter(({ l, i }) => l.speaker === meRef.current && results[i])
+    if (!scored.some(({ i }) => results[i]?.score)) return
+    const share = scored.reduce((sum, { i }) => sum + (results[i]?.share ?? 0), 0) / scored.length
+    onFinishedRef.current?.(Math.round(share * 100))
+  }, [phase, results, lines])
 
   // A partner line can be heard again while nothing is listening or about to listen.
   const quiet = kind === 'judged' || kind === 'nothing' || kind === 'self' || kind === 'failed' || phase === 'finished'

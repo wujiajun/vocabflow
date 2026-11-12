@@ -18,3 +18,8 @@ export function completeScenario(id: string, score?: number) {
     body: score === undefined ? undefined : { score },
   })
 }
+
+// The share of the learner's words said right in Speak this scene, 0-100. Only the latest is kept.
+export function saveSpeakingScore(id: string, score: number) {
+  return apiClient<void>(`${scenariosPath}/${encodeURIComponent(id)}/speaking`, { method: 'PUT', body: { score } })
+}

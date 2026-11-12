@@ -50,7 +50,25 @@ class ScenarioServiceTest {
               old == null || old.bestScore() == null
                   ? score
                   : score == null ? old.bestScore() : Math.max(old.bestScore(), score);
-          mine.put(scenarioId, new Progress(old == null ? at : old.completedAt(), best));
+          mine.put(
+              scenarioId,
+              new Progress(
+                  old == null ? at : old.completedAt(),
+                  best,
+                  old == null ? null : old.speakingScore(),
+                  old == null ? null : old.spokenAt()));
+        }
+
+        public void recordSpeaking(long userId, String scenarioId, Instant at, int score) {
+          var mine = rows.computeIfAbsent(userId, id -> new HashMap<>());
+          Progress old = mine.get(scenarioId);
+          mine.put(
+              scenarioId,
+              new Progress(
+                  old == null ? at : old.completedAt(),
+                  old == null ? null : old.bestScore(),
+                  score,
+                  at));
         }
       };
   private final ScenarioService service =
@@ -87,5 +105,29 @@ class ScenarioServiceTest {
         .isInstanceOf(BadRequestException.class);
     assertThatThrownBy(() -> service.complete(1, "demo", -1))
         .isInstanceOf(BadRequestException.class);
+  }
+
+  @Test
+  void theLatestSpeakingScoreIsKeptAndSpeakingMarksTheScenarioFinished() {
+    service.recordSpeaking(1, "demo", 90);
+    service.recordSpeaking(1, "demo", 60);
+
+    var progress = service.get(1, "demo").progress();
+    assertThat(progress.speakingScore()).isEqualTo(60);
+    assertThat(progress.spokenAt()).isEqualTo(Instant.parse("2025-05-01T00:00:00Z"));
+    assertThat(progress.completedAt()).isNotNull();
+    assertThat(service.get(2, "demo").progress()).isNull();
+  }
+
+  @Test
+  void speakingScoresOutsideZeroToHundredOrForUnknownScenariosAreRefused() {
+    assertThatThrownBy(() -> service.recordSpeaking(1, "demo", 101))
+        .isInstanceOf(BadRequestException.class);
+    assertThatThrownBy(() -> service.recordSpeaking(1, "demo", -1))
+        .isInstanceOf(BadRequestException.class);
+    assertThatThrownBy(() -> service.recordSpeaking(1, "demo", null))
+        .isInstanceOf(BadRequestException.class);
+    assertThatThrownBy(() -> service.recordSpeaking(1, "nope", 50))
+        .isInstanceOf(NotFoundException.class);
   }
 }

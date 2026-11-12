@@ -5,6 +5,15 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.17.0] - 2026-11-12
+
+### Added
+
+- **Your latest speaking result is kept.** When a Speak this scene round ends with at least one line heard by the phone, its score (the share of your words said right, 0-100) is saved; only the latest one is kept, for you alone. Rounds rated only by yourself are not saved. The scene shows **Last time: 85% · date** next to Speak this scene, and the Canada list shows it as 🗣️ 85%.
+- The Canada list now marks scenes you have not finished as **Unread**, and the quiz score reads **Quiz 2/2**.
+- Speaking a scene also counts as finishing it.
+- Backend: migration V22 adds `speaking_score` and `spoken_at` to `scenario_progress`; `PUT /api/v1/scenarios/{id}/speaking` with `{"score": 0-100}` (400 outside that range, 404 for an unknown scene); the list and the scene give `speakingScore` and `spokenAt`.
+
 ## [1.16.3] - 2026-11-12
 
 ### Changed

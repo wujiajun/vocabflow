@@ -54,7 +54,14 @@ export function ScenariosPage() {
                       <span className="text-slate-700">{scenario.readingMinutes} min</span>
                       {scenario.completed ? (
                         <span className="font-semibold text-emerald-800">
-                          ✓ Finished{scenario.bestScore !== null ? ` · ${scenario.bestScore}/${scenario.quizSize}` : ''}
+                          ✓ Finished{scenario.bestScore !== null ? ` · Quiz ${scenario.bestScore}/${scenario.quizSize}` : ''}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-600">Unread</span>
+                      )}
+                      {scenario.speakingScore !== null ? (
+                        <span className="font-semibold text-indigo-800" title="Latest Speak this scene result">
+                          🗣️ {scenario.speakingScore}%
                         </span>
                       ) : null}
                     </p>

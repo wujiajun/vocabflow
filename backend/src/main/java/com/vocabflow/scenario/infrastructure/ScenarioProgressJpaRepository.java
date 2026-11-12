@@ -1,5 +1,6 @@
 package com.vocabflow.scenario.infrastructure;
 
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -22,4 +23,15 @@ public interface ScenarioProgressJpaRepository extends JpaRepository<ScenarioPro
       @Param("userId") Long userId,
       @Param("scenarioId") String scenarioId,
       @Param("score") int score);
+
+  @Modifying
+  @Transactional
+  @Query(
+      "update ScenarioProgressEntity e set e.speakingScore = :score, e.spokenAt = :at "
+          + "where e.userId = :userId and e.scenarioId = :scenarioId")
+  int setSpeaking(
+      @Param("userId") Long userId,
+      @Param("scenarioId") String scenarioId,
+      @Param("score") int score,
+      @Param("at") Instant at);
 }

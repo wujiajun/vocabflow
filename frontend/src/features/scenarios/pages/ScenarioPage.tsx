@@ -11,7 +11,7 @@ import { ReadStatus } from '../../reading/components/ReadStatus'
 import { QuizBlock } from '../components/QuizBlock'
 import { dialogueFromText } from '../speaking/dialogueFromText'
 import { SpeakScene } from '../speaking/SpeakScene'
-import { useCompleteScenario, useScenario } from '../hooks/useScenarios'
+import { useCompleteScenario, useSaveSpeakingScore, useScenario } from '../hooks/useScenarios'
 
 const fallbackBack = { path: '/app/reading/scenarios', label: 'Back to Canada' }
 
@@ -92,7 +92,7 @@ export function ScenarioPage() {
           CLB {current.clb} · {current.readingMinutes} min read
         </p>
         <p className="mt-1 text-sm text-slate-600">Tap any word to add it to your list.</p>
-        <SpeakEntry text={current.text} />
+        <SpeakEntry scenarioId={current.id} speakingScore={current.speakingScore} spokenAt={current.spokenAt} text={current.text} />
 
         <PassageReader source={{ title: current.title, link: `/app/reading/scenarios/${current.id}` }} text={current.text} />
 
@@ -124,17 +124,28 @@ export function ScenarioPage() {
 }
 
 // "Speak this scene" appears only when the text holds a conversation between two or more speakers.
-function SpeakEntry({ text }: { text: string }) {
+// The latest speaking result is shown under the button and saved quietly when a round ends.
+function SpeakEntry({ text, scenarioId, speakingScore, spokenAt }: { text: string; scenarioId: string; speakingScore: number | null; spokenAt: string | null }) {
   const lines = useMemo(() => dialogueFromText(text), [text])
   const [open, setOpen] = useState(false)
+  const save = useSaveSpeakingScore(scenarioId)
   if (lines.length === 0) {
     return null
   }
-  return open ? (
-    <SpeakScene lines={lines} onClose={() => setOpen(false)} />
-  ) : (
-    <button className="mt-3 min-h-11 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white" onClick={() => setOpen(true)} type="button">
-      Speak this scene
-    </button>
+  return (
+    <>
+      {open ? <SpeakScene lines={lines} onClose={() => setOpen(false)} onFinished={(score) => save.mutate(score)} /> : null}
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button className="min-h-11 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white" onClick={() => setOpen(true)} type="button">
+          Speak this scene
+        </button>
+        {speakingScore !== null ? (
+          <p className="text-sm text-slate-700" data-testid="last-speaking">
+            Last time: <strong className="text-indigo-800">{speakingScore}%</strong>
+            {spokenAt ? ` · ${new Date(spokenAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}` : ''}
+          </p>
+        ) : null}
+      </div>
+    </>
   )
 }

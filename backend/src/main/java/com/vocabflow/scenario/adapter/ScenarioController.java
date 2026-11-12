@@ -29,7 +29,9 @@ public class ScenarioController {
       int keywordCount,
       boolean completed,
       Integer bestScore,
-      int quizSize) {}
+      int quizSize,
+      Integer speakingScore,
+      Instant spokenAt) {}
 
   record Keyword(String word, String zh, String definition, String example) {}
 
@@ -49,9 +51,13 @@ public class ScenarioController {
       List<Question> quiz,
       boolean completed,
       Instant completedAt,
-      Integer bestScore) {}
+      Integer bestScore,
+      Integer speakingScore,
+      Instant spokenAt) {}
 
   record CompleteRequest(Integer score) {}
+
+  record SpeakingRequest(Integer score) {}
 
   @GetMapping
   public List<Summary> list(@AuthenticationPrincipal Long userId) {
@@ -71,7 +77,9 @@ public class ScenarioController {
                   s.keywords().size(),
                   p != null,
                   p == null ? null : p.bestScore(),
-                  s.quiz().size());
+                  s.quiz().size(),
+                  p == null ? null : p.speakingScore(),
+                  p == null ? null : p.spokenAt());
             })
         .toList();
   }
@@ -99,7 +107,9 @@ public class ScenarioController {
             .toList(),
         p != null,
         p == null ? null : p.completedAt(),
-        p == null ? null : p.bestScore());
+        p == null ? null : p.bestScore(),
+        p == null ? null : p.speakingScore(),
+        p == null ? null : p.spokenAt());
   }
 
   @PutMapping("/{id}/complete")
@@ -109,5 +119,15 @@ public class ScenarioController {
       @PathVariable String id,
       @RequestBody(required = false) CompleteRequest request) {
     service.complete(userId, id, request == null ? null : request.score());
+  }
+
+  /** Keeps the latest Speak this scene result (0-100); it also marks the scenario finished. */
+  @PutMapping("/{id}/speaking")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void speaking(
+      @AuthenticationPrincipal Long userId,
+      @PathVariable String id,
+      @RequestBody(required = false) SpeakingRequest request) {
+    service.recordSpeaking(userId, id, request == null ? null : request.score());
   }
 }
