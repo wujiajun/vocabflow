@@ -23,8 +23,9 @@ export function SentenceTest() {
   const [index, setIndex] = useState(0)
   const [lang, setLang] = useState('en-US')
   const [variant, setVariant] = useState<Variant>('A')
-  const { supported, state, text, error, log, start, stop, clear, clearLog, note } = useSpeechRecognition(lang, variant)
   const sentence = speechTestSentences[index]
+  const { supported, state, text, error, log, start, stop, clear, clearLog, note } = useSpeechRecognition(lang, variant, undefined, sentence.text)
+  const busy = state === 'listening' || state === 'priming'
   const comparison = text ? compareSpeech(sentence.text, text) : null
   const secure = window.isSecureContext
 
@@ -89,19 +90,38 @@ export function SentenceTest() {
       <button
         className="mt-4 min-h-11 w-full rounded-xl bg-indigo-700 px-4 text-base font-semibold text-white disabled:opacity-50 sm:w-auto"
         disabled={!supported || state === 'stopping'}
-        onClick={state === 'listening' ? stop : start}
+        onClick={busy ? stop : start}
         type="button"
       >
-        {state === 'listening' ? 'Stop' : state === 'stopping' ? 'Wait…' : 'Start speaking'}
+        {busy ? (variant === 'H' ? 'Done' : 'Stop') : state === 'stopping' ? 'Wait…' : 'Start speaking'}
       </button>
       {variant === 'D' && (
         <button className="mt-2 ml-2 min-h-11 rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-800" onClick={clear} type="button">
           Clear
         </button>
       )}
+      {state === 'priming' && (
+        <p className="mt-2 text-sm text-slate-600" role="status">
+          Listen… the phone reads the sentence, then it is your turn.
+        </p>
+      )}
       {state === 'listening' && (
         <p className="mt-2 text-sm text-slate-600" role="status">
-          {variant === 'D' ? 'Listening… keep talking; tap Clear between sentences.' : 'Listening… read the sentence, then tap Stop.'}
+          {variant === 'D'
+            ? 'Listening… keep talking; tap Clear between sentences.'
+            : variant === 'H'
+              ? 'Your turn: read the sentence. Listening ends by itself when you pause.'
+              : 'Listening… read the sentence, then tap Stop.'}
+        </p>
+      )}
+      {state === 'stopping' && variant === 'H' && (
+        <p className="mt-2 text-sm text-slate-600" role="status">
+          Finishing… it ends by itself after a short pause.
+        </p>
+      )}
+      {variant === 'H' && state === 'idle' && (
+        <p className="mt-2 text-sm text-slate-600">
+          Before testing H, close the app completely (swipe it away) and open it again: a deaf microphone is said to stay deaf until then.
         </p>
       )}
       {error && (
