@@ -14,23 +14,112 @@ function normalizedLang(voice: SpeechSynthesisVoice) {
   return voice.lang.replace('_', '-').toLowerCase()
 }
 
-export function chooseVoice(voices: readonly SpeechSynthesisVoice[]) {
-  const american = voices.filter((voice) => normalizedLang(voice) === 'en-us')
-  if (american.length > 0) {
-    return { voice: american.find((voice) => voice.default) ?? american[0], accent: 'american' as const }
-  }
+// Apple's joke voices and the old Eloquence ones (robotic) are never chosen or offered.
+const noveltyNames = new Set(
+  [
+    'Albert', 'Bad News', 'Bahh', 'Bells', 'Boing', 'Bubbles', 'Cellos', 'Good News', 'Jester', 'Organ', 'Superstar',
+    'Trinoids', 'Whisper', 'Wobble', 'Zarvox', 'Fred', 'Junior', 'Ralph', 'Kathy',
+    'Eddy', 'Flo', 'Grandma', 'Grandpa', 'Reed', 'Rocko', 'Sandy', 'Shelley',
+  ].map((name) => name.toLowerCase()),
+)
 
-  const english = voices.filter((voice) => normalizedLang(voice).startsWith('en'))
-  if (english.length > 0) {
-    return { voice: english.find((voice) => voice.default) ?? english[0], accent: 'other' as const }
+function baseName(voice: SpeechSynthesisVoice) {
+  return voice.name.replace(/\s*\(.*\)\s*$/, '').trim().toLowerCase()
+}
+
+/** English voices worth hearing: not the joke or robotic ones. */
+export function isUsableVoice(voice: SpeechSynthesisVoice) {
+  return (
+    normalizedLang(voice).startsWith('en') && !noveltyNames.has(baseName(voice)) && !voice.voiceURI.toLowerCase().includes('eloquence')
+  )
+}
+
+/**
+ * How natural a voice sounds. Apple's downloadable voices say Premium or Enhanced in their name or id
+ * (`com.apple.voice.premium.en-US.Ava`); Edge's online voices say Natural, some others Neural.
+ */
+export function voiceQuality(voice: SpeechSynthesisVoice): 0 | 1 | 2 {
+  const id = `${voice.name} ${voice.voiceURI}`.toLowerCase()
+  if (id.includes('premium') || id.includes('natural')) return 2
+  if (id.includes('enhanced') || id.includes('neural')) return 1
+  return 0
+}
+
+function rankVoices(voices: readonly SpeechSynthesisVoice[], lang?: string) {
+  return voices
+    .filter(isUsableVoice)
+    .map((voice, order) => ({ voice, order }))
+    .sort(
+      (a, b) =>
+        Number(normalizedLang(b.voice) === lang) - Number(normalizedLang(a.voice) === lang) ||
+        voiceQuality(b.voice) - voiceQuality(a.voice) ||
+        Number(b.voice.default) - Number(a.voice.default) ||
+        a.order - b.order,
+    )
+    .map(({ voice }) => voice)
+}
+
+function accentOf(voice: SpeechSynthesisVoice) {
+  return normalizedLang(voice) === 'en-us' ? ('american' as const) : ('other' as const)
+}
+
+function stored(voices: readonly SpeechSynthesisVoice[], uri: string) {
+  return uri ? voices.find((voice) => voice.voiceURI === uri && isUsableVoice(voice)) : undefined
+}
+
+/**
+ * The voice for reading: the one picked in Settings when this device still has it, otherwise the most natural
+ * American voice (Premium, then Enhanced, then the default), otherwise the most natural other English voice.
+ */
+export function chooseVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('first')) {
+  const chosen = stored(voices, picked) ?? rankVoices(voices, 'en-us')[0]
+  if (chosen) {
+    return { voice: chosen, accent: accentOf(chosen) }
   }
 
   // Browsers often report no voices until they have loaded them, so "none yet" is not "no American voice".
   return { voice: undefined, accent: 'unknown' as const }
 }
 
+/**
+ * The other person's voice in a conversation: the one picked in Settings, otherwise the most natural other
+ * voice, in the first voice's language if there is one. None means the first voice at a lower pitch.
+ */
+export function chooseSecondVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('second')) {
+  const first = chooseVoice(voices).voice
+  if (!first) return undefined
+  const chosen = stored(voices, picked)
+  if (chosen && chosen.voiceURI !== first.voiceURI) return chosen
+  return rankVoices(voices, normalizedLang(first)).find(
+    (voice) => voice.voiceURI !== first.voiceURI && baseName(voice) !== baseName(first),
+  )
+}
+
 export function currentVoiceAccent(): VoiceAccent {
   return isSpeechSupported() ? chooseVoice(window.speechSynthesis.getVoices()).accent : 'unknown'
+}
+
+/** The first speaker of a conversation (and everything else) or the second. */
+export type VoiceRole = 'first' | 'second'
+const choiceKeys: Record<VoiceRole, string> = { first: 'vocabflow.voice', second: 'vocabflow.secondVoice' }
+const secondPitch = 0.75
+
+/** The voice picked in Settings for this browser (its voiceURI); empty means automatic. */
+export function getVoiceChoice(role: VoiceRole) {
+  try {
+    return window.localStorage.getItem(choiceKeys[role]) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function setVoiceChoice(role: VoiceRole, uri: string) {
+  try {
+    if (uri) window.localStorage.setItem(choiceKeys[role], uri)
+    else window.localStorage.removeItem(choiceKeys[role])
+  } catch {
+    // The choice then lasts only until the page is closed.
+  }
 }
 
 interface SpeakCallbacks {
@@ -40,8 +129,8 @@ interface SpeakCallbacks {
   onError?: (reason: string) => void
   /** Pause and resume as the browser reports them (a phone may pause speech on its own). */
   onPauseResume?: (event: 'pause' | 'resume') => void
-  /** A different pitch (1 is normal), to tell two speakers apart. */
-  pitch?: number
+  /** The second speaker of a conversation gets its own voice, or a lower pitch when the device has one voice. */
+  role?: VoiceRole
 }
 
 // Chrome on a computer drops an utterance that is spoken right after a cancel() of one that is still
@@ -59,7 +148,7 @@ function finishCurrent() {
   finished?.onEnd()
 }
 
-export function speakText(text: string, { onStart, onEnd, onError, onPauseResume, pitch }: SpeakCallbacks) {
+export function speakText(text: string, { onStart, onEnd, onError, onPauseResume, role }: SpeakCallbacks) {
   const synth = window.speechSynthesis
   const request = ++latestRequest
   const interrupting = synth.speaking || synth.pending
@@ -70,15 +159,17 @@ export function speakText(text: string, { onStart, onEnd, onError, onPauseResume
     if (request !== latestRequest) {
       return
     }
-    const { voice } = chooseVoice(synth.getVoices())
+    const voices = synth.getVoices()
+    const second = role === 'second' ? chooseSecondVoice(voices) : undefined
+    const voice = second ?? chooseVoice(voices).voice
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = voice?.lang ?? preferredLang
     if (voice) {
       utterance.voice = voice
     }
     utterance.rate = speechRate
-    if (pitch !== undefined) {
-      utterance.pitch = pitch
+    if (role === 'second' && !second) {
+      utterance.pitch = secondPitch
     }
     utterance.onstart = onStart
     utterance.onpause = () => onPauseResume?.('pause')

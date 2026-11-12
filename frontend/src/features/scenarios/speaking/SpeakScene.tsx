@@ -7,7 +7,7 @@ import { type HeardResult, recognitionErrorMessage, useSpeechRecognition } from 
 import { type SceneLine, speakersOf } from './dialogueFromText'
 import { ListenFirst } from './ListenFirst'
 import { type LineScore, scoreLine } from './lineScore'
-import { type SelfRating, pitchFor, readyDelayMs, selfLabel, selfShare, turnCue, turnText, watchdogMs } from './turn'
+import { type SelfRating, readyDelayMs, roleFor, selfLabel, selfShare, turnCue, turnText, watchdogMs } from './turn'
 
 type Phase = 'setup' | 'running' | 'finished'
 // partner: the other person's line is read aloud and nobody listens (the next line is not the learner's, or
@@ -113,7 +113,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     changeKind('cue')
     const go = () => {
       if (phaseRef.current !== 'running' || kindRef.current !== 'cue') return
-      if (!listenAfterSpeaking(phrase, speaker ? pitchFor(speakers, speaker) : undefined)) pending.current = go
+      if (!listenAfterSpeaking(phrase, speaker ? roleFor(speakers, speaker) : undefined)) pending.current = go
     }
     go()
   }
@@ -143,7 +143,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     // Nobody listens after this line: just read it aloud and move on.
     changeKind('partner')
     speakText(line.text, {
-      pitch: pitchFor(speakers, line.speaker),
+      role: roleFor(speakers, line.speaker),
       onStart: () => undefined,
       onEnd: () => {
         if (token.current === mine && kindRef.current === 'partner') advance(index + 1)
@@ -339,7 +339,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
   const quiet = kind === 'judged' || kind === 'nothing' || kind === 'self' || kind === 'failed' || phase === 'finished'
   function replay(line: SceneLine) {
     if (!quiet) return
-    speakText(line.text, { pitch: pitchFor(speakers, line.speaker), onStart: () => undefined, onEnd: () => undefined })
+    speakText(line.text, { role: roleFor(speakers, line.speaker), onStart: () => undefined, onEnd: () => undefined })
   }
 
   const mine = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.speaker === me)

@@ -5,6 +5,17 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.18.0] - 2026-11-12
+
+### Added
+
+- **More natural voices.** Reading aloud now prefers this device's most natural American voice: a **Premium** one, then an **Enhanced** one, then the default. Apple's joke and robotic voices are never used.
+- **Pick the voice in Settings** (On this device): **Voice**, and **Other person in conversations**, each with a ▶ Play button to hear it. The choice is kept in this browser; Automatic shows which voice it uses. The hint says how to download a Premium voice on an iPhone (Settings → Accessibility → Spoken Content → Voices → English).
+
+### Changed
+
+- In Canada scenes (Listen first and Speak this scene) the second speaker now has a voice of their own instead of the first voice at a lower pitch; the lower pitch is kept only when the device has one usable English voice.
+
 ## [1.17.0] - 2026-11-12
 
 ### Added
