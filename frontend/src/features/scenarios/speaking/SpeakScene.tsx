@@ -4,6 +4,7 @@ import { starsForShare } from '../../learning/starsForShare'
 import { playListenEnd, playListenStart, unlockGameSound } from '../../../shared/sound/effects'
 import { speakText, stopSpeaking } from '../../../shared/speech/pronunciation'
 import { type HeardResult, recognitionErrorMessage, useSpeechRecognition } from '../../../shared/speech/useSpeechRecognition'
+import { TappableText } from '../../vocabulary/components/TappableText'
 import { type SceneLine, speakersOf } from './dialogueFromText'
 import { ListenFirst } from './ListenFirst'
 import { type LineScore, scoreLine } from './lineScore'
@@ -50,7 +51,18 @@ function Words({ score }: { score: LineScore }) {
 // now" shows once the microphone is open, and the recognizer ends by itself when the learner pauses; then the line
 // is scored. Nothing is recorded, stored or sent; the result is shown, not kept.
 // `onFinished` gets the round's score (0-100) once when it ends, if at least one line was heard and scored.
-export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[]; onClose: () => void; onFinished?: (score: number) => void }) {
+// While nothing listens, a word in the chat can be tapped to add it, with its line and `source` kept.
+export function SpeakScene({
+  lines,
+  onClose,
+  onFinished,
+  source,
+}: {
+  lines: SceneLine[]
+  onClose: () => void
+  onFinished?: (score: number) => void
+  source?: { title: string; link: string }
+}) {
   const speakers = speakersOf(lines)
   const [me, setMe] = useState(speakers[0])
   const [phase, setPhase] = useState<Phase>('setup')
@@ -335,7 +347,8 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     onFinishedRef.current?.(Math.round(share * 100))
   }, [phase, results, lines])
 
-  // A partner line can be heard again while nothing is listening or about to listen.
+  // A line can be heard again (a partner's, or the learner's own once it has a result, as a model) while nothing is
+  // listening or about to listen: speech while a recognizer is open would leave the next ones deaf on an iPhone.
   const quiet = kind === 'judged' || kind === 'nothing' || kind === 'self' || kind === 'failed' || phase === 'finished'
   function replay(line: SceneLine) {
     if (!quiet) return
@@ -457,7 +470,14 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
                         }`}
                       >
                         <p className={`text-xs font-semibold ${isMe && active && !r ? 'text-indigo-100' : 'text-slate-500'}`}>{isMe ? `${line.speaker} (you)` : line.speaker}</p>
-                        {isMe && r?.score ? <Words score={r.score} /> : <p className="mt-0.5 text-base">{line.text}</p>}
+                        {isMe && r?.score ? (
+                          <Words score={r.score} />
+                        ) : (
+                          <p className="mt-0.5 text-base">
+                            {/* Tappable only while nothing listens, so a tap never opens the panel over Speak now. */}
+                            {quiet ? <TappableText sentence={line.text} source={source} text={line.text} /> : line.text}
+                          </p>
+                        )}
                         {!isMe &&
                           (active && speaking ? (
                             <SoundBars />
@@ -472,7 +492,20 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
                               <SpeakerIcon />
                             </button>
                           ))}
-                        {isMe && r && <p className="mt-1 text-xs font-semibold text-slate-500">{r.self ? `You rated yourself ${Math.round(r.share * 100)}%` : `${Math.round(r.share * 100)}%`}</p>}
+                        {isMe && r && (
+                          <div className="mt-1 flex items-center gap-1">
+                            <button
+                              aria-label={`Hear how to say: ${line.text}`}
+                              className="-my-2 -ml-2 flex size-11 items-center justify-center rounded-full text-indigo-700 hover:bg-indigo-50 disabled:opacity-30"
+                              disabled={!quiet}
+                              onClick={() => replay(line)}
+                              type="button"
+                            >
+                              <SpeakerIcon />
+                            </button>
+                            <p className="text-xs font-semibold text-slate-500">{r.self ? `You rated yourself ${Math.round(r.share * 100)}%` : `${Math.round(r.share * 100)}%`}</p>
+                          </div>
+                        )}
                       </div>
                     </li>
                   )
