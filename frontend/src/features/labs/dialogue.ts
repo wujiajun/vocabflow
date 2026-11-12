@@ -72,3 +72,14 @@ export function turnSaid(results: readonly HeardResult[], baseline: number): { t
     final: mine.length > 0 && mine[mine.length - 1].isFinal,
   }
 }
+
+// A line that is spoken has this long to end before the speech is taken as blocked (the watchdog is 10 s).
+export function speechTimeoutMs(text: string): number {
+  return Math.min(9000, 1500 + text.length * 100)
+}
+
+// How long a line is given to be read when the phone does not speak it.
+export function readingMs(text: string): number {
+  return Math.max(2500, 1500 + text.split(/\s+/).length * 400)
+}
+

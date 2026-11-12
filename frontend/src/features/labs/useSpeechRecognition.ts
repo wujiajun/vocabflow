@@ -94,6 +94,8 @@ export interface RecognitionListeners {
   onResults?: (results: HeardResult[]) => void
   /** The recognizer is over. `requested` is false when the browser ended it on its own (or with an error). */
   onEnd?: (info: { requested: boolean }) => void
+  /** Each of start, audiostart, soundstart, speechstart… as it happens (the name without `on`). */
+  onEvent?: (name: string) => void
 }
 
 export function useSpeechRecognition(lang: string, variant: Variant = 'A', listeners?: RecognitionListeners) {
@@ -154,7 +156,10 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
       const id = tag(recognition)
       note(`${id} new recognizer`)
       for (const name of plainEvents) {
-        ;(recognition as unknown as Record<string, unknown>)[`on${name}`] = () => note(`${id} on${name}`)
+        ;(recognition as unknown as Record<string, unknown>)[`on${name}`] = () => {
+          note(`${id} on${name}`)
+          listenersRef.current?.onEvent?.(name)
+        }
       }
       recognition.onresult = (event) => {
         const last = event.results[event.results.length - 1]
