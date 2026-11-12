@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { compareSpeech } from '../compareSpeech'
 import { useSpeechRecognition } from '../useSpeechRecognition'
@@ -31,6 +32,10 @@ export function SpeechTestPage() {
 
   return (
     <div>
+      <BackLink
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline underline-offset-4"
+        fallback={{ path: '/app/settings', label: 'Back to Settings' }}
+      />
       <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">Speech test</h1>
       <p className="mt-1 text-sm text-slate-600">Experimental. Tests whether this device can hear you read a sentence. Nothing is saved or sent by VocabFlow.</p>
 
