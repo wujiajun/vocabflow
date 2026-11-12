@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { compareSpeech } from './compareSpeech'
+import { compareSpeech } from '../../shared/speech/compareSpeech'
 import { DiagnosticLog } from './DiagnosticLog'
-import { type Variant, useSpeechRecognition, variantLabels } from './useSpeechRecognition'
+import { type Variant, useSpeechRecognition, variantLabels } from '../../shared/speech/useSpeechRecognition'
 
 const speechTestSentences = [
   { level: 'Easy', text: 'I would like a cup of coffee, please.' },

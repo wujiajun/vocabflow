@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { ApiClientError } from '../../../shared/api/apiClient'
 import { BackLink } from '../../../shared/BackLink'
@@ -9,6 +9,8 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { PassageReader } from '../../reading/components/PassageReader'
 import { ReadStatus } from '../../reading/components/ReadStatus'
 import { QuizBlock } from '../components/QuizBlock'
+import { dialogueFromText } from '../speaking/dialogueFromText'
+import { SpeakScene } from '../speaking/SpeakScene'
 import { useCompleteScenario, useScenario } from '../hooks/useScenarios'
 
 const fallbackBack = { path: '/app/reading/scenarios', label: 'Back to Canada' }
@@ -90,6 +92,7 @@ export function ScenarioPage() {
           CLB {current.clb} · {current.readingMinutes} min read
         </p>
         <p className="mt-1 text-sm text-slate-600">Tap any word to add it to your list.</p>
+        <SpeakEntry text={current.text} />
 
         <PassageReader source={{ title: current.title, link: `/app/reading/scenarios/${current.id}` }} text={current.text} />
 
@@ -118,4 +121,20 @@ export function ScenarioPage() {
       </article>
     )
   }
+}
+
+// "Speak this scene" appears only when the text holds a conversation between two or more speakers.
+function SpeakEntry({ text }: { text: string }) {
+  const lines = useMemo(() => dialogueFromText(text), [text])
+  const [open, setOpen] = useState(false)
+  if (lines.length === 0) {
+    return null
+  }
+  return open ? (
+    <SpeakScene lines={lines} onClose={() => setOpen(false)} />
+  ) : (
+    <button className="mt-3 min-h-11 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white" onClick={() => setOpen(true)} type="button">
+      Speak this scene
+    </button>
+  )
 }
