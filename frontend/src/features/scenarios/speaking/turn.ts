@@ -1,11 +1,17 @@
 import type { HeardResult } from '../../../shared/speech/useSpeechRecognition'
 
-/** After Done, a result that is not final yet is waited for this long. The final one often comes 1 to 2 s late. */
-export const settleMs = 1500
-/** When a result is final and nothing more comes for this long, the learner has finished the line. */
-export const quietMs = 1200
-/** A step that has not moved for this long is offered a way out. */
+/**
+ * After the microphone is open (`audiostart`), "Speak now" is shown only this much later: on an iPhone the
+ * first words said right after audiostart are often lost.
+ */
+export const readyDelayMs = 500
+/** A turn whose microphone has not opened after this long is offered a way out. */
 export const watchdogMs = 10000
+
+/** One voice for the first speaker and a lower one for the second, as in Listen first. */
+export function pitchFor(speakers: readonly string[], speaker: string): number {
+  return speakers.indexOf(speaker) % 2 === 0 ? 1 : 0.75
+}
 
 /**
  * What the learner has said in this turn. In continuous mode the results pile up for the whole practice, so

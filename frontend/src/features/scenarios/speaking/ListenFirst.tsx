@@ -1,27 +1,32 @@
-import { useEffect, useRef, useState } from 'react'
+import { type MutableRefObject, useEffect, useRef, useState } from 'react'
 import { isSpeechSupported, speakText, stopSpeaking } from '../../../shared/speech/pronunciation'
 import { type SceneLine, speakersOf } from './dialogueFromText'
+import { pitchFor } from './turn'
 
 type Play = 'idle' | 'playing' | 'paused'
 
 // The whole conversation read aloud, one voice (pitch) for each speaker. The microphone is off here.
-export function ListenFirst({ lines }: { lines: SceneLine[] }) {
+// `stopRef` lets the page stop the reading before it starts its own speech.
+export function ListenFirst({ lines, stopRef }: { lines: SceneLine[]; stopRef?: MutableRefObject<(() => void) | null> }) {
   const [play, setPlay] = useState<Play>('idle')
   const [index, setIndex] = useState(0)
   const token = useRef(0)
+  const playing = useRef(false) // only its own reading is stopped when it goes away, not what follows it
   const speakers = speakersOf(lines)
 
   function playFrom(from: number) {
     const mine = ++token.current
     if (from >= lines.length) {
+      playing.current = false
       setPlay('idle')
       setIndex(0)
       return
     }
+    playing.current = true
     setPlay('playing')
     setIndex(from)
     speakText(lines[from].text, {
-      pitch: speakers.indexOf(lines[from].speaker) % 2 === 0 ? 1 : 0.75,
+      pitch: pitchFor(speakers, lines[from].speaker),
       onStart: () => undefined,
       onEnd: () => {
         if (token.current === mine) playFrom(from + 1)
@@ -31,15 +36,26 @@ export function ListenFirst({ lines }: { lines: SceneLine[] }) {
 
   function halt(next: Play) {
     token.current++
+    playing.current = false
     stopSpeaking()
     setPlay(next)
     if (next === 'idle') setIndex(0)
   }
 
+  useEffect(() => {
+    if (!stopRef) return
+    stopRef.current = () => {
+      if (playing.current) halt('idle')
+    }
+    return () => {
+      stopRef.current = null
+    }
+  })
+
   useEffect(
     () => () => {
       token.current++
-      stopSpeaking()
+      if (playing.current) stopSpeaking()
     },
     [],
   )

@@ -113,8 +113,11 @@ export interface RecognitionListeners {
   onResults?: (results: HeardResult[]) => void
   /** The recognizer is over. `requested` is false when the browser ended it on its own (or with an error). */
   onEnd?: (info: { requested: boolean }) => void
-  /** Each of start, audiostart, soundstart, speechstart… as it happens (the name without `on`). */
+  /** Each of start, audiostart, soundstart, speechstart… as it happens (the name without `on`), and `primed` in H
+   * when the phone has finished speaking (listening starts 0.4 s later). */
   onEvent?: (name: string) => void
+  /** The error code of the current recognizer (not-allowed, no-speech…), before it is reported as ended. */
+  onError?: (code: string) => void
 }
 
 /** `primeText` is what the phone says before listening in variant H (the sentence to repeat). */
@@ -200,6 +203,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
       recognition.onerror = (event) => {
         note(`${id} onerror ${event.error}`)
         if (ref.current !== recognition) return
+        listenersRef.current?.onError?.(event.error)
         setError(recognitionErrorMessage(event.error))
         finish(recognition)
       }
@@ -240,19 +244,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     }
   }, [create, lang, note])
 
-  const start = useCallback(() => {
-    // A recognizer that is still stopping is waited for: starting another one then often fails silently.
-    if (!getRecognitionConstructor()) return
-    if (ref.current || priming.current) {
-      note('start ignored: the last recognizer has not ended yet')
-      return
-    }
-    if (variantRef.current !== 'H') {
-      begin()
-      return
-    }
-    // H: speak first (in this press), listen 0.4 s after the speech ends.
-    const phrase = primeTextRef.current || 'Your turn.'
+  const primeThenListen = useCallback((phrase: string, pitch?: number) => {
     priming.current = true
     setState('priming')
     setText('')
@@ -264,6 +256,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
       over = true
       clearTimeout(primeTimer.current)
       note(`H: speech over (${why})`)
+      listenersRef.current?.onEvent?.('primed')
       primeTimer.current = setTimeout(() => {
         if (!priming.current) return
         priming.current = false
@@ -273,6 +266,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     primeTimer.current = setTimeout(() => speechOver('no end reported in time'), primeFallbackMs(phrase))
     try {
       speakText(phrase, {
+        pitch,
         onStart: () => note('H: speech onstart'),
         onEnd: () => speechOver('ended'),
         onError: (reason) => note(`H: speech error ${reason}`),
@@ -282,6 +276,35 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
       speechOver('no speech')
     }
   }, [begin, note])
+
+  // H: speak first, listen 0.4 s after the speech ends. Returns false when a recognizer is still busy.
+  const listenAfterSpeaking = useCallback(
+    (phrase: string, pitch?: number) => {
+      if (!getRecognitionConstructor()) return false
+      if (ref.current || priming.current) {
+        note('start ignored: the last recognizer has not ended yet')
+        return false
+      }
+      primeThenListen(phrase, pitch)
+      return true
+    },
+    [note, primeThenListen],
+  )
+
+  const start = useCallback(() => {
+    // A recognizer that is still stopping is waited for: starting another one then often fails silently.
+    if (!getRecognitionConstructor()) return
+    if (ref.current || priming.current) {
+      note('start ignored: the last recognizer has not ended yet')
+      return
+    }
+    if (variantRef.current !== 'H') {
+      begin()
+      return
+    }
+    primeThenListen(primeTextRef.current || 'Your turn.')
+  }, [begin, note, primeThenListen])
+
 
   const stop = useCallback(() => {
     if (priming.current) {
@@ -362,5 +385,5 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     [],
   )
 
-  return { supported, state, text, error, log, start, stop, clear, clearLog, note }
+  return { supported, state, text, error, log, start, listenAfterSpeaking, stop, clear, clearLog, note }
 }
