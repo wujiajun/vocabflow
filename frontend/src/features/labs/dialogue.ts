@@ -1,4 +1,4 @@
-import type { HeardResult } from './useSpeechRecognition'
+import type { HeardResult } from '../../shared/speech/useSpeechRecognition'
 
 export interface DialogueLine {
   speaker: 'other' | 'you'

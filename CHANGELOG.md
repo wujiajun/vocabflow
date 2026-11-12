@@ -5,6 +5,15 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.15.0] - 2026-11-11
+
+### Added
+
+- **Speak this scene**: a Canada scenario that has a conversation now has a **Speak this scene** button under "Tap any word…". You choose who you play; **Listen first** reads the whole conversation aloud (a different pitch for each speaker, the microphone off); then **Start speaking** asks for the microphone and begins. The other person's lines are shown, not spoken (the phone's own voice would drown out yours), and move on after a reading time or when you tap **I read it**. Say only your own lines. When it is your turn, say the line and tap **Done**, or stop for a moment after the phone has heard it; the page waits up to a second and a half for the last words, scores only what you said in that turn, and shows each word green, red (a different word) or struck through (left out). **Retry this line** tries it again without restarting the microphone. At the end you get a percentage and 1 to 3 stars, as in the games. The score is not saved and nothing is recorded or sent by VocabFlow (the browser's speech service may send the sound to Apple or Google).
+- **How a line is scored**: capitals and punctuation do not count; "I'd" and "I would", "can't" and "cannot" are the same; "$6.50", "six fifty" and "six dollars and fifty cents" are the same; small words (a, the, to, of, …) may be left out; a plural, or a one-letter spelling difference in a long word, is accepted.
+- **If the microphone does not work**: a refused or slow microphone is explained, with "Try again" or **Self-rate**. If the phone stops listening in the middle (an iPhone sometimes does), the page says so and offers to let you rate the remaining lines yourself (Went well, So-so, Need practice); it does not try to start listening again, because that often fails on an iPhone.
+- Only the frontend changed: the recognizer and the word comparison moved from the experimental page into `shared/speech`. No backend change, no migration.
+
 ## [1.14.3] - 2026-11-11
 
 ### Fixed

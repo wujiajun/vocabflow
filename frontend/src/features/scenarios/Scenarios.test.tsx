@@ -159,3 +159,35 @@ test('an unknown scenario says so', async () => {
 
   expect(await screen.findByRole('heading', { name: 'We couldn’t find that scenario' })).toBeInTheDocument()
 })
+
+const talk = [
+  'Sam is looking for a flat.',
+  'Ms. Patel: Welcome, Sam.',
+  'Sam: Thank you. Is it all right if I look around?',
+  'Ms. Patel: Of course, take your time.',
+  'Sam: Could you tell me what the rent includes?',
+].join('\n\n')
+
+test('a scenario with a conversation offers "Speak this scene" and opens the practice', async () => {
+  stubApi({ ...server(), 'GET /api/v1/scenarios/renting': () => jsonResponse({ ...detail(false, null), text: talk }) })
+  const browserUser = userEvent.setup()
+  renderApp('/app/reading/scenarios/renting')
+
+  await browserUser.click(await screen.findByRole('button', { name: 'Speak this scene' }))
+  const practice = screen.getByRole('region', { name: 'Speak this scene' })
+  expect(within(practice).getByRole('button', { name: 'Ms. Patel' })).toBeInTheDocument()
+  expect(within(practice).getByRole('button', { name: 'Sam' })).toBeInTheDocument()
+  expect(within(practice).getByRole('button', { name: 'Start speaking' })).toBeInTheDocument()
+  // The reading goes on below it.
+  expect(screen.getByText('Keywords')).toBeInTheDocument()
+  await browserUser.click(within(practice).getByRole('button', { name: 'Close' }))
+  expect(screen.getByRole('button', { name: 'Speak this scene' })).toBeInTheDocument()
+})
+
+test('a scenario without a conversation has no "Speak this scene"', async () => {
+  stubApi(server())
+  renderApp('/app/reading/scenarios/renting')
+
+  await screen.findByRole('heading', { name: 'Renting an Apartment' })
+  expect(screen.queryByRole('button', { name: 'Speak this scene' })).toBeNull()
+})

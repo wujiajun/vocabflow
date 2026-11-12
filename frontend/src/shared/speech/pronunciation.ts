@@ -40,6 +40,8 @@ interface SpeakCallbacks {
   onError?: (reason: string) => void
   /** Pause and resume as the browser reports them (a phone may pause speech on its own). */
   onPauseResume?: (event: 'pause' | 'resume') => void
+  /** A different pitch (1 is normal), to tell two speakers apart. */
+  pitch?: number
 }
 
 // Chrome on a computer drops an utterance that is spoken right after a cancel() of one that is still
@@ -57,7 +59,7 @@ function finishCurrent() {
   finished?.onEnd()
 }
 
-export function speakText(text: string, { onStart, onEnd, onError, onPauseResume }: SpeakCallbacks) {
+export function speakText(text: string, { onStart, onEnd, onError, onPauseResume, pitch }: SpeakCallbacks) {
   const synth = window.speechSynthesis
   const request = ++latestRequest
   const interrupting = synth.speaking || synth.pending
@@ -75,6 +77,9 @@ export function speakText(text: string, { onStart, onEnd, onError, onPauseResume
       utterance.voice = voice
     }
     utterance.rate = speechRate
+    if (pitch !== undefined) {
+      utterance.pitch = pitch
+    }
     utterance.onstart = onStart
     utterance.onpause = () => onPauseResume?.('pause')
     utterance.onresume = () => onPauseResume?.('resume')
@@ -104,5 +109,5 @@ export function speakText(text: string, { onStart, onEnd, onError, onPauseResume
 export function stopSpeaking() {
   latestRequest++
   finishCurrent()
-  window.speechSynthesis.cancel()
+  window.speechSynthesis?.cancel()
 }

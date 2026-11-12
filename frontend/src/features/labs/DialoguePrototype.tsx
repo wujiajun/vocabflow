@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { isSpeechSupported, speakText, stopSpeaking } from '../../shared/speech/pronunciation'
-import { compareSpeech } from './compareSpeech'
+import { compareSpeech } from '../../shared/speech/compareSpeech'
 import { DiagnosticLog } from './DiagnosticLog'
 import { dialogues, graceMs, isEchoWindow, readingMs, speechTimeoutMs, turnSaid } from './dialogue'
-import { type HeardResult, useSpeechRecognition } from './useSpeechRecognition'
+import { type HeardResult, useSpeechRecognition } from '../../shared/speech/useSpeechRecognition'
 
 type Phase = 'idle' | 'starting' | 'running' | 'ended' | 'failed' | 'finished'
 interface Judged {

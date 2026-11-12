@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Variant } from './useSpeechRecognition'
+import type { Variant } from '../../shared/speech/useSpeechRecognition'
 
 // The events of the recognizer, to be copied and sent back. Collapsed.
 export function DiagnosticLog({ lines, onClear, onNote, variant, lang }: { lines: string[]; onClear: () => void; onNote: (line: string) => void; variant: Variant | string; lang: string }) {
