@@ -83,7 +83,25 @@ function clock() {
  * the state of the new one. After Stop the state is 'stopping' until that recognizer ends, and a new start
  * waits for it. Each event of each recognizer goes into a log that can be copied.
  */
-export function useSpeechRecognition(lang: string, variant: Variant = 'A') {
+export interface HeardResult {
+  transcript: string
+  isFinal: boolean
+}
+
+/** What a user of the hook wants to know besides the display text. */
+export interface RecognitionListeners {
+  /** Every result of the current recognizer so far (in continuous mode they pile up), at each result event. */
+  onResults?: (results: HeardResult[]) => void
+  /** The recognizer is over. `requested` is false when the browser ended it on its own (or with an error). */
+  onEnd?: (info: { requested: boolean }) => void
+}
+
+export function useSpeechRecognition(lang: string, variant: Variant = 'A', listeners?: RecognitionListeners) {
+  const listenersRef = useRef(listeners)
+  useEffect(() => {
+    listenersRef.current = listeners
+  })
+  const stopRequested = useRef(false)
   const [state, setState] = useState<RecognitionState>('idle')
   const [text, setText] = useState('')
   const [error, setError] = useState('')
@@ -109,6 +127,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A') {
     (recognition: RecognitionLike) => {
       if (ref.current !== recognition) return
       clearTimeout(stopTimer.current)
+      listenersRef.current?.onEnd?.({ requested: stopRequested.current })
       if (variantRef.current === 'E') {
         // The next recognizer may only start a little after this one ended.
         setState('stopping')
@@ -145,6 +164,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A') {
         length.current = event.results.length
         note(`${id} onresult n=${event.results.length} final=${last?.isFinal ?? '?'} "${last?.[0].transcript ?? ''}"`)
         if (ref.current === recognition) setText(heard)
+        listenersRef.current?.onResults?.(Array.from({ length: event.results.length }, (_, k) => ({ transcript: event.results[k][0].transcript, isFinal: event.results[k].isFinal })))
       }
       recognition.onerror = (event) => {
         note(`${id} onerror ${event.error}`)
@@ -175,6 +195,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A') {
     recognition.continuous = variantRef.current === 'D'
     recognition.interimResults = true
     ref.current = recognition
+    stopRequested.current = false
     offset.current = 0
     length.current = 0
     setText('')
@@ -194,6 +215,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A') {
   const stop = useCallback(() => {
     const recognition = ref.current
     if (!recognition) return
+    stopRequested.current = true
     setState('stopping')
     clearTimeout(stopTimer.current)
     stopTimer.current = setTimeout(() => {
