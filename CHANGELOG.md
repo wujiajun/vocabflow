@@ -5,11 +5,18 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
-## [1.13.4] - 2026-11-11
+## [1.14.1] - 2026-11-11
 
 ### Added
 
 - **Speech test: diagnostics and five ways of listening (experimental)**. On the iPhone home-screen app a second Start after Stop showed the microphone but returned no text. The test page now has a collapsed **Diagnostic log** that records, with a time, every event of every recognizer (start, audio start, sound, speech, result with its final flag, no match, error with its code, speech end, audio end, end) and every `start()`, `stop()` and `abort()` call, with a Copy button. A new **Way of listening** choice, A (as before) to E: A a new recognizer each time and Stop = `stop()`; B Stop = `abort()`; C one recognizer reused; D continuous, started once, with a Clear button; E a new recognizer only 0.5 s after the last one ended. It is to learn which way the phone handles reliably. Nothing is stored or sent; no backend change.
+
+## [1.14.0] - 2026-11-11
+
+### Added
+
+- **Life in Canada**: a new fourth section in Reading, **Canada** (next to Passages, Videos and Articles), with short scenes of everyday life written for the app: **Renting an Apartment** and **Parent-Teacher Meeting** (CLB 6), **Opening a Bank Account**, **A Job Interview** and **Filing Your Taxes** (CLB 7). Each is a natural dialogue (about 450 words) plus a **short piece of formal writing** (a lease clause, a fee notice, a school newsletter, a job posting, a tax letter) and a tip, **17 to 19 keywords and phrases with Chinese meanings and an example sentence each**, a short note about Canada in Chinese, and a **five-question quiz**. It opens in the same reader as passages and articles: tap any word to add it (the sentence and a link back to the scene are kept), listen to it read aloud, or press **Add all** to put every keyword in your list (words you already have are skipped). A scene counts as finished when you reach the end or check the quiz; the best quiz score is kept.
+- **Under the hood**: the scenes are stored in the app (`scenarios/catalog.json`, checked at startup: every keyword must appear in the text, and a price or a number that looks like a phone number is refused) and written to be read, not generated, so they cost nothing to run and can be reviewed. Practical facts differ between provinces, so the text keeps to what holds in general and each scene carries a list of facts to check (`verify`, never shown to a learner). New table `scenario_progress` (V21); `GET /api/v1/scenarios`, `GET /api/v1/scenarios/{id}`, `PUT /api/v1/scenarios/{id}/complete`. Daily tasks and the progress page do not use scenes yet.
 
 ## [1.13.3] - 2026-11-11
 

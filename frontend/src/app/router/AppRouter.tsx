@@ -6,6 +6,8 @@ import { useAuth } from '../../features/auth/hooks/useAuth'
 import { ArticleAlbumPage } from '../../features/articles/pages/ArticleAlbumPage'
 import { ArticlePage } from '../../features/articles/pages/ArticlePage'
 import { ArticlesPage } from '../../features/articles/pages/ArticlesPage'
+import { ScenarioPage } from '../../features/scenarios/pages/ScenarioPage'
+import { ScenariosPage } from '../../features/scenarios/pages/ScenariosPage'
 import { AlbumPage } from '../../features/videos/pages/AlbumPage'
 import { VideosPage } from '../../features/videos/pages/VideosPage'
 import { ReadingListPage } from '../../features/reading/pages/ReadingListPage'
@@ -59,6 +61,8 @@ export function AppRouter() {
         <Route path="reading/articles" element={<ArticlesPage />} />
         <Route path="reading/articles/albums/:albumId" element={<ArticleAlbumPage />} />
         <Route path="reading/articles/a/:articleId" element={<ArticlePage />} />
+        <Route path="reading/scenarios" element={<ScenariosPage />} />
+        <Route path="reading/scenarios/:scenarioId" element={<ScenarioPage />} />
         <Route path="reading/videos" element={<VideosPage />} />
         <Route path="reading/videos/:albumId" element={<AlbumPage />} />
         <Route path="reading/writing" element={<ReadingWritingPage />} />
