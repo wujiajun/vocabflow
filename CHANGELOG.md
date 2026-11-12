@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.13.3] - 2026-11-11
+
+### Fixed
+
+- **Speech test: Start did nothing after Stop** (seen on the iPhone home-screen app). A late `end` or `error` from the earlier recognizer could reset the new one, and the phone can fail silently when a new recognizer starts while the old one is still stopping. Now every event is checked against the current recognizer, Stop shows "Wait…" until the recognizer has ended (or 3 seconds have passed), an error resets the button, and a start that throws shows its message. Experimental page only; not yet checked on a real iPhone.
+
 ## [1.13.2] - 2026-11-11
 
 ### Added

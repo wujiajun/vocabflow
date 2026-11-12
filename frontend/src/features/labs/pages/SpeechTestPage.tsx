@@ -80,11 +80,11 @@ export function SpeechTestPage() {
 
       <button
         className="mt-4 min-h-11 w-full rounded-xl bg-indigo-700 px-4 text-base font-semibold text-white disabled:opacity-50 sm:w-auto"
-        disabled={!supported}
+        disabled={!supported || state === 'stopping'}
         onClick={state === 'listening' ? stop : start}
         type="button"
       >
-        {state === 'listening' ? 'Stop' : 'Start speaking'}
+        {state === 'listening' ? 'Stop' : state === 'stopping' ? 'Wait…' : 'Start speaking'}
       </button>
       {state === 'listening' && (
         <p className="mt-2 text-sm text-slate-600" role="status">
