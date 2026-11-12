@@ -14,7 +14,8 @@ public record ProgressSummary(
     Milestone milestone,
     List<Day> days,
     Week thisWeek,
-    Week lastWeek) {
+    Week lastWeek,
+    ScenarioProgress.Scenes scenes) {
   /** {@code next} is null once the last goal is reached. */
   public record Milestone(int previous, Integer next) {}
 

@@ -6,5 +6,7 @@ public enum TaskCategory {
   ADD_WORDS,
   READING,
   VIDEO,
-  GAMES
+  GAMES,
+  /** The Life in Canada scenarios: reading one, or speaking one. */
+  CANADA
 }

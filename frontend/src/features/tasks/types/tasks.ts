@@ -18,6 +18,8 @@ export type TaskType =
   | 'CHALLENGE_GAMES'
   | 'CHALLENGE_PERFECT'
   | 'CHALLENGE_READ'
+  | 'READ_SCENARIO'
+  | 'SPEAK_SCENARIO'
 
 export interface DailyTask {
   key: string

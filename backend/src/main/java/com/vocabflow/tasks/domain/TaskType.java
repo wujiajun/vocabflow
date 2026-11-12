@@ -28,7 +28,11 @@ public enum TaskType {
   /** Challenge: two rounds with no wrong first try. */
   CHALLENGE_PERFECT(TaskCategory.GAMES, 8, true),
   /** Challenge: read two articles, one of them long. */
-  CHALLENGE_READ(TaskCategory.READING, 10, true);
+  CHALLENGE_READ(TaskCategory.READING, 10, true),
+  /** Finish a Life in Canada scenario not finished before (reading to its end, or its quiz). */
+  READ_SCENARIO(TaskCategory.CANADA, 4),
+  /** A Speak this scene round the phone heard and scored (self-rated rounds are not kept). */
+  SPEAK_SCENARIO(TaskCategory.CANADA, 5);
 
   private final TaskCategory category;
   private final int points;

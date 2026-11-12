@@ -254,7 +254,10 @@ class TaskVarietyTest {
             "STARS_ROUND")) {
       assertThat(TaskType.valueOf(old).name()).isEqualTo(old);
     }
-    assertThat(TaskType.values()[TaskType.values().length - 1].name()).startsWith("CHALLENGE");
+    // New types go after the ones already stored.
+    assertThat(TaskType.CHALLENGE_READ.ordinal()).isEqualTo(17);
+    assertThat(TaskType.READ_SCENARIO.ordinal()).isGreaterThan(TaskType.CHALLENGE_READ.ordinal());
+    assertThat(TaskType.SPEAK_SCENARIO.ordinal()).isGreaterThan(TaskType.READ_SCENARIO.ordinal());
     assertThat(TaskType.PLAY_GAME.points()).isEqualTo(3);
     assertThat(TaskType.STARS_ROUND.points()).isEqualTo(5);
   }
