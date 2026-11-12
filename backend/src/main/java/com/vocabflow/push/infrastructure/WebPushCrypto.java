@@ -138,6 +138,13 @@ final class WebPushCrypto {
     return out;
   }
 
+  /** A non-negative number as exactly 32 big-endian bytes, padded with zeros on the left. */
+  static byte[] fixed32(BigInteger value) {
+    byte[] out = new byte[32];
+    copyFixed(value, out, 0);
+    return out;
+  }
+
   private static void copyFixed(BigInteger value, byte[] target, int offset) {
     byte[] raw = value.toByteArray();
     int length = Math.min(raw.length, 32);
