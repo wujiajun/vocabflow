@@ -199,15 +199,23 @@ describe('natural voices', () => {
     expect(chooseSecondVoice([compact, zoe, ava])).toBe(ava)
   })
 
-  test('the phone’s own voice names no voice, and the second speaker is then that voice lower unless one is picked', () => {
+  test('the phone’s own voice names no voice, and the second voice is then the best listed one unless one is picked', () => {
     setVoiceChoice('first', systemVoice)
     expect(chooseVoice([compact, ava])).toEqual({ voice: undefined, accent: 'american' })
     const speech = installSpeechSynthesis([compact, ava])
     speakText('Hello', { onStart: vi.fn(), onEnd: vi.fn() })
     expect(speech.lastUtterance()).toMatchObject({ voice: null, lang: 'en-US', pitch: 1 })
 
-    expect(chooseSecondVoice([compact, ava])).toBeUndefined()
+    expect(chooseSecondVoice([compact, ava])).toBe(ava)
     setVoiceChoice('second', compact.voiceURI)
     expect(chooseSecondVoice([compact, ava])).toBe(compact)
+  })
+
+  test('on an iPhone, automatic is the phone’s own voice, and the second voice the best listed one', () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X)', maxTouchPoints: 5 })
+    expect(chooseVoice([compact, zoe])).toEqual({ voice: undefined, accent: 'american' })
+    expect(chooseSecondVoice([compact, zoe])).toBe(zoe)
+    setVoiceChoice('first', compact.voiceURI)
+    expect(chooseVoice([compact, zoe]).voice).toBe(compact)
   })
 })

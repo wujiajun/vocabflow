@@ -250,10 +250,13 @@ test('Listen first reads the conversation aloud with the microphone off', () => 
   render(<SpeakScene lines={lines} onClose={() => undefined} />)
   click('Listen first')
   expect(spoken()).toBe('Hi there! What can I get for you?')
+  // The learner plays the first speaker by default, so their line has the second voice (here, lower)...
+  expect(speech.lastUtterance().pitch).toBe(0.75)
   expect(FakeRecognition.instances).toHaveLength(0)
   act(() => speech.lastUtterance().onend?.())
+  // ...and the other person the main voice.
   expect(spoken()).toBe("I'd like a medium coffee, please.")
-  expect(speech.lastUtterance().pitch).toBe(0.75)
+  expect(speech.lastUtterance().pitch).toBe(1)
   click('Pause')
   expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument()
 })

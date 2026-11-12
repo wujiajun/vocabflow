@@ -326,7 +326,7 @@ test('links to the experimental speech test, and its back link returns to Settin
   expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
 })
 
-test('the reading voice and the other person’s voice can be picked and heard, a choice kept on this device', async () => {
+test('the main voice and the voice of your lines can be picked and heard, a choice kept on this device', async () => {
   stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
   const speech = installSpeechSynthesis([
     voice('Samantha', 'en-US', true, 'compact.Samantha'),
@@ -350,7 +350,7 @@ test('the reading voice and the other person’s voice can be picked and heard, 
   await browserUser.click(screen.getByRole('button', { name: 'Play the voice' }))
   expect(speech.lastUtterance().voice?.name).toBe('Samantha')
 
-  await browserUser.click(screen.getByRole('button', { name: 'Play the other person’s voice' }))
+  await browserUser.click(screen.getByRole('button', { name: 'Play the voice of your lines' }))
   expect(speech.lastUtterance().voice?.name).toBe('Ava')
 
   await browserUser.selectOptions(first, 'system')

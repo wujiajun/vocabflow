@@ -1,18 +1,25 @@
 import { type MutableRefObject, useEffect, useRef, useState } from 'react'
 import { isSpeechSupported, speakText, stopSpeaking } from '../../../shared/speech/pronunciation'
-import { type SceneLine, speakersOf } from './dialogueFromText'
+import type { SceneLine } from './dialogueFromText'
 import { roleFor } from './turn'
 
 type Play = 'idle' | 'playing' | 'paused'
 
-// The whole conversation read aloud, one voice for each speaker. The microphone is off here.
+// The whole conversation read aloud, the other person in the main voice and the learner (`me`) in the second. The microphone is off here.
 // `stopRef` lets the page stop the reading before it starts its own speech.
-export function ListenFirst({ lines, stopRef }: { lines: SceneLine[]; stopRef?: MutableRefObject<(() => void) | null> }) {
+export function ListenFirst({
+  lines,
+  me,
+  stopRef,
+}: {
+  lines: SceneLine[]
+  me: string
+  stopRef?: MutableRefObject<(() => void) | null>
+}) {
   const [play, setPlay] = useState<Play>('idle')
   const [index, setIndex] = useState(0)
   const token = useRef(0)
   const playing = useRef(false) // only its own reading is stopped when it goes away, not what follows it
-  const speakers = speakersOf(lines)
 
   function playFrom(from: number) {
     const mine = ++token.current
@@ -26,7 +33,7 @@ export function ListenFirst({ lines, stopRef }: { lines: SceneLine[]; stopRef?: 
     setPlay('playing')
     setIndex(from)
     speakText(lines[from].text, {
-      role: roleFor(speakers, lines[from].speaker),
+      role: roleFor(me, lines[from].speaker),
       onStart: () => undefined,
       onEnd: () => {
         if (token.current === mine) playFrom(from + 1)
