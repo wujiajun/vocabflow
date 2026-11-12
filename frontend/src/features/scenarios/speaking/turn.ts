@@ -15,9 +15,12 @@ export const turnCue = 'Your turn. Go ahead.'
 /** A turn whose microphone has not opened after this long is offered a way out. */
 export const watchdogMs = 10000
 
-/** The first voice for the first speaker and the second voice for the other, as in Listen first. */
-export function roleFor(speakers: readonly string[], speaker: string): VoiceRole {
-  return speakers.indexOf(speaker) % 2 === 0 ? 'first' : 'second'
+/**
+ * The other person speaks with the main voice (the one picked in Settings, the voice heard most), and the learner's
+ * own lines, read as a model or in Listen first, with the second voice.
+ */
+export function roleFor(me: string, speaker: string): VoiceRole {
+  return speaker === me ? 'second' : 'first'
 }
 
 /**

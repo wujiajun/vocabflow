@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.18.2] - 2026-11-12
+
+### Changed
+
+- **On an iPhone or iPad, Automatic now uses the phone’s own English voice** (the one in Settings → Accessibility → Spoken Content → Voices → English), so a downloaded Enhanced or Premium voice is used without picking anything. iOS never lists those voices to web apps; naming no voice lets the phone use it. Computers keep choosing the most natural listed voice.
+- **In a conversation the other person now speaks with your main voice**, and your own lines (read as a model, or in Listen first) with the second voice. Before, the first speaker in the script always had the main voice, so playing that person gave your partner the second voice. The Settings label is now **Your lines in conversations**.
+
 ## [1.18.1] - 2026-11-12
 
 ### Added

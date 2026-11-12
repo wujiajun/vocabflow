@@ -3,6 +3,7 @@ import {
   chooseSecondVoice,
   chooseVoice,
   getVoiceChoice,
+  isAppleMobile,
   isUsableVoice,
   setVoiceChoice,
   speakText,
@@ -13,8 +14,8 @@ import {
 import { useVoices } from '../../../shared/speech/usePronunciation'
 
 const samples: Record<VoiceRole, string> = {
-  first: 'Hi, I’m calling about the apartment for rent. Is it still available?',
-  second: 'Yes, it is. Would you like to come and see it this weekend?',
+  first: 'Good morning, this is the rental office. How can I help you?',
+  second: 'Hi, I’m calling about the apartment for rent. Is it still available?',
 }
 
 const qualityTag = ['', 'Enhanced', 'Premium'] as const
@@ -72,12 +73,18 @@ export function VoiceSettings() {
         return (
           <div className={role === 'second' ? 'mt-3' : undefined} key={role}>
             <label className="block text-sm font-medium text-slate-800" htmlFor={id}>
-              {role === 'first' ? 'Voice' : 'Other person in conversations'}
+              {role === 'first' ? 'Voice' : 'Your lines in conversations'}
             </label>
             <div className="flex items-end gap-2">
               <select className={selectClass} id={id} onChange={(event) => pick(role, event.target.value)} value={value}>
-                <option value="">{auto ? `Automatic (${voiceLabel(auto)})` : 'Automatic (same voice, lower)'}</option>
-                {role === 'first' ? <option value={systemVoice}>This phone’s own English voice</option> : null}
+                <option value="">
+                  {auto
+                    ? `Automatic (${voiceLabel(auto)})`
+                    : role === 'first'
+                      ? 'Automatic (this phone’s own English voice)'
+                      : 'Automatic (same voice, lower)'}
+                </option>
+                {role === 'first' && !isAppleMobile() ? <option value={systemVoice}>This phone’s own English voice</option> : null}
                 {english.map((voice) => (
                   <option key={voice.voiceURI} value={voice.voiceURI}>
                     {voiceLabel(voice)}
@@ -85,7 +92,7 @@ export function VoiceSettings() {
                 ))}
               </select>
               <button
-                aria-label={role === 'first' ? 'Play the voice' : 'Play the other person’s voice'}
+                aria-label={role === 'first' ? 'Play the voice' : 'Play the voice of your lines'}
                 className={playClass}
                 onClick={() => speakText(samples[role], { role, onStart: () => undefined, onEnd: () => undefined })}
                 type="button"
@@ -97,11 +104,12 @@ export function VoiceSettings() {
         )
       })}
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        {hasNatural
-          ? 'Premium and Enhanced voices sound the most natural. '
-          : 'This device has no Premium or Enhanced English voice yet. '}
-        On an iPhone, voices you download are not offered to web apps; choose them in Settings → Accessibility → Spoken
-        Content → Voices → English, then pick “This phone’s own English voice” here, which may use that one.
+        In a conversation the other person speaks with Voice, and your own lines, when read to you, with the second.{' '}
+        {isAppleMobile()
+          ? 'On this phone, Automatic uses the English voice chosen in Settings → Accessibility → Spoken Content → Voices → English; a downloaded Premium or Enhanced voice there sounds the most natural, though it is not listed here.'
+          : hasNatural
+            ? 'Premium and Enhanced voices sound the most natural.'
+            : 'This device has no Premium or Enhanced English voice yet.'}
       </p>
     </div>
   )

@@ -72,8 +72,9 @@ function stored(voices: readonly SpeechSynthesisVoice[], uri: string) {
  * American voice (Premium, then Enhanced, then the default), otherwise the most natural other English voice.
  */
 export function chooseVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('first')) {
-  // No voice is named, so the device uses its own English voice (on an iPhone, perhaps the one set in Spoken Content).
-  if (picked === systemVoice) {
+  // No voice is named, so the device uses its own English voice: on an iPhone the one set in Spoken Content, which
+  // can be a downloaded Enhanced or Premium voice that iOS never lists to web pages. So that is automatic there.
+  if (picked === systemVoice || (picked === '' && isAppleMobile())) {
     return { voice: undefined, accent: 'american' as const }
   }
   const chosen = stored(voices, picked) ?? rankVoices(voices, 'en-us')[0]
@@ -86,14 +87,15 @@ export function chooseVoice(voices: readonly SpeechSynthesisVoice[], picked = ge
 }
 
 /**
- * The other person's voice in a conversation: the one picked in Settings, otherwise the most natural other
- * voice, in the first voice's language if there is one. None means the first voice at a lower pitch.
+ * The second voice in a conversation (the learner's own lines): the one picked in Settings, otherwise the most
+ * natural other voice, in the main voice's language if there is one. With the phone's own voice as the main one,
+ * the best listed voice. None means the main voice at a lower pitch.
  */
 export function chooseSecondVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('second')) {
   const first = chooseVoice(voices).voice
   const chosen = stored(voices, picked)
   if (chosen && chosen.voiceURI !== first?.voiceURI) return chosen
-  if (!first) return undefined
+  if (!first) return rankVoices(voices, 'en-us')[0]
   return rankVoices(voices, normalizedLang(first)).find(
     (voice) => voice.voiceURI !== first.voiceURI && baseName(voice) !== baseName(first),
   )
@@ -103,7 +105,13 @@ export function currentVoiceAccent(): VoiceAccent {
   return isSpeechSupported() ? chooseVoice(window.speechSynthesis.getVoices()).accent : 'unknown'
 }
 
-/** The first speaker of a conversation (and everything else) or the second. */
+/** iPhone and iPad, including an iPad that says it is a Mac. */
+export function isAppleMobile() {
+  if (typeof navigator === 'undefined') return false
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+}
+
+/** The main voice (everything, and the other person in a conversation) or the second (the learner's own lines). */
 export type VoiceRole = 'first' | 'second'
 const choiceKeys: Record<VoiceRole, string> = { first: 'vocabflow.voice', second: 'vocabflow.secondVoice' }
 const secondPitch = 0.75

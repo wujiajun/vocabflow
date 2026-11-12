@@ -113,7 +113,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     changeKind('cue')
     const go = () => {
       if (phaseRef.current !== 'running' || kindRef.current !== 'cue') return
-      if (!listenAfterSpeaking(phrase, speaker ? roleFor(speakers, speaker) : undefined)) pending.current = go
+      if (!listenAfterSpeaking(phrase, speaker ? roleFor(meRef.current, speaker) : undefined)) pending.current = go
     }
     go()
   }
@@ -143,7 +143,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     // Nobody listens after this line: just read it aloud and move on.
     changeKind('partner')
     speakText(line.text, {
-      role: roleFor(speakers, line.speaker),
+      role: roleFor(meRef.current, line.speaker),
       onStart: () => undefined,
       onEnd: () => {
         if (token.current === mine && kindRef.current === 'partner') advance(index + 1)
@@ -339,7 +339,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
   const quiet = kind === 'judged' || kind === 'nothing' || kind === 'self' || kind === 'failed' || phase === 'finished'
   function replay(line: SceneLine) {
     if (!quiet) return
-    speakText(line.text, { role: roleFor(speakers, line.speaker), onStart: () => undefined, onEnd: () => undefined })
+    speakText(line.text, { role: roleFor(me, line.speaker), onStart: () => undefined, onEnd: () => undefined })
   }
 
   const mine = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.speaker === me)
@@ -421,7 +421,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
           <details className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-1 text-left shadow-sm">
             <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-slate-700">Options</summary>
             <div className="pb-4">
-              <ListenFirst lines={lines} stopRef={stopListenFirst} />
+              <ListenFirst lines={lines} me={me} stopRef={stopListenFirst} />
               <label className="mt-2 flex min-h-11 items-center gap-2 text-sm text-slate-800">
                 <input checked={model} className="size-5 accent-indigo-700" onChange={(e) => setModel(e.target.checked)} type="checkbox" />
                 Read my line to me first (to repeat after it)
