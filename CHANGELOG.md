@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.13.0] - 2026-11-10
+
+### Added
+
+- **Daily reminder**: Settings has a new "Daily reminder" card with a switch ("Remind me to study") and a time (19:00 to begin with). When it is on, the device gets **one short notification a day** at that time in the learner's time zone (the one chosen in Settings, else the device's), **only if that day's study is not finished**; tapping it opens the Study page. With a streak it says "Your N-day streak is waiting"; otherwise "Today's words are ready whenever you are." Nothing is sent to someone who has not switched it on, it can be switched off at any time, and it is kept per device. Switching it on after the time has passed does not send one at once, and a reminder more than 3 hours late (the server was down) is dropped.
+- **It needs three things** that no earlier version needed: the app opened over **https** (a browser allows a service worker and notifications on https only), on an iPhone or iPad the app **added to the Home Screen**, and VAPID keys in `.env` (`scripts/generate_vapid_keys.sh mailto:you@example.com`). Settings says which one is missing. Without the keys the feature is simply off: the server starts as before and the card says reminders are not set up.
+- **Under the hood**: a service worker (`/sw.js`) that only shows the notification and opens the app when it is tapped (no caching and no fetch handler, so updates and `NewVersionNotice` work as before); a `push_subscriptions` table (V20); `GET /api/v1/push/config`, `GET/POST/DELETE /api/v1/push/subscription`; a once-a-minute job inside the backend. A reminder is claimed with one conditional update before it is sent, so it cannot go out twice; a push service answering 404 or 410 deletes the subscription. Web Push (RFC 8291 encryption and VAPID) is written with the JDK's own crypto instead of a library (the usual one brings BouncyCastle and Apache HttpClient); a test reproduces the RFC's worked example byte for byte. The Caddy policy needed no change (`worker-src` falls back to `script-src 'self'`).
+
 ## [1.12.2] - 2026-11-10
 
 ### Added

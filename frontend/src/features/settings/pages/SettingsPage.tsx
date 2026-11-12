@@ -11,6 +11,7 @@ import { authErrorMessage } from '../../auth/components/AuthError'
 import { clbLabel, clbLevels } from '../../auth/clbLevels'
 import { useAuth, useUpdateSettings } from '../../auth/hooks/useAuth'
 import type { ClbLevel, UpdateSettingsRequest } from '../../auth/types/auth'
+import { ReminderSettings } from '../../reminders/components/ReminderSettings'
 
 export function SettingsPage() {
   usePageTitle('Settings')
@@ -145,6 +146,8 @@ export function SettingsPage() {
           </p>
         </div>
       </form>
+
+      <ReminderSettings />
 
       <section aria-label="On this device" className="mt-4 max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-7">
         <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">On this device</h2>

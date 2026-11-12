@@ -193,6 +193,12 @@ The web container serves `index.html` with `Cache-Control: no-cache` (the hashed
 
 Open `http://localhost:8088`, or `http://<this computer's IP>:8088` from another device on the same network. Registering needs the invite code from `.env`. To use this computer only, set `VOCABFLOW_BIND_ADDRESS=127.0.0.1`.
 
+**Daily reminders (optional).** A notification once a day at a time the learner chooses (Settings, "Daily reminder"), only if that day's study is not finished. It is off until you do three things, because browsers allow notifications only on https and iPhones only for an app added to the Home Screen:
+
+1. Make the keys: `scripts/generate_vapid_keys.sh mailto:you@example.com` (writes three `VOCABFLOW_PUSH_*` lines to `.env`, never prints the private key), then `docker compose up -d --build --wait`. The Mac running the app needs to reach the internet (the push services of Apple and Google).
+2. Open the app over https. With Tailscale: turn on HTTPS Certificates in the Tailscale admin page (DNS), then on the Mac run `tailscale serve --bg 8088` (Tailscale versions differ in the exact command; `tailscale serve --help`). The app is then also at `https://<machine>.<tailnet>.ts.net`; `http://<machine>:8088` keeps working. A different address is a different site to the browser, so sign in again there, and the reminder is set up from the https address.
+3. On an iPhone or iPad (16.4 or newer): open the https address in Safari, Share, Add to Home Screen, and open VocabFlow from the new icon. Then Settings, Daily reminder, switch it on and allow notifications.
+
 **This is plain HTTP.** Other devices on the network could read passwords and login tokens in transit, so use it only on a network you trust. It is not ready for the internet: it has no HTTPS and no login rate limit.
 
 Data lives in the `mysql-data` Docker volume. `docker compose down` keeps it; `docker compose down -v` deletes it.
