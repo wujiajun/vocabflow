@@ -294,3 +294,16 @@ test('the chat shows the lines so far; a partner line can be heard again only wh
   expect(spoken()).toBe('Hi there! What can I get for you?')
   expect(screen.getByText('Great!')).toBeInTheDocument()
 })
+
+test('the start screen shows who you play and Start; the rest is folded under Options', () => {
+  const onClose = vi.fn()
+  render(<SpeakScene lines={lines} onClose={onClose} />)
+  expect(screen.getByRole('heading', { name: 'Who do you play?' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Start speaking' })).toBeEnabled()
+  const options = screen.getByText('Options').closest('details')!
+  expect(options).not.toHaveAttribute('open')
+  expect(options).toContainElement(screen.getByRole('button', { name: 'Listen first' }))
+  expect(options).toContainElement(screen.getByRole('button', { name: 'Self-rate (no microphone)' }))
+  click('Close')
+  expect(onClose).toHaveBeenCalled()
+})
