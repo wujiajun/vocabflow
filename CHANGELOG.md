@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.14.3] - 2026-11-11
+
+### Fixed
+
+- **Speech test, conversation: the first microphone question cut the speech off and the page stopped.** The microphone is now asked for first, and the phone does not speak until the recognizer has really started. If the microphone is refused or cannot start, the page says so and offers "Try again" or the way back to the one-sentence test. A spoken line that the system interrupts or that never starts is tried once more and then skipped (the text stays on the screen), and every step has a watchdog: after 10 seconds without progress the page shows Retry and Skip (or Cancel while waiting for the microphone) and the log says where it stopped. The log also records the start of the microphone question, when the page loses and regains focus or is hidden, and for each spoken line its start, end and any error. Experimental page only; not yet checked on a real iPhone.
+
 ## [1.14.2] - 2026-11-11
 
 ### Added

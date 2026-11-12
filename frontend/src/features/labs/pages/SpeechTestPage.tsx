@@ -36,7 +36,7 @@ export function SpeechTestPage() {
           </button>
         ))}
       </div>
-      {tab === 'sentence' ? <SentenceTest /> : <DialoguePrototype />}
+      {tab === 'sentence' ? <SentenceTest /> : <DialoguePrototype onBack={() => setTab('sentence')} />}
     </div>
   )
 }

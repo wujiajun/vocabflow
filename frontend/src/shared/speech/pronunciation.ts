@@ -36,6 +36,8 @@ export function currentVoiceAccent(): VoiceAccent {
 interface SpeakCallbacks {
   onStart: () => void
   onEnd: () => void
+  /** Called before onEnd when the browser reports an error (for example `interrupted`, `canceled`). */
+  onError?: (reason: string) => void
 }
 
 // Chrome on a computer drops an utterance that is spoken right after a cancel() of one that is still
@@ -53,7 +55,7 @@ function finishCurrent() {
   finished?.onEnd()
 }
 
-export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
+export function speakText(text: string, { onStart, onEnd, onError }: SpeakCallbacks) {
   const synth = window.speechSynthesis
   const request = ++latestRequest
   const interrupting = synth.speaking || synth.pending
@@ -78,7 +80,10 @@ export function speakText(text: string, { onStart, onEnd }: SpeakCallbacks) {
       }
     }
     utterance.onend = ended
-    utterance.onerror = ended
+    utterance.onerror = (event) => {
+      onError?.((event as SpeechSynthesisErrorEvent | undefined)?.error ?? 'error')
+      ended()
+    }
 
     current = { utterance, onEnd }
     synth.resume()
