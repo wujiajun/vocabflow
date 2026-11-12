@@ -127,6 +127,29 @@ class TaskRulesTest {
   }
 
   @Test
+  void canadaScenariosAreOfferedWhenThereIsOneToReadOrSpeak() {
+    TaskFacts both = new TaskFacts(20, 0, 40, 0, 0, false, false, false, false, true, true);
+    assertThat(types(both)).contains(TaskType.READ_SCENARIO, TaskType.SPEAK_SCENARIO);
+    TaskFacts allRead = new TaskFacts(20, 0, 40, 0, 0, false, false, false, false, false, true);
+    assertThat(types(allRead))
+        .as("every scenario finished: speaking one again is still possible")
+        .contains(TaskType.SPEAK_SCENARIO)
+        .doesNotContain(TaskType.READ_SCENARIO);
+    assertThat(types(EVERYTHING)).doesNotContain(TaskType.READ_SCENARIO, TaskType.SPEAK_SCENARIO);
+    assertThat(TaskType.READ_SCENARIO.category()).isEqualTo(TaskCategory.CANADA);
+    assertThat(TaskType.SPEAK_SCENARIO.category()).isEqualTo(TaskCategory.CANADA);
+  }
+
+  @Test
+  void canadaTasksCountScenariosReadAndSpoken() {
+    DayActivity day = new DayActivity(false, 0, 0, 0, 0, 0, 0, List.of(), 0, 0, 1, 0);
+    assertThat(TaskRules.done(task(TaskType.READ_SCENARIO, null, 1), day)).isTrue();
+    assertThat(TaskRules.done(task(TaskType.SPEAK_SCENARIO, null, 1), day)).isFalse();
+    DayActivity spoke = new DayActivity(false, 0, 0, 0, 0, 0, 0, List.of(), 0, 0, 0, 2);
+    assertThat(TaskRules.progress(task(TaskType.SPEAK_SCENARIO, null, 1), spoke)).isEqualTo(1);
+  }
+
+  @Test
   void anIdleDayHasNoProgress() {
     DayActivity idle = day(false, 0, 6, 0, 0, 0, 0);
     for (TaskType type : TaskType.values()) {

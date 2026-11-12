@@ -56,6 +56,33 @@ class ProgressApiTests {
   }
 
   @Test
+  void canadaScenesShowHowManyAreFinishedAndSpokenWithTheAverageScore() throws Exception {
+    String token = token("progress-scenes@example.com");
+    JsonNode before = summary(token, "").path("scenes");
+    assertThat(before.path("total").asInt()).isPositive();
+    assertThat(before.path("finished").asInt()).isZero();
+    assertThat(before.path("spoken").asInt()).isZero();
+    assertThat(before.path("averageSpeaking").isNull()).isTrue();
+
+    mvc.perform(
+            put("/api/v1/scenarios/renting-an-apartment/complete")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    for (String[] spoken : new String[][] {{"job-interview", "70"}, {"filing-your-taxes", "91"}}) {
+      mvc.perform(
+              put("/api/v1/scenarios/" + spoken[0] + "/speaking")
+                  .header("Authorization", "Bearer " + token)
+                  .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                  .content("{\"score\":" + spoken[1] + "}"))
+          .andExpect(status().is2xxSuccessful());
+    }
+    JsonNode after = summary(token, "").path("scenes");
+    assertThat(after.path("finished").asInt()).isEqualTo(3);
+    assertThat(after.path("spoken").asInt()).isEqualTo(2);
+    assertThat(after.path("averageSpeaking").asInt()).isEqualTo(81);
+  }
+
+  @Test
   void anIntervalOf21DaysIsMasteredAnd20IsNot() throws Exception {
     String token = token("progress-mature@example.com");
     long user = userId("progress-mature@example.com");

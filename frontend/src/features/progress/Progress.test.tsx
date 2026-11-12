@@ -42,6 +42,7 @@ function summary(overrides: Partial<ProgressSummary> = {}): ProgressSummary {
     }),
     thisWeek: { reviews: 30, newWords: 10, rounds: 1 },
     lastWeek: { reviews: 40, newWords: 10, rounds: 0 },
+    scenes: { total: 5, finished: 2, spoken: 1, averageSpeaking: 84 },
     ...overrides,
   }
 }
@@ -193,4 +194,26 @@ test('a finished save anywhere (a rating, a game round) refreshes the numbers', 
   await queryClient.getMutationCache().build(queryClient, { mutationFn: async () => 'saved' }).execute(undefined)
 
   await waitFor(() => expect(within(screen.getByRole('region', { name: 'Your numbers' })).getByText('Words learned').previousSibling).toHaveTextContent('42'))
+})
+
+test('the Life in Canada card shows scenarios finished and scenes spoken, with a link to the list', async () => {
+  stubApi({ ...signedIn(), 'GET /api/v1/progress/summary': () => jsonResponse(summary()) })
+  renderApp('/app/progress')
+
+  const card = await screen.findByRole('region', { name: 'Life in Canada' })
+  expect(within(card).getByTestId('scenes-finished')).toHaveTextContent('2 of 5')
+  expect(within(card).getByTestId('scenes-spoken')).toHaveTextContent('1 · 84% on average')
+  expect(within(card).getByRole('link', { name: 'Open the next scenario' })).toHaveAttribute('href', '/app/reading/scenarios')
+})
+
+test('no speaking score yet shows no average', async () => {
+  stubApi({
+    ...signedIn(),
+    'GET /api/v1/progress/summary': () => jsonResponse(summary({ scenes: { total: 5, finished: 5, spoken: 0, averageSpeaking: null } })),
+  })
+  renderApp('/app/progress')
+
+  const card = await screen.findByRole('region', { name: 'Life in Canada' })
+  expect(within(card).getByTestId('scenes-spoken')).toHaveTextContent(/^0\s*$/)
+  expect(within(card).getByRole('link', { name: 'Practise a scene again' })).toBeInTheDocument()
 })

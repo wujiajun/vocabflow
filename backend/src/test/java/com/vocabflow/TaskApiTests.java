@@ -129,6 +129,33 @@ class TaskApiTests {
   }
 
   @Test
+  void canadaTasksCountAScenarioFinishedAndASceneSpokenToday() throws Exception {
+    String token = token("tasks-canada@example.com");
+    long user = userId("tasks-canada@example.com");
+    seed(user, TODAY, "STUDY_PLAN", null, "STUDY", 1, 10, 0);
+    seed(user, TODAY, "READ_SCENARIO", null, "CANADA", 1, 4, 1);
+    seed(user, TODAY, "SPEAK_SCENARIO", null, "CANADA", 1, 5, 2);
+
+    mvc.perform(
+            put("/api/v1/scenarios/renting-an-apartment/complete")
+                .header("Authorization", "Bearer " + token))
+        .andExpect(status().is2xxSuccessful());
+    JsonNode read = today(token);
+    assertThat(read.path("tasks").get(1).path("completed").asBoolean()).as("read").isTrue();
+    assertThat(read.path("tasks").get(2).path("completed").asBoolean()).as("spoken").isFalse();
+
+    mvc.perform(
+            put("/api/v1/scenarios/renting-an-apartment/speaking")
+                .header("Authorization", "Bearer " + token)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"score\":80}"))
+        .andExpect(status().is2xxSuccessful());
+    JsonNode spoken = today(token);
+    assertThat(spoken.path("tasks").get(2).path("completed").asBoolean()).as("spoken").isTrue();
+    assertThat(spoken.path("earnedToday").asInt()).isEqualTo(4 + 5);
+  }
+
+  @Test
   void longArticlesGrammarVideosAndGameDetailsAreCountedFromTheirData() throws Exception {
     String token = token("tasks-new-kinds@example.com");
     long user = userId("tasks-new-kinds@example.com");

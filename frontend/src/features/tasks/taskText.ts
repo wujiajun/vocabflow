@@ -47,6 +47,10 @@ export function taskTitle(task: DailyTask) {
       return `Play ${n} games with no mistakes`
     case 'CHALLENGE_READ':
       return `Read ${n} articles, one of them long`
+    case 'READ_SCENARIO':
+      return 'Finish a new Life in Canada scenario'
+    case 'SPEAK_SCENARIO':
+      return 'Speak a Life in Canada scene'
   }
 }
 
@@ -67,6 +71,9 @@ export function taskPath(task: DailyTask) {
     case 'WATCH_VIDEO':
     case 'WATCH_GRAMMAR_VIDEO':
       return '/app/reading/videos'
+    case 'READ_SCENARIO':
+    case 'SPEAK_SCENARIO':
+      return '/app/reading/scenarios'
     case 'SPELL_STARS':
       return gameNames['spell-it'].path
     case 'PLAY_GAME':

@@ -36,6 +36,7 @@ public class TaskService {
   private final ArticleActivity articles;
   private final PassageActivity passages;
   private final VideoActivity videos;
+  private final ScenarioActivity scenarios;
   private final Clock clock;
 
   public TaskService(
@@ -47,6 +48,7 @@ public class TaskService {
       ArticleActivity articles,
       PassageActivity passages,
       VideoActivity videos,
+      ScenarioActivity scenarios,
       Clock clock) {
     this.users = users;
     this.store = store;
@@ -56,6 +58,7 @@ public class TaskService {
     this.articles = articles;
     this.passages = passages;
     this.videos = videos;
+    this.scenarios = scenarios;
     this.clock = clock;
   }
 
@@ -125,7 +128,9 @@ public class TaskService {
             articles.unreadArticleFor(userId, clb),
             videos.unwatchedVideoFor(userId, clb),
             articles.unreadLongArticleFor(userId, clb, TaskRules.LONG_ARTICLE_MINUTES),
-            videos.unwatchedGrammarVideoFor(userId, clb));
+            videos.unwatchedGrammarVideoFor(userId, clb),
+            scenarios.unfinishedScenario(userId),
+            scenarios.speakableScenario());
     List<DailyTask> list = new ArrayList<>();
     list.add(new DailyTask(TaskType.STUDY_PLAN, null, 1, TaskType.STUDY_PLAN.points(), null));
     list.addAll(
@@ -151,7 +156,9 @@ public class TaskService {
         videos.watchedBetween(userId, from, to),
         learning.rounds(userId, date),
         articles.readLongBetween(userId, from, to, TaskRules.LONG_ARTICLE_MINUTES),
-        videos.grammarWatchedBetween(userId, from, to));
+        videos.grammarWatchedBetween(userId, from, to),
+        scenarios.finishedBetween(userId, from, to),
+        scenarios.spokenBetween(userId, from, to));
   }
 
   /** Awards every finished task not yet awarded, then the day's bonuses; returns the new state. */
@@ -223,6 +230,8 @@ public class TaskService {
       case CHALLENGE_GAMES -> "Challenge: 2 stars in 3 different games";
       case CHALLENGE_PERFECT -> "Challenge: " + task.target() + " rounds with no mistakes";
       case CHALLENGE_READ -> "Challenge: read 2 articles, one of them long";
+      case READ_SCENARIO -> "Finished a Life in Canada scenario";
+      case SPEAK_SCENARIO -> "Spoke a Life in Canada scene";
     };
   }
 

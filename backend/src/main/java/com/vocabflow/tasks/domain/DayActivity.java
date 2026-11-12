@@ -13,8 +13,37 @@ public record DayActivity(
     int videosWatched,
     List<GameResult> rounds,
     int longReadings,
-    int grammarVideos) {
-  /** Activity without long articles or grammar videos. */
+    int grammarVideos,
+    int scenariosRead,
+    int scenariosSpoken) {
+  /** Activity without Canada scenarios. */
+  public DayActivity(
+      boolean planFinished,
+      int ratedCards,
+      int dueReviews,
+      int wordsAdded,
+      int wordsAddedFromArticles,
+      int readings,
+      int videosWatched,
+      List<GameResult> rounds,
+      int longReadings,
+      int grammarVideos) {
+    this(
+        planFinished,
+        ratedCards,
+        dueReviews,
+        wordsAdded,
+        wordsAddedFromArticles,
+        readings,
+        videosWatched,
+        rounds,
+        longReadings,
+        grammarVideos,
+        0,
+        0);
+  }
+
+  /** Activity without long articles, grammar videos or Canada scenarios. */
   public DayActivity(
       boolean planFinished,
       int ratedCards,
@@ -33,6 +62,8 @@ public record DayActivity(
         readings,
         videosWatched,
         rounds,
+        0,
+        0,
         0,
         0);
   }

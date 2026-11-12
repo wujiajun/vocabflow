@@ -69,6 +69,12 @@ public final class TaskRules {
     if (facts.grammarVideoAvailable()) {
       list.add(easy(TaskType.WATCH_GRAMMAR_VIDEO, 1, 4));
     }
+    if (facts.scenarioAvailable()) {
+      list.add(easy(TaskType.READ_SCENARIO, 1, TaskType.READ_SCENARIO.points()));
+    }
+    if (facts.speakingAvailable()) {
+      list.add(easy(TaskType.SPEAK_SCENARIO, 1, TaskType.SPEAK_SCENARIO.points()));
+    }
     if (facts.gameWords() >= MIN_GAME_WORDS) {
       list.add(easy(TaskType.PLAY_ROUND, 1, 2));
       list.add(easy(TaskType.PLAY_ROUND, 2, 3));
@@ -125,6 +131,8 @@ public final class TaskRules {
           case CHALLENGE_PERFECT -> perfectRounds(day);
           case CHALLENGE_READ ->
               day.longReadings() >= 1 ? day.readings() : Math.min(1, day.readings());
+          case READ_SCENARIO -> day.scenariosRead();
+          case SPEAK_SCENARIO -> day.scenariosSpoken();
         };
     return Math.max(0, Math.min(task.target(), count));
   }

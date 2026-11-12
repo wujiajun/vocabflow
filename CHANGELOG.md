@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.20.0] - 2026-11-12
+
+### Added
+
+- **Daily tasks for Life in Canada.** A new task group, Canada, can put one of two tasks on a day: **Finish a new Life in Canada scenario** (4 points, offered while one is unfinished; reading to the end, the quiz or speaking finishes it) and **Speak a Life in Canada scene** (5 points; a Speak this scene round the phone heard and scored, since self-rated rounds are not kept). Like the other groups it is chosen more often the longer it has not been done.
+- **My progress shows Life in Canada**: how many scenarios you have finished, how many scenes you have spoken, and your average speaking score, with a link to the list.
+
 ## [1.19.1] - 2026-11-12
 
 ### Fixed
