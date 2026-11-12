@@ -1,5 +1,6 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
 import { SpeechTestPage } from './pages/SpeechTestPage'
 
@@ -25,14 +26,22 @@ class FakeRecognition {
 }
 
 test('says so when the browser has no speech recognition', () => {
-  render(<SpeechTestPage />)
+  render(
+    <MemoryRouter>
+      <SpeechTestPage />
+    </MemoryRouter>,
+  )
   expect(screen.getByRole('alert')).toHaveTextContent('no speech recognition')
   expect(screen.getByRole('button', { name: 'Start speaking' })).toBeDisabled()
 })
 
 test('listens on a press and compares what was heard', async () => {
   vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
-  render(<SpeechTestPage />)
+  render(
+    <MemoryRouter>
+      <SpeechTestPage />
+    </MemoryRouter>,
+  )
   await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
   const rec = FakeRecognition.last!
   expect(rec.start).toHaveBeenCalled()
@@ -49,7 +58,11 @@ test('listens on a press and compares what was heard', async () => {
 
 test('shows a clear message when the microphone is refused', async () => {
   vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
-  render(<SpeechTestPage />)
+  render(
+    <MemoryRouter>
+      <SpeechTestPage />
+    </MemoryRouter>,
+  )
   await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
   act(() => FakeRecognition.last!.onerror?.({ error: 'not-allowed' }))
   expect(screen.getByRole('alert')).toHaveTextContent('refused')

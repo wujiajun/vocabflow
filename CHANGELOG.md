@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.13.2] - 2026-11-11
+
+### Added
+
+- **A way into the speech test from the home-screen app**: the bottom of Settings, under the version number, has a small "Speech test (experimental)" link to `/app/labs/speech-test`, because an app opened from the home screen has no address bar. The test page has a "← Back to Settings" link. Nothing else changes.
+
 ## [1.13.1] - 2026-11-10
 
 ### Added
