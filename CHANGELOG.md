@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.19.0] - 2026-11-12
+
+### Added
+
+- **Hear how to say your own line in Speak this scene.** Once your line has a result, a speaker button on its bubble reads it to you as a model, with the voice of your lines. Like Hear again on the other person's lines, it works only while the phone is not listening or about to listen, since speech at that moment would leave the iPhone's microphone deaf.
+- **Tap a word in the Speak this scene chat to add it.** Words in the conversation open the add-word panel, as in the reader, and the word keeps its line and the scene as its source. They can be tapped only while the phone is not listening; your own scored line keeps its coloured words.
+
 ## [1.18.2] - 2026-11-12
 
 ### Changed

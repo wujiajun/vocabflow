@@ -92,7 +92,7 @@ export function ScenarioPage() {
           CLB {current.clb} · {current.readingMinutes} min read
         </p>
         <p className="mt-1 text-sm text-slate-600">Tap any word to add it to your list.</p>
-        <SpeakEntry scenarioId={current.id} speakingScore={current.speakingScore} spokenAt={current.spokenAt} text={current.text} />
+        <SpeakEntry scenarioId={current.id} title={current.title} speakingScore={current.speakingScore} spokenAt={current.spokenAt} text={current.text} />
 
         <PassageReader source={{ title: current.title, link: `/app/reading/scenarios/${current.id}` }} text={current.text} />
 
@@ -125,7 +125,19 @@ export function ScenarioPage() {
 
 // "Speak this scene" appears only when the text holds a conversation between two or more speakers.
 // The latest speaking result is shown under the button and saved quietly when a round ends.
-function SpeakEntry({ text, scenarioId, speakingScore, spokenAt }: { text: string; scenarioId: string; speakingScore: number | null; spokenAt: string | null }) {
+function SpeakEntry({
+  text,
+  title,
+  scenarioId,
+  speakingScore,
+  spokenAt,
+}: {
+  text: string
+  title: string
+  scenarioId: string
+  speakingScore: number | null
+  spokenAt: string | null
+}) {
   const lines = useMemo(() => dialogueFromText(text), [text])
   const [open, setOpen] = useState(false)
   const save = useSaveSpeakingScore(scenarioId)
@@ -134,7 +146,14 @@ function SpeakEntry({ text, scenarioId, speakingScore, spokenAt }: { text: strin
   }
   return (
     <>
-      {open ? <SpeakScene lines={lines} onClose={() => setOpen(false)} onFinished={(score) => save.mutate(score)} /> : null}
+      {open ? (
+        <SpeakScene
+          lines={lines}
+          onClose={() => setOpen(false)}
+          onFinished={(score) => save.mutate(score)}
+          source={{ title, link: `/app/reading/scenarios/${scenarioId}` }}
+        />
+      ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <button className="min-h-11 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white" onClick={() => setOpen(true)} type="button">
           Speak this scene

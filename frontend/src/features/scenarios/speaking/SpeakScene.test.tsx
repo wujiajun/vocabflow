@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { primeGapMs } from '../../../shared/speech/useSpeechRecognition'
 import { installSpeechSynthesis } from '../../../test/speech'
 import { playListenEnd, playListenStart } from '../../../shared/sound/effects'
+import { WordTapContext } from '../../vocabulary/components/wordTapContext'
 import { SpeakScene } from './SpeakScene'
 import { readyDelayMs, turnCue, watchdogMs } from './turn'
 
@@ -361,4 +362,48 @@ test('a rising cue sounds with Speak now, and a falling one when the phone stops
   expect(playListenEnd).not.toHaveBeenCalled()
   latest().end()
   expect(playListenEnd).toHaveBeenCalledTimes(1)
+})
+
+test('your own line, once scored, has a speaker that reads it as a model, only while nothing listens', () => {
+  begin('Customer')
+  phoneDone()
+  micOpen()
+  latest().said(['a medium tea', true])
+  latest().end()
+  const model = screen.getByRole('button', { name: "Hear how to say: I'd like a medium coffee, please." })
+  expect(model).toBeEnabled()
+  act(() => model.click())
+  expect(spoken()).toBe("I'd like a medium coffee, please.")
+  expect(speech.lastUtterance().pitch).toBe(0.75) // your lines have the second voice
+
+  click('Try again')
+  phoneDone()
+  // A new try is under way: the old result is gone, and nothing may speak while the microphone opens.
+  expect(screen.queryByRole('button', { name: /Hear how to say/ })).toBeNull()
+})
+
+test('a word in the chat can be tapped to add it with its line and the scene, but not while listening', () => {
+  const open = vi.fn()
+  render(
+    <WordTapContext.Provider value={{ open, spot: undefined }}>
+      <SpeakScene lines={lines} onClose={() => undefined} source={{ title: 'At the café', link: '/app/reading/scenarios/cafe' }} />
+    </WordTapContext.Provider>,
+  )
+  click('Customer')
+  click('Start speaking')
+  phoneDone()
+  // Listening: the words are plain text.
+  act(() => screen.getByText(/Hi there!/).click())
+  expect(open).not.toHaveBeenCalled()
+
+  micOpen()
+  latest().said(["I'd like a medium coffee please", true])
+  latest().end()
+  act(() => screen.getByText('there').click())
+  expect(open).toHaveBeenCalledWith('there', expect.any(String), {
+    sentence: 'Hi there! What can I get for you?',
+    form: 'there',
+    title: 'At the café',
+    link: '/app/reading/scenarios/cafe',
+  })
 })
