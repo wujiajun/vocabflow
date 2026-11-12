@@ -12,6 +12,12 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 - **Life in Canada**: a new fourth section in Reading, **Canada** (next to Passages, Videos and Articles), with short scenes of everyday life written for the app: **Renting an Apartment** and **Parent-Teacher Meeting** (CLB 6), **Opening a Bank Account**, **A Job Interview** and **Filing Your Taxes** (CLB 7). Each is a natural dialogue (about 450 words) plus a **short piece of formal writing** (a lease clause, a fee notice, a school newsletter, a job posting, a tax letter) and a tip, **17 to 19 keywords and phrases with Chinese meanings and an example sentence each**, a short note about Canada in Chinese, and a **five-question quiz**. It opens in the same reader as passages and articles: tap any word to add it (the sentence and a link back to the scene are kept), listen to it read aloud, or press **Add all** to put every keyword in your list (words you already have are skipped). A scene counts as finished when you reach the end or check the quiz; the best quiz score is kept.
 - **Under the hood**: the scenes are stored in the app (`scenarios/catalog.json`, checked at startup: every keyword must appear in the text, and a price or a number that looks like a phone number is refused) and written to be read, not generated, so they cost nothing to run and can be reviewed. Practical facts differ between provinces, so the text keeps to what holds in general and each scene carries a list of facts to check (`verify`, never shown to a learner). New table `scenario_progress` (V21); `GET /api/v1/scenarios`, `GET /api/v1/scenarios/{id}`, `PUT /api/v1/scenarios/{id}/complete`. Daily tasks and the progress page do not use scenes yet.
 
+## [1.13.3] - 2026-11-11
+
+### Fixed
+
+- **Speech test: Start did nothing after Stop** (seen on the iPhone home-screen app). A late `end` or `error` from the earlier recognizer could reset the new one, and the phone can fail silently when a new recognizer starts while the old one is still stopping. Now every event is checked against the current recognizer, Stop shows "Wait…" until the recognizer has ended (or 3 seconds have passed), an error resets the button, and a start that throws shows its message. Experimental page only; not yet checked on a real iPhone.
+
 ## [1.13.2] - 2026-11-11
 
 ### Added
