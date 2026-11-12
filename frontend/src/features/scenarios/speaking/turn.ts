@@ -5,6 +5,12 @@ import type { HeardResult } from '../../../shared/speech/useSpeechRecognition'
  * first words said right after audiostart are often lost.
  */
 export const readyDelayMs = 500
+/**
+ * Said before listening when no other line comes just before the learner's (they speak first, twice in a row, or
+ * try again): an iPhone listens reliably only right after the phone has spoken, and the learner's own line would
+ * give the answer away. Long enough (about a second and a half) to count as the phone having spoken.
+ */
+export const turnCue = 'Your turn. Go ahead.'
 /** A turn whose microphone has not opened after this long is offered a way out. */
 export const watchdogMs = 10000
 

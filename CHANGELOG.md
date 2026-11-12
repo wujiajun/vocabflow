@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.16.1] - 2026-11-12
+
+### Changed
+
+- **Speak this scene no longer reads your own line to you.** When no line of the other person comes just before yours (you speak first, you have two lines in a row, or you try again), the phone now says only "Your turn. Go ahead." before it listens (it still has to say something first, or an iPhone does not hear you). To repeat after a model instead, turn on **Read my line to me first** before you start.
+
 ## [1.16.0] - 2026-11-12
 
 ### Changed

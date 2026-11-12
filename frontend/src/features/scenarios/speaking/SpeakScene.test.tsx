@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { primeGapMs } from '../../../shared/speech/useSpeechRecognition'
 import { installSpeechSynthesis } from '../../../test/speech'
 import { SpeakScene } from './SpeakScene'
-import { readyDelayMs, watchdogMs } from './turn'
+import { readyDelayMs, turnCue, watchdogMs } from './turn'
 
 class FakeRecognition {
   static instances: FakeRecognition[] = []
@@ -127,10 +127,11 @@ test('each turn has its own recognizer, none is ever cut, and the total counts o
   }
 })
 
-test('when you play the one who speaks first, the phone reads your own line as a model before listening', () => {
+test('when you play the one who speaks first, the phone says a short cue, not your line, before listening', () => {
   begin() // Barista
-  expect(spoken()).toBe('Hi there! What can I get for you?')
-  expect(screen.getByText('Listen to your line first…')).toBeInTheDocument()
+  expect(spoken()).toBe(turnCue)
+  expect(speech.spoken.map((u) => u.text)).not.toContain('Hi there! What can I get for you?')
+  expect(screen.getByText('Your turn is next…')).toBeInTheDocument()
   phoneDone()
   expect(FakeRecognition.instances).toHaveLength(1)
   micOpen()
@@ -139,7 +140,7 @@ test('when you play the one who speaks first, the phone reads your own line as a
   expect(screen.getByTestId('line-result')).toHaveTextContent('100%')
 })
 
-test('nothing heard: Try again reads your line first and listens with a new recognizer', () => {
+test('nothing heard: Try again says the cue and listens with a new recognizer', () => {
   begin('Customer')
   phoneDone()
   micOpen()
@@ -149,7 +150,7 @@ test('nothing heard: Try again reads your line first and listens with a new reco
   expect(screen.getByText('Nothing was heard.')).toBeInTheDocument()
 
   click('Try again')
-  expect(spoken()).toBe("I'd like a medium coffee, please.")
+  expect(spoken()).toBe(turnCue)
   phoneDone()
   expect(latest()).not.toBe(first)
   micOpen()
@@ -260,4 +261,18 @@ test('starting while Listen first is reading stops it, and the first line is not
   phoneDone()
   expect(screen.getByText('Get ready…')).toBeInTheDocument()
   expect(speech.spoken.filter((u) => u.text === "I'd like a medium coffee, please.")).toHaveLength(0)
+})
+
+test('Read my line to me first reads your own line as a model before you say it', () => {
+  render(<SpeakScene lines={lines} onClose={() => undefined} />)
+  act(() => screen.getByRole('checkbox', { name: /Read my line to me first/ }).click())
+  click('Start speaking') // Barista speaks first
+  expect(spoken()).toBe('Hi there! What can I get for you?')
+  expect(screen.getByText('Listen to your line first…')).toBeInTheDocument()
+  phoneDone()
+  micOpen()
+  latest().said(['a cup of tea', true])
+  latest().end()
+  click('Try again')
+  expect(spoken()).toBe('Hi there! What can I get for you?')
 })
