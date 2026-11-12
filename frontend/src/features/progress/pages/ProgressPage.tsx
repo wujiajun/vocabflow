@@ -3,6 +3,7 @@ import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { useUserToday } from '../../auth/hooks/useUserToday'
 import { BigNumbers } from '../components/BigNumbers'
+import { CanadaScenes } from '../components/CanadaScenes'
 import { Heatmap } from '../components/Heatmap'
 import { MilestoneBar } from '../components/MilestoneBar'
 import { WeekCompare } from '../components/WeekCompare'
@@ -36,6 +37,7 @@ export function ProgressPage() {
           <MilestoneBar summary={progress.data} />
           <Heatmap days={progress.data.days} />
           <WeekCompare lastWeek={progress.data.lastWeek} thisWeek={progress.data.thisWeek} />
+          <CanadaScenes scenes={progress.data.scenes} />
         </div>
       )}
     </div>

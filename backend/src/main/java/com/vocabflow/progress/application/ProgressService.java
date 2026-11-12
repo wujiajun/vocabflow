@@ -27,13 +27,19 @@ public class ProgressService {
   private final UserRepository users;
   private final LearningProgress learning;
   private final TaskProgress tasks;
+  private final ScenarioProgress scenarios;
   private final Clock clock;
 
   public ProgressService(
-      UserRepository users, LearningProgress learning, TaskProgress tasks, Clock clock) {
+      UserRepository users,
+      LearningProgress learning,
+      TaskProgress tasks,
+      ScenarioProgress scenarios,
+      Clock clock) {
     this.users = users;
     this.learning = learning;
     this.tasks = tasks;
+    this.scenarios = scenarios;
     this.clock = clock;
   }
 
@@ -89,7 +95,8 @@ public class ProgressService {
             Milestones.previous(mastered), next.isPresent() ? next.getAsInt() : null),
         days,
         week(days, days.size() - WEEK, days.size()),
-        week(days, days.size() - 2 * WEEK, days.size() - WEEK));
+        week(days, days.size() - 2 * WEEK, days.size() - WEEK),
+        scenarios.scenes(userId));
   }
 
   private static ProgressSummary.Week week(List<ProgressSummary.Day> days, int from, int to) {

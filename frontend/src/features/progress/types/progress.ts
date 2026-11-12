@@ -25,4 +25,6 @@ export interface ProgressSummary {
   days: ProgressDay[]
   thisWeek: ProgressWeek
   lastWeek: ProgressWeek
+  // The Life in Canada scenarios: offered, finished, with a kept speaking score, and those scores' average.
+  scenes: { total: number; finished: number; spoken: number; averageSpeaking: number | null }
 }

@@ -24,6 +24,8 @@ public class ProgressController {
 
   record WeekResponse(int reviews, int newWords, int rounds) {}
 
+  record ScenesResponse(int total, int finished, int spoken, Integer averageSpeaking) {}
+
   record SummaryResponse(
       LocalDate date,
       int started,
@@ -34,7 +36,8 @@ public class ProgressController {
       MilestoneResponse milestone,
       List<DayResponse> days,
       WeekResponse thisWeek,
-      WeekResponse lastWeek) {}
+      WeekResponse lastWeek,
+      ScenesResponse scenes) {}
 
   /** The signed-in user's progress (their own today when no date is sent). */
   @GetMapping("/summary")
@@ -58,7 +61,12 @@ public class ProgressController {
                         d.date(), d.cards(), d.reviews(), d.newWords(), d.rounds(), d.points()))
             .toList(),
         week(s.thisWeek()),
-        week(s.lastWeek()));
+        week(s.lastWeek()),
+        new ScenesResponse(
+            s.scenes().total(),
+            s.scenes().finished(),
+            s.scenes().spoken(),
+            s.scenes().averageSpeaking()));
   }
 
   private static WeekResponse week(ProgressSummary.Week w) {
