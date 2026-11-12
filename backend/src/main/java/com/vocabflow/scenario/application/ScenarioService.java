@@ -48,4 +48,13 @@ public class ScenarioService {
     }
     progress.complete(userId, id, clock.instant(), score);
   }
+
+  /** {@code score} is the share of the learner's words said right in Speak this scene, 0 to 100. */
+  public void recordSpeaking(long userId, String id, Integer score) {
+    catalog.scenario(id).orElseThrow(() -> new NotFoundException("Scenario was not found"));
+    if (score == null || score < 0 || score > 100) {
+      throw new BadRequestException("The speaking score must be 0 to 100");
+    }
+    progress.recordSpeaking(userId, id, clock.instant(), score);
+  }
 }

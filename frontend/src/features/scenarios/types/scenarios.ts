@@ -10,6 +10,9 @@ export interface ScenarioSummary {
   completed: boolean
   bestScore: number | null
   quizSize: number
+  // The latest Speak this scene result, 0-100, and when; null until the learner has spoken it.
+  speakingScore: number | null
+  spokenAt: string | null
 }
 
 export interface ScenarioKeyword {
@@ -43,4 +46,6 @@ export interface Scenario {
   completed: boolean
   completedAt: string | null
   bestScore: number | null
+  speakingScore: number | null
+  spokenAt: string | null
 }

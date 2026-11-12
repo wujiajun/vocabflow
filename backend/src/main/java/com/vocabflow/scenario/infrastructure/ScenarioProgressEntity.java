@@ -26,4 +26,10 @@ public class ScenarioProgressEntity {
 
   @Column(name = "best_score")
   public Integer bestScore;
+
+  @Column(name = "speaking_score")
+  public Integer speakingScore;
+
+  @Column(name = "spoken_at")
+  public Instant spokenAt;
 }

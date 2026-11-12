@@ -22,7 +22,12 @@ public class JpaScenarioProgressRepositoryAdapter implements ScenarioProgressRep
         .collect(
             Collectors.toUnmodifiableMap(
                 entity -> entity.scenarioId,
-                entity -> new Progress(entity.completedAt, entity.bestScore)));
+                entity ->
+                    new Progress(
+                        entity.completedAt,
+                        entity.bestScore,
+                        entity.speakingScore,
+                        entity.spokenAt)));
   }
 
   @Override
@@ -46,6 +51,28 @@ public class JpaScenarioProgressRepositoryAdapter implements ScenarioProgressRep
     if (score != null) {
       rows.raiseBestScore(userId, scenarioId, score);
     }
+  }
+
+  @Override
+  public void recordSpeaking(long userId, String scenarioId, Instant at, int score) {
+    if (!rows.existsByUserIdAndScenarioId(userId, scenarioId)) {
+      ScenarioProgressEntity entity = new ScenarioProgressEntity();
+      entity.userId = userId;
+      entity.scenarioId = scenarioId;
+      entity.completedAt = at;
+      entity.speakingScore = score;
+      entity.spokenAt = at;
+      try {
+        rows.saveAndFlush(entity);
+        return;
+      } catch (DataIntegrityViolationException exception) {
+        // The row was made meanwhile (the reading was finished at the same moment): update it.
+        if (!isDuplicateKeyViolation(exception)) {
+          throw exception;
+        }
+      }
+    }
+    rows.setSpeaking(userId, scenarioId, score, at);
   }
 
   private boolean isDuplicateKeyViolation(DataIntegrityViolationException exception) {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { completeScenario, getScenario, listScenarios } from '../api/scenariosApi'
+import { completeScenario, getScenario, listScenarios, saveSpeakingScore } from '../api/scenariosApi'
 
 export const scenarioKeys = {
   all: ['scenarios'] as const,
@@ -19,6 +19,16 @@ export function useCompleteScenario(id: string | undefined) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (score?: number) => completeScenario(id as string, score),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: scenarioKeys.all }),
+  })
+}
+
+// Saved quietly when a Speak this scene round ends; retried once, never shown as an error.
+export function useSaveSpeakingScore(id: string | undefined) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (score: number) => saveSpeakingScore(id as string, score),
+    retry: 1,
     onSettled: () => queryClient.invalidateQueries({ queryKey: scenarioKeys.all }),
   })
 }
