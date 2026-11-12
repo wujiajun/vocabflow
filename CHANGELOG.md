@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.14.2] - 2026-11-11
+
+### Added
+
+- **Speech test: a conversation prototype (experimental)**. The test page (`/app/labs/speech-test`) has a second tab, **Conversation**: two built-in conversations of eight lines (a coffee shop, asking the way) where you play one side and the phone speaks the other with the browser's voice. On an iPhone a recognizer started again after Stop did not hear, so here **one continuous recognizer is started once and kept for the whole conversation**. A line is judged when its result is final, or when you tap **Done**; **Skip** moves on. Results that arrive while the phone is speaking, or in the second after, are dropped as its own voice and noted in the log. If the phone ends the listening by itself, the page says so, shows how long it lasted, and offers one try at listening again without promising that it works. The diagnostic log also records the speaking, the start and end of each line and how long the listening lasts. Nothing is stored or sent; no backend change.
+
 ## [1.14.1] - 2026-11-11
 
 ### Added
