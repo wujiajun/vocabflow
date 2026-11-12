@@ -46,6 +46,13 @@ class ScenarioTest {
   }
 
   @Test
+  void theEmergencyNumberIsTheOnlyNumberAllowed() {
+    assertThat(scenario("Call 911 hello.", "hello").text()).contains("911");
+    assertThatThrownBy(() -> scenario("Call 912 hello.", "hello"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void aQuestionNeedsARightAnswerAmongItsOptions() {
     assertThatThrownBy(() -> new QuizQuestion("Q?", List.of("a", "b"), 2, ""))
         .isInstanceOf(IllegalArgumentException.class);

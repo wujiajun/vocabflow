@@ -5,6 +5,16 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.21.0] - 2026-11-12
+
+### Added
+
+- **Seven more Life in Canada scenes, so the list now has all twelve:** calling 911, at the pharmacy, a doctor's appointment, buying groceries, taking the bus, weather and small talk with neighbours, and Service Canada (health card and SIN). Each has a conversation for Speak this scene, keywords and a quiz, and is set in Calgary where it matters. Their `verify` lists name the practical facts (health card names, transit fares, SIN papers, drug cover and so on) that still need a check against official sources.
+
+### Changed
+
+- The scenario catalog check still refuses numbers that look like phone numbers or prices, but now allows the emergency number 911.
+
 ## [1.19.1] - 2026-11-12
 
 ### Fixed

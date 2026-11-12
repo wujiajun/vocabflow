@@ -24,7 +24,10 @@ public record Scenario(
     List<QuizQuestion> quiz) {
   private static final Pattern SLUG = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
 
-  /** Phone numbers, prices and the like must not be invented, so the text may not hold them. */
+  /**
+   * Phone numbers, prices and the like must not be invented, so the text may not hold them. The
+   * emergency number 911 is the one exception.
+   */
   private static final Pattern NUMBERS = Pattern.compile("[$€£]|\\d{3}");
 
   public Scenario {
@@ -53,7 +56,7 @@ public record Scenario(
     quiz = quiz == null ? List.of() : List.copyOf(quiz);
 
     String text = text(segments).toLowerCase(Locale.ROOT);
-    if (NUMBERS.matcher(text).find()) {
+    if (NUMBERS.matcher(text.replace("911", "")).find()) {
       throw new IllegalArgumentException(
           "Scenario " + id + " has a price or a number that looks like a phone number");
     }

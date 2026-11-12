@@ -1329,6 +1329,1613 @@
      "explainZh": "信里说不同意可以提出异议(file an objection)。"
     }
    ]
+  },
+  {
+   "id": "calling-911",
+   "title": "Calling 911",
+   "titleZh": "拨打 911 求助",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "Lina's neighbour slipped on the ice and cannot get up. She calls 911, answers the dispatcher's questions and stays on the line until help arrives.",
+   "summaryZh": "莉娜的邻居在冰上滑倒,爬不起来。她拨打 911,回答接线员的问题,并保持通话直到救援到达。",
+   "canadaNoteZh": "紧急情况(有人受伤、起火、正在发生的犯罪)才打 911。接通后先说清楚在哪个城市和具体地址,再说发生了什么。听不懂也不要挂断,可以说 \"I need an interpreter\" 或慢慢重复关键词。不确定是不是紧急情况时,也可以直接问接线员。",
+   "verify": [
+    "Whether a 911 dispatcher can bring in an interpreter, and for which languages, differs by service. The text only has the caller say she is not sure of the word, and does not promise an interpreter.",
+    "The dispatcher's questions (city first, then police, fire or ambulance, then address) are typical, but the order and wording differ by dispatch centre. Calgary and Alberta wording is not confirmed.",
+    "Advice not to move an injured person is general first-aid advice for a possible broken bone or neck or back injury. Confirm it fits the story's injury.",
+    "The dispatcher telling the caller to stay on the line, and to send someone to meet the ambulance, is common practice, not a rule.",
+    "Calling 911 from a cell phone: the location sent to the dispatcher may be imprecise, so giving the address is correct. The exact accuracy is not stated in the text.",
+    "Text-to-911 exists only for people registered in advance (for example people who are deaf or hard of hearing). It is not mentioned in the text on purpose.",
+    "Whether to call 911 for non-emergencies is not covered; the tip says only to use it for real emergencies."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "On a cold morning in Calgary, Lina sees her neighbour, Mr. Brown, lying on the icy sidewalk in front of his house. He says his leg hurts and he cannot stand up. Lina takes out her phone and calls 911."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Dispatcher",
+       "text": "911. What city are you in?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "Calgary."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "Do you need police, fire or ambulance?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "Ambulance, please. My neighbour fell on the ice and he cannot get up. I think his leg is broken."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "All right, I am sending help. What is the address of the emergency?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "He is lying in front of the house on Maple Street, near the corner of Maple Street and Fifth Avenue. Sorry, I am not sure about the house number. I can read it to you in a moment."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "That is fine. Stay on the line. Is he awake and conscious? Is he breathing normally?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "Yes, he is awake. He is talking to me, but he is in pain."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "Good. Please do not move him. Can you cover him with a coat or a blanket to keep him warm?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "Yes, I can do that. I have a coat with me."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "Does he have any medical conditions, or take any medication that you know of?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "I do not know. I will ask him. He says he takes medicine for his heart."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "Thank you. That helps. Now, can you read me the number on the house?"
+      },
+      {
+       "speaker": "Lina",
+       "text": "Yes, it is on the door. I can see it now."
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "Perfect. The ambulance is on its way. Please stay with him and do not hang up. If anything changes, tell me right away."
+      },
+      {
+       "speaker": "Lina",
+       "text": "I will. Is there anything else I should do?"
+      },
+      {
+       "speaker": "Dispatcher",
+       "text": "If you can, ask someone to wait by the road and wave to the paramedics, so they can find you quickly. When they arrive, tell them what you told me."
+      },
+      {
+       "speaker": "Lina",
+       "text": "Understood. Thank you."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Call 911 only in an emergency, for example when someone is badly hurt, there is a fire, or a crime is happening now. Stay calm, speak slowly, give the city and the address first, and answer the questions one at a time. Do not hang up until the dispatcher tells you that you can."
+    }
+   ],
+   "keywords": [
+    {
+     "word": "dispatcher",
+     "zh": "接线调度员",
+     "definition": "a person who answers emergency calls and sends help",
+     "example": "The dispatcher asked for my address."
+    },
+    {
+     "word": "emergency",
+     "zh": "紧急情况",
+     "definition": "a sudden, serious situation that needs help right away",
+     "example": "Call 911 in an emergency."
+    },
+    {
+     "word": "ambulance",
+     "zh": "救护车",
+     "definition": "a vehicle that takes sick or hurt people to the hospital",
+     "example": "The ambulance arrived in ten minutes."
+    },
+    {
+     "word": "stay on the line",
+     "zh": "不要挂断电话",
+     "definition": "to keep the phone call going and not hang up",
+     "example": "Please stay on the line until help comes."
+    },
+    {
+     "word": "corner of",
+     "zh": "……的路口",
+     "definition": "the place where two streets meet",
+     "example": "The store is at the corner of Main Street and Second Avenue."
+    },
+    {
+     "word": "in pain",
+     "zh": "感到疼痛",
+     "definition": "feeling physical hurt",
+     "example": "He was in pain after the fall."
+    },
+    {
+     "word": "conscious",
+     "zh": "有意识的",
+     "definition": "awake and able to understand what is happening",
+     "example": "Is she conscious?"
+    },
+    {
+     "word": "breathing",
+     "zh": "呼吸",
+     "definition": "taking air in and out",
+     "example": "He is breathing normally."
+    },
+    {
+     "word": "medical conditions",
+     "zh": "基础疾病",
+     "definition": "health problems that a person has for a long time",
+     "example": "Tell the doctor about your medical conditions."
+    },
+    {
+     "word": "medication",
+     "zh": "药物",
+     "definition": "medicine that a person takes",
+     "example": "She takes medication for her blood pressure."
+    },
+    {
+     "word": "paramedics",
+     "zh": "急救人员",
+     "definition": "trained workers who give emergency medical care",
+     "example": "The paramedics helped him into the ambulance."
+    },
+    {
+     "word": "hang up",
+     "zh": "挂断电话",
+     "definition": "to end a phone call",
+     "example": "Do not hang up yet."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "What does the dispatcher ask first?",
+     "options": [
+      "What is your name?",
+      "What city are you in?",
+      "Is he your father?"
+     ],
+     "answer": 1,
+     "explainZh": "接线员先问你在哪个城市,再问要警察、消防还是救护车。"
+    },
+    {
+     "question": "Why does the dispatcher say \"Stay on the line\"?",
+     "options": [
+      "To keep helping and get more information until help arrives",
+      "Because the phone is free",
+      "To test Lina's English"
+     ],
+     "answer": 0,
+     "explainZh": "保持通话,接线员才能继续问问题、给出指示,直到救援到达。"
+    },
+    {
+     "question": "What should Lina do with Mr. Brown?",
+     "options": [
+      "Help him stand up",
+      "Not move him and keep him warm",
+      "Take him home"
+     ],
+     "answer": 1,
+     "explainZh": "可能骨折时不要移动伤者,用外套或毯子保暖。"
+    },
+    {
+     "question": "What is a good reason to call 911?",
+     "options": [
+      "You want to ask about the weather",
+      "Someone is badly hurt",
+      "You lost your keys"
+     ],
+     "answer": 1,
+     "explainZh": "911 只用于真正的紧急情况,例如有人重伤、起火或正在发生的犯罪。"
+    }
+   ]
+  },
+  {
+   "id": "at-the-pharmacy",
+   "title": "At the Pharmacy",
+   "titleZh": "在药房取药",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "Mei picks up an antibiotic, tells the pharmacist about her allergy, asks how to take the medicine and buys cough syrup.",
+   "summaryZh": "小美取一种抗生素,告诉药师自己的过敏情况,问清楚怎么吃药,还买了止咳糖浆。",
+   "canadaNoteZh": "在加拿大,药师(pharmacist)会当面讲解怎么吃药,你可以随时提问,不用不好意思。取药时带上健康卡和药物保险卡(如果有)。药费能报多少取决于你的保险和所在省份。有些常见药不需要处方,可以直接在药房货架上买。",
+   "verify": [
+    "How much of the drug cost insurance covers, and whether public drug coverage exists, differs by province and plan. The text says only that she pays a small part.",
+    "Health card names differ by province (in Alberta it is the Alberta Health Care card). The text uses only \"health card\" and does not check that a health card is asked for at a pharmacy.",
+    "Whether pharmacists in Alberta can renew a prescription is true in some provinces, but the details differ. The text has the pharmacist say that Mei can ask for a refill, without naming a rule.",
+    "Taking the antibiotic with food and finishing every pill are typical instructions, but depend on the drug. The medicine in the story is invented.",
+    "A pharmacist checking for allergies and other medicines before giving a prescription is standard practice, but the exact questions differ by pharmacy.",
+    "Over-the-counter medicine on a shelf versus behind the counter: some products are kept behind the counter in some places. The text only mentions a shelf."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "Mei has a bad throat infection, and her doctor gave her a prescription. Now she is at a pharmacy in Calgary. The pharmacist, Raj, is at the counter."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Raj",
+       "text": "Hello. How can I help you?"
+      },
+      {
+       "speaker": "Mei",
+       "text": "Hi. I would like to pick up a prescription for Mei Chen, please."
+      },
+      {
+       "speaker": "Raj",
+       "text": "Sure. Can I see your health card, please?"
+      },
+      {
+       "speaker": "Mei",
+       "text": "Here it is."
+      },
+      {
+       "speaker": "Raj",
+       "text": "Thank you. One moment. Yes, I have it here. This is an antibiotic. Before I give it to you, do you have any allergies?"
+      },
+      {
+       "speaker": "Mei",
+       "text": "Yes, I am allergic to penicillin."
+      },
+      {
+       "speaker": "Raj",
+       "text": "Thank you for telling me. This medicine is a different kind, so it is safe for you. Are you taking any other medicine right now?"
+      },
+      {
+       "speaker": "Mei",
+       "text": "No, nothing else."
+      },
+      {
+       "speaker": "Raj",
+       "text": "Good. Take one pill in the morning and one at night, with food. Finish the whole bottle, even if you feel better after a few days. If your doctor wants you to continue, I can help you with a refill."
+      },
+      {
+       "speaker": "Mei",
+       "text": "I see. What if I forget to take one?"
+      },
+      {
+       "speaker": "Raj",
+       "text": "Take it as soon as you remember, but do not take a double dose. Some people feel a little sick to their stomach, and that is a common side effect. If you get a rash or trouble breathing, call your doctor or go to a hospital right away."
+      },
+      {
+       "speaker": "Mei",
+       "text": "Thank you. Do I need to pay?"
+      },
+      {
+       "speaker": "Raj",
+       "text": "Do you have drug insurance from your work?"
+      },
+      {
+       "speaker": "Mei",
+       "text": "Yes, I have a card from my job."
+      },
+      {
+       "speaker": "Raj",
+       "text": "Great. Then you only pay a small part. I will take care of the rest with your insurance."
+      },
+      {
+       "speaker": "Mei",
+       "text": "Also, I have a cough. Can I get something for it?"
+      },
+      {
+       "speaker": "Raj",
+       "text": "Yes. Cough syrup is over-the-counter, so you do not need a prescription. It is on the shelf in aisle three. If you are not sure which one to choose, ask me and I can help you."
+      },
+      {
+       "speaker": "Mei",
+       "text": "Thank you very much for your help."
+      },
+      {
+       "speaker": "Raj",
+       "text": "You're welcome. Feel better soon!"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "On the pharmacy label: take one pill twice a day with food. Keep out of reach of children. Store in a cool, dry place."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Tell the pharmacist about all your allergies and all the medicines you take, even vitamins. Ask when and how to take the medicine, and what to do if you miss a dose. The pharmacist is a health professional, and the advice is free."
+    }
+   ],
+   "keywords": [
+    {
+     "word": "prescription",
+     "zh": "处方",
+     "definition": "a paper or message from a doctor that lets you get a medicine",
+     "example": "I need to pick up a prescription."
+    },
+    {
+     "word": "pharmacist",
+     "zh": "药师",
+     "definition": "a person who gives out medicine and explains how to use it",
+     "example": "The pharmacist explained the pills."
+    },
+    {
+     "word": "antibiotic",
+     "zh": "抗生素",
+     "definition": "a medicine that kills bacteria and treats infections",
+     "example": "The doctor gave me an antibiotic."
+    },
+    {
+     "word": "allergic",
+     "zh": "过敏的",
+     "definition": "having a bad reaction to something, such as a food or a medicine",
+     "example": "I am allergic to peanuts."
+    },
+    {
+     "word": "side effect",
+     "zh": "副作用",
+     "definition": "an unwanted effect that a medicine can cause",
+     "example": "One side effect is feeling sleepy."
+    },
+    {
+     "word": "rash",
+     "zh": "皮疹",
+     "definition": "red spots or patches on the skin",
+     "example": "He got a rash after taking the medicine."
+    },
+    {
+     "word": "insurance",
+     "zh": "保险",
+     "definition": "an arrangement where a company pays part of your costs",
+     "example": "My insurance covers part of the cost."
+    },
+    {
+     "word": "over-the-counter",
+     "zh": "非处方的",
+     "definition": "sold without a prescription",
+     "example": "Cough syrup is over-the-counter."
+    },
+    {
+     "word": "pill",
+     "zh": "药片",
+     "definition": "a small round piece of medicine that you swallow",
+     "example": "Take one pill with water."
+    },
+    {
+     "word": "refill",
+     "zh": "续药",
+     "definition": "more medicine of the same kind, from the same prescription",
+     "example": "Can I get a refill of my prescription?"
+    },
+    {
+     "word": "label",
+     "zh": "标签",
+     "definition": "a piece of paper on a product that gives information",
+     "example": "Read the label before you take it."
+    },
+    {
+     "word": "dose",
+     "zh": "一次的剂量",
+     "definition": "the amount of medicine that you take at one time",
+     "example": "Do not take a double dose."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "Why does the pharmacist ask about allergies?",
+     "options": [
+      "To choose a cheaper medicine",
+      "To make sure the medicine is safe for Mei",
+      "To fill in a form for the doctor"
+     ],
+     "answer": 1,
+     "explainZh": "药师要确认药对她安全。小美对青霉素过敏,这种药不是青霉素类。"
+    },
+    {
+     "question": "How should Mei take the antibiotic?",
+     "options": [
+      "One pill in the morning and one at night, with food",
+      "Three pills at lunch",
+      "Only when she feels sick"
+     ],
+     "answer": 0,
+     "explainZh": "早晚各一片,随餐服用,并且要吃完整瓶。"
+    },
+    {
+     "question": "What should Mei do if she gets a rash or trouble breathing?",
+     "options": [
+      "Wait a week",
+      "Take two pills",
+      "Call her doctor or go to a hospital right away"
+     ],
+     "answer": 2,
+     "explainZh": "皮疹或呼吸困难可能是严重的不良反应,要马上就医。"
+    },
+    {
+     "question": "Why does Mei not need a prescription for the cough syrup?",
+     "options": [
+      "It is over-the-counter",
+      "It is free",
+      "The doctor forgot it"
+     ],
+     "answer": 0,
+     "explainZh": "Over-the-counter 指不需要处方就能买的药。"
+    },
+    {
+     "question": "How much does Mei pay for the antibiotic?",
+     "options": [
+      "Everything",
+      "A small part, because she has drug insurance",
+      "Nothing at all, because she is a student"
+     ],
+     "answer": 1,
+     "explainZh": "她有工作提供的药物保险,所以只付一小部分。"
+    }
+   ]
+  },
+  {
+   "id": "doctors-appointment",
+   "title": "A Doctor's Appointment",
+   "titleZh": "看家庭医生",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "Daniel visits a clinic for headaches and tiredness. He checks in at the desk, describes his symptoms to the doctor and learns about a blood test and a follow-up visit.",
+   "summaryZh": "丹尼尔因头痛和疲倦去诊所就诊。他在前台登记,向医生描述症状,并了解验血和复诊的安排。",
+   "canadaNoteZh": "看病通常要先预约(appointment),准时到,带上健康卡。看病前最好写下症状从什么时候开始、有多严重、吃过什么药,说起来更清楚。不急的小病可以约家庭医生;情况严重时才去急诊(emergency room)。各省的健康卡名称和办理方式不同。",
+   "verify": [
+    "Health card names and how a patient registers with a family doctor differ by province. The text says \"health card\" and does not claim that every clinic accepts walk-ins.",
+    "Many Canadians do not have a family doctor, and waiting times differ. The story assumes Daniel already has one.",
+    "Whether a clinic asks you to arrive early to fill in a form, and what the reception asks for, differs by clinic.",
+    "Blood tests being ordered by a family doctor and done at a separate lab is common, but where results go and how long they take differs. The text gives no time.",
+    "Whether the clinic or the lab needs an appointment for a blood test differs by lab and province.",
+    "The doctor's advice (sleep, water, less coffee) is general and invented for the story. It is not medical advice.",
+    "Whether a patient pays anything at a clinic visit: for a provincial health insurance visit usually not, but some extras may cost money. The text does not mention costs."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "Daniel has had headaches and has felt very tired for two weeks. He has an appointment with his family doctor, Dr. Singh, at a clinic in Calgary. First he must check in with the receptionist at the front desk, shows his health card and waits in the waiting room. Then Dr. Singh calls his name."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Dr. Singh",
+       "text": "Daniel? Please come in. Have a seat. What brings you in today?"
+      },
+      {
+       "speaker": "Daniel",
+       "text": "For the past two weeks, I have had headaches almost every day, and I feel tired all the time."
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "I see. Where is the pain, and how bad is it?"
+      },
+      {
+       "speaker": "Daniel",
+       "text": "It is mostly at the front of my head. It is not terrible, but it makes it hard to concentrate at work."
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "Have you taken anything for it?"
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Only a pain reliever, a couple of times. It helped for a few hours."
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "How is your sleep? And do you drink a lot of coffee?"
+      },
+      {
+       "speaker": "Daniel",
+       "text": "I sleep about five hours a night, because I work late shifts. I drink about four cups of coffee a day."
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "That could explain a lot. Let me check your blood pressure and listen to your heart and lungs."
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "Everything looks normal. I would like to rule out a few other causes, so I am going to order a blood test. You can go to a lab, and I will send them the request."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Do I need to do anything to prepare?"
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "It depends on the test, so please read the form carefully. In the meantime, try to get more sleep, drink more water and cut down on coffee. If the headaches get much worse, or you feel dizzy or confused, go to the emergency room."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Okay. When will I get the results?"
+      },
+      {
+       "speaker": "Dr. Singh",
+       "text": "My office will contact you. Please book a follow-up appointment at the front desk so we can talk about the results."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Thank you, doctor."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Before the visit, write down your symptoms, when they started, any medicine you take and your questions. In the doctor's office, speak slowly and ask the doctor to repeat or explain anything you do not understand, for example: \"Could you say that again, please?\" or \"What does that mean?\""
+    }
+   ],
+   "keywords": [
+    {
+     "word": "appointment",
+     "zh": "预约",
+     "definition": "a planned time to meet a doctor or other professional",
+     "example": "I have a doctor's appointment tomorrow."
+    },
+    {
+     "word": "check in",
+     "zh": "登记报到",
+     "definition": "to tell the person at the desk that you have arrived",
+     "example": "Please check in at the front desk."
+    },
+    {
+     "word": "receptionist",
+     "zh": "前台接待员",
+     "definition": "the person who greets visitors and answers the phone in an office",
+     "example": "The receptionist asked for my health card."
+    },
+    {
+     "word": "waiting room",
+     "zh": "候诊室",
+     "definition": "a room where people wait to see a doctor",
+     "example": "We waited in the waiting room."
+    },
+    {
+     "word": "symptom",
+     "zh": "症状",
+     "definition": "a sign that you are sick",
+     "example": "A cough is a common symptom of a cold."
+    },
+    {
+     "word": "concentrate",
+     "zh": "集中注意力",
+     "definition": "to give all your attention to one thing",
+     "example": "I cannot concentrate when I am tired."
+    },
+    {
+     "word": "pain reliever",
+     "zh": "止痛药",
+     "definition": "a medicine that makes pain feel less",
+     "example": "She took a pain reliever for her back."
+    },
+    {
+     "word": "blood pressure",
+     "zh": "血压",
+     "definition": "the force of blood moving through your body",
+     "example": "The nurse checked my blood pressure."
+    },
+    {
+     "word": "rule out",
+     "zh": "排除",
+     "definition": "to decide that something is not the cause",
+     "example": "The doctor wants to rule out an infection."
+    },
+    {
+     "word": "blood test",
+     "zh": "验血",
+     "definition": "a test where a small amount of your blood is checked",
+     "example": "I have to do a blood test."
+    },
+    {
+     "word": "dizzy",
+     "zh": "头晕的",
+     "definition": "feeling that everything is moving around you",
+     "example": "I felt dizzy when I stood up."
+    },
+    {
+     "word": "follow-up",
+     "zh": "复诊",
+     "definition": "a later visit to check how you are doing",
+     "example": "Please book a follow-up appointment."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "What problem does Daniel have?",
+     "options": [
+      "A broken arm",
+      "Headaches and tiredness for two weeks",
+      "A cough for a month"
+     ],
+     "answer": 1,
+     "explainZh": "他连续两周头痛,而且一直觉得很累。"
+    },
+    {
+     "question": "What does the doctor think may be part of the cause?",
+     "options": [
+      "Too little sleep and a lot of coffee",
+      "Too much exercise",
+      "Too much water"
+     ],
+     "answer": 0,
+     "explainZh": "他每晚只睡约五小时,每天喝很多咖啡,医生认为这可能是原因之一。"
+    },
+    {
+     "question": "What does Dr. Singh order?",
+     "options": [
+      "An operation",
+      "A blood test",
+      "A new health card"
+     ],
+     "answer": 1,
+     "explainZh": "医生为排除其他原因,开了验血单。"
+    },
+    {
+     "question": "When should Daniel go to the emergency room?",
+     "options": [
+      "Right after the appointment",
+      "If the headaches get much worse, or he feels dizzy or confused",
+      "Never"
+     ],
+     "answer": 1,
+     "explainZh": "症状明显加重,或出现头晕、意识混乱时,要去急诊。"
+    },
+    {
+     "question": "What should Daniel do at the front desk before he leaves?",
+     "options": [
+      "Pay a bill",
+      "Book a follow-up appointment",
+      "Sign a lease"
+     ],
+     "answer": 1,
+     "explainZh": "医生让他预约复诊,以便讨论验血结果。"
+    }
+   ]
+  },
+  {
+   "id": "buying-groceries",
+   "title": "Buying Groceries",
+   "titleZh": "超市购物结账",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "Hana shops at a grocery store, asks an employee where to find things, uses a flyer deal and pays at the checkout with her debit card.",
+   "summaryZh": "哈娜在超市买东西,向店员问商品位置,用上了传单上的优惠,并在收银台用借记卡付款。",
+   "canadaNoteZh": "加拿大超市常见自助结账(self-checkout)和收银员结账两种,都可以刷卡或碰卡。每周的 flyer(优惠传单)在店里或 App 里能看到,按促销价买能省钱。很多店不免费提供购物袋,自带环保袋最方便。蔬果和肉类通常按重量计价。",
+   "verify": [
+    "Whether a store charges for bags, and whether paper or plastic bags are still offered, differs by store and city. The text says only that bags are not free here, without a price or a rule.",
+    "Paying by debit with a PIN, and tapping a card for smaller purchases, is common. The spending limit for tapping is not named. Interac is not named in the text.",
+    "Loyalty points programs exist at many chains. The story uses a generic points card and does not name a program.",
+    "Flyer deals: a limit per customer is a common condition, but whether it applies depends on the store.",
+    "Which items are sold by weight versus per piece differs by store.",
+    "Whether receipts are given automatically or on request, and the idea of checking the receipt before leaving, is advice, not a rule.",
+    "Alcohol, cannabis and other items with age or location rules are left out on purpose."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "On Saturday morning, Hana is shopping at a grocery store in Calgary. She has a list and a flyer from this week. She is already in line at the cashier when she remembers that she forgot the rice."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Hana",
+       "text": "Hello. Sorry, I forgot the rice. Could you tell me where I can find it?"
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Sure. It is in aisle six, next to the pasta and the canned food. I can hold your place in line if you want."
+      },
+      {
+       "speaker": "Hana",
+       "text": "That would be great. Also, the flyer says chicken breasts are on sale this week. The sign in the refrigerated section shows the sale price, so I will get it from there."
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Good idea. The sale price will come up at the till when I scan it. Take your time."
+      },
+      {
+       "speaker": "Hana",
+       "text": "Thank you. I will be right back."
+      },
+      {
+       "speaker": "Hana",
+       "text": "Sorry for the wait. I found everything. I have my own bags, so I will pack them myself."
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Sounds good. Do you have a points card?"
+      },
+      {
+       "speaker": "Hana",
+       "text": "Yes, here it is."
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Thank you. I see the chicken was on sale. Your total is on the screen. Will you pay by debit or credit?"
+      },
+      {
+       "speaker": "Hana",
+       "text": "Debit, please. Can I tap?"
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Yes, just tap your card on the machine. For larger amounts, it may ask you to enter your PIN."
+      },
+      {
+       "speaker": "Hana",
+       "text": "Okay. It is asking for my PIN. Done."
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Your payment went through. Would you like your receipt?"
+      },
+      {
+       "speaker": "Hana",
+       "text": "Yes, please. I want to check the prices."
+      },
+      {
+       "speaker": "Cashier",
+       "text": "Here you go. Have a nice weekend!"
+      },
+      {
+       "speaker": "Hana",
+       "text": "You too. Thank you!"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "From the flyer: This week's specials: chicken breasts, apples and whole grain bread. Limit of two per customer. Collect points with your points card."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Before you leave the store, take a quick look at your receipt. If a price does not match the sign or the flyer, tell the cashier or go to the customer service desk. Bring your own bags, because many stores do not give them out for free."
+    }
+   ],
+   "keywords": [
+    {
+     "word": "aisle",
+     "zh": "(超市)通道",
+     "definition": "a long space between shelves where you walk in a store",
+     "example": "The rice is in aisle six."
+    },
+    {
+     "word": "flyer",
+     "zh": "优惠传单",
+     "definition": "a printed or online page that shows what a store is selling this week",
+     "example": "I checked the flyer before I went shopping."
+    },
+    {
+     "word": "on sale",
+     "zh": "在打折",
+     "definition": "sold at a lower price than usual",
+     "example": "These apples are on sale."
+    },
+    {
+     "word": "section",
+     "zh": "区域",
+     "definition": "a part of a store",
+     "example": "The milk is in the dairy section."
+    },
+    {
+     "word": "refrigerated",
+     "zh": "冷藏的",
+     "definition": "kept cold in a fridge",
+     "example": "The refrigerated food is at the back."
+    },
+    {
+     "word": "cashier",
+     "zh": "收银员",
+     "definition": "a person who takes your payment in a store",
+     "example": "The cashier scanned my groceries."
+    },
+    {
+     "word": "points card",
+     "zh": "积分卡",
+     "definition": "a card that gives you points when you buy things",
+     "example": "I always show my points card."
+    },
+    {
+     "word": "total",
+     "zh": "总额",
+     "definition": "the whole amount that you must pay",
+     "example": "What is the total?"
+    },
+    {
+     "word": "debit",
+     "zh": "借记卡",
+     "definition": "a card that takes money straight from your bank account",
+     "example": "I paid by debit."
+    },
+    {
+     "word": "credit",
+     "zh": "信用卡",
+     "definition": "a card that lets you pay later",
+     "example": "Do you accept credit?"
+    },
+    {
+     "word": "tap",
+     "zh": "轻触支付",
+     "definition": "to touch a card to a machine to pay without putting it in",
+     "example": "You can tap your card here."
+    },
+    {
+     "word": "PIN",
+     "zh": "银行卡密码",
+     "definition": "a secret number that you enter to use your card",
+     "example": "Please enter your PIN."
+    },
+    {
+     "word": "receipt",
+     "zh": "收据",
+     "definition": "a paper or message that shows what you bought and paid",
+     "example": "Can I have the receipt, please?"
+    },
+    {
+     "word": "limit",
+     "zh": "限购",
+     "definition": "the most that you are allowed to buy or have",
+     "example": "There is a limit of two per customer."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "Where is the rice?",
+     "options": [
+      "In aisle six",
+      "In the meat section",
+      "At the cashier"
+     ],
+     "answer": 0,
+     "explainZh": "店员说米在第六通道,在意大利面和罐头旁边。"
+    },
+    {
+     "question": "Why does Hana want to buy chicken breasts this week?",
+     "options": [
+      "The flyer says they are on sale",
+      "They are free",
+      "She forgot her list"
+     ],
+     "answer": 0,
+     "explainZh": "传单上说鸡胸肉本周特价。"
+    },
+    {
+     "question": "What happens when Hana taps her debit card?",
+     "options": [
+      "It asks for her PIN",
+      "It prints a recipe",
+      "Nothing happens"
+     ],
+     "answer": 0,
+     "explainZh": "金额较大时,机器会要求输入 PIN。"
+    },
+    {
+     "question": "Why does Hana want the receipt?",
+     "options": [
+      "To check the prices",
+      "To get a free bag",
+      "To return the card"
+     ],
+     "answer": 0,
+     "explainZh": "她想核对价格,这是个好习惯。"
+    },
+    {
+     "question": "What is a good habit after paying?",
+     "options": [
+      "Throw the receipt away at once",
+      "Check that the prices match the sign or flyer",
+      "Pay again"
+     ],
+     "answer": 1,
+     "explainZh": "离店前看一眼收据,价格不对就告诉收银员。"
+    }
+   ]
+  },
+  {
+   "id": "taking-the-bus",
+   "title": "Taking the Bus",
+   "titleZh": "乘公交车",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "Ahmed asks a driver and a fellow passenger how to get downtown by bus and train, learns about transfers and the transit card, and gets off at the right stop.",
+   "summaryZh": "艾哈迈德向司机和乘客打听怎么乘公交和轻轨去市中心,了解换乘和公交卡,并在正确的站下车。",
+   "canadaNoteZh": "各城市的交通卡和付费方式不同(例如多伦多的 Presto、温哥华的 Compass、蒙特利尔的 OPUS),卡尔加里常用手机 App 或购票机买票,上车前先在官方网站或 App 看清楚。一定要看路线号码和\"终点方向\"。要下车时按车内的 stop 按钮或拉线。冬天路滑,提前几分钟到站台。",
+   "verify": [
+    "Fare payment methods in Calgary (tickets, an app, a card, tap payment) differ by city and change often. The text says \"transit pass\" and a \"fare\" without any names or prices. Please check what Calgary Transit uses now.",
+    "A transfer, meaning the right to change vehicles within a time limit on one fare, is common, but the time length and how it works differ by city. The text gives no number.",
+    "Whether the driver sells tickets or takes cash differs by city. The story avoids it.",
+    "Calgary has a light rail train (the CTrain) and buses. The text says only \"train\", not the name, and does not mention any free-fare zone.",
+    "A bell, button or cord to request a stop: button is typical, details differ by vehicle.",
+    "Priority seating for older people and people with disabilities is common. The text says it in general terms.",
+    "Using a transit app to see real-time schedules is common; the app is not named."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "Ahmed has just moved to Calgary, and today he wants to go downtown to visit a friend. He is waiting at a bus stop. A woman, Grace, is waiting next to him, and they start to talk. Later they ride the bus and the train together."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Ahmed",
+       "text": "Excuse me, does this bus go downtown?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "This one goes to the train station. You can take the train from there. It runs every few minutes during the day."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "I see. Do I need a separate ticket for the train?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "No. You can change between the bus and the train with one fare, as long as you do it within the time limit. That is called a transfer."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "That is helpful. How do I pay?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "Many people use a transit pass or pay with an app. If you are not sure, you can check the official website or ask the driver."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "Okay. Here comes the bus. Should I sit at the front?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "You can sit anywhere, but the seats at the front are for older people and people with disabilities. Please leave them free if someone needs them."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "Of course. How will I know where to get off?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "The driver will announce each stop, and you will also see it on the screen. Your station is the last stop, so you cannot miss it."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "Great. Is this the right platform for the downtown train?"
+      },
+      {
+       "speaker": "Grace",
+       "text": "Yes, this one. Look at the sign on the front of the train. It should say downtown. Do you know your stop?"
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "I am going to the Eighth Avenue station."
+      },
+      {
+       "speaker": "Grace",
+       "text": "Then you will get off in about ten minutes. The doors open automatically on the train, but on a bus you have to press the stop button before your stop."
+      },
+      {
+       "speaker": "Ahmed",
+       "text": "That is good to know. Thank you so much for your help!"
+      },
+      {
+       "speaker": "Grace",
+       "text": "You're welcome. Enjoy your day!"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Before you travel, use the transit website or app to check your route. Look at the route number and the final destination on the front of the bus, because the same number can go in two directions. Arrive a few minutes early, especially in winter. If you are not sure, ask the driver or another passenger."
+    }
+   ],
+   "keywords": [
+    {
+     "word": "bus stop",
+     "zh": "公交站",
+     "definition": "a place where a bus stops to let people on and off",
+     "example": "I wait at the bus stop every morning."
+    },
+    {
+     "word": "downtown",
+     "zh": "市中心",
+     "definition": "the main business area of a city",
+     "example": "My office is downtown."
+    },
+    {
+     "word": "fare",
+     "zh": "车费",
+     "definition": "the money you pay to travel on a bus or train",
+     "example": "You pay the fare when you get on."
+    },
+    {
+     "word": "transfer",
+     "zh": "换乘",
+     "definition": "to change from one bus or train to another",
+     "example": "You can transfer to the train."
+    },
+    {
+     "word": "transit pass",
+     "zh": "公交通票/月票",
+     "definition": "a card or ticket that lets you travel on buses and trains",
+     "example": "I bought a transit pass for the month."
+    },
+    {
+     "word": "route",
+     "zh": "路线",
+     "definition": "the way a bus or train goes",
+     "example": "Which route goes to the airport?"
+    },
+    {
+     "word": "get off",
+     "zh": "下车",
+     "definition": "to leave a bus or train",
+     "example": "Where should I get off?"
+    },
+    {
+     "word": "platform",
+     "zh": "站台",
+     "definition": "the place where you wait for a train",
+     "example": "The train leaves from platform two."
+    },
+    {
+     "word": "announce",
+     "zh": "广播通知",
+     "definition": "to say something to everyone so they can hear it",
+     "example": "The driver will announce the next stop."
+    },
+    {
+     "word": "disabilities",
+     "zh": "残障",
+     "definition": "conditions that make some activities harder for a person",
+     "example": "This seat is for people with disabilities."
+    },
+    {
+     "word": "destination",
+     "zh": "目的地",
+     "definition": "the place where a trip ends",
+     "example": "The destination is shown on the front of the bus."
+    },
+    {
+     "word": "automatically",
+     "zh": "自动地",
+     "definition": "without a person doing it",
+     "example": "The doors open automatically."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "Where does the first bus go?",
+     "options": [
+      "To the train station",
+      "To the airport",
+      "To a school"
+     ],
+     "answer": 0,
+     "explainZh": "这路公交开到轻轨站,再换乘去市中心。"
+    },
+    {
+     "question": "What is a \"transfer\"?",
+     "options": [
+      "Changing from one bus or train to another within the time limit on one fare",
+      "Buying a new house",
+      "Paying twice"
+     ],
+     "answer": 0,
+     "explainZh": "Transfer 指在时限内换乘,不用再付一次车费。"
+    },
+    {
+     "question": "Who are the seats at the front for?",
+     "options": [
+      "Anyone who is in a hurry",
+      "Older people and people with disabilities",
+      "The driver's friends"
+     ],
+     "answer": 1,
+     "explainZh": "前排座位优先让给老人和残障人士。"
+    },
+    {
+     "question": "What should Ahmed do on the bus before his stop?",
+     "options": [
+      "Shout to the driver",
+      "Press the stop button",
+      "Get off at once"
+     ],
+     "answer": 1,
+     "explainZh": "下车前按 stop 按钮,司机才知道你要在下一站下车。"
+    },
+    {
+     "question": "Why should you look at the final destination on the bus?",
+     "options": [
+      "The same route number can go in two directions",
+      "The bus is cheaper",
+      "It is the only way to pay"
+     ],
+     "answer": 0,
+     "explainZh": "同一个路线号可能往相反两个方向开,要看终点站名。"
+    }
+   ]
+  },
+  {
+   "id": "weather-and-neighbours",
+   "title": "Weather and Small Talk with Neighbours",
+   "titleZh": "聊天气,和邻居寒暄",
+   "clb": 6,
+   "readingMinutes": 3,
+   "summary": "On a snowy morning, Wei shovels his walkway and chats with his neighbour Sandra about the weather, the winter, the neighbourhood and a coffee.",
+   "summaryZh": "下雪的早晨,韦在铲门前的路,和邻居桑德拉聊天气、冬天、社区的事,还聊到喝咖啡。",
+   "canadaNoteZh": "在加拿大,和邻居聊天气(weather)是最常见、最安全的开场白。简单的问候、一两句闲聊就够了,不必深谈。很多邻居会互相帮忙铲雪、看家。对方说 \"How are you?\" 时,通常回答 \"Good, thanks. You?\" 就可以,并不是真的想听长篇回答。想拒绝邀请时,说 \"Thanks for asking, but I am busy\" 也很礼貌。",
+   "verify": [
+    "Many cities, including Calgary, have a bylaw that says residents must clear the snow from the sidewalk next to their property within a set time. The story only says that people shovel their walkway and does not name a rule or a time. Please check whether the Calgary rule applies and how to say it.",
+    "Tim Hortons is a well-known Canadian coffee chain. The phrase \"double-double\" (two creams and two sugars) is a real Canadian expression. The story does not claim that every neighbour likes it.",
+    "Chinook winds are a real feature of southern Alberta weather and can warm the temperature quickly in winter. The text mentions the word; please confirm that it is described correctly.",
+    "\"It's a dry cold\" is a common way to describe Alberta winters. It is a general remark, not a measurement.",
+    "Neighbours helping with shovelling or sharing tools is common but not a rule. The text keeps it as an offer.",
+    "Garbage, recycling and compost collection days differ by city and neighbourhood. The text only mentions that the bins go out on a different day, without any day.",
+    "Weather temperatures are written in degrees Celsius, which is correct for Canada. The story avoids exact numbers."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "It snowed all night in Calgary. This morning Wei is shovelling the walkway in front of his house. His neighbour, Sandra, comes out to do the same, and they say hello."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Sandra",
+       "text": "Good morning, Wei! Quite a lot of snow last night, isn't it?"
+      },
+      {
+       "speaker": "Wei",
+       "text": "Good morning, Sandra. It certainly is. I woke up and could not see the street."
+      },
+      {
+       "speaker": "Sandra",
+       "text": "It happens every winter. How are you finding your first winter in Calgary?"
+      },
+      {
+       "speaker": "Wei",
+       "text": "Honestly, it is colder than I expected, but it is beautiful. People keep telling me it is a dry cold, so it does not feel as bad."
+      },
+      {
+       "speaker": "Sandra",
+       "text": "That is true. And you never know here. One day it is freezing, and the next day a chinook comes and it feels like spring."
+      },
+      {
+       "speaker": "Wei",
+       "text": "A chinook? I have heard that word. What exactly is it?"
+      },
+      {
+       "speaker": "Sandra",
+       "text": "It is a warm wind that comes over the mountains. The temperature can rise very fast, and the snow starts to melt."
+      },
+      {
+       "speaker": "Wei",
+       "text": "Interesting. I should be careful with my shovelling, then. Maybe I will wait until the afternoon."
+      },
+      {
+       "speaker": "Sandra",
+       "text": "Ha! Not a bad idea. Actually, if you need to borrow a shovel or a bag of salt, just ask. I have an extra one."
+      },
+      {
+       "speaker": "Wei",
+       "text": "That is very kind of you. For now I have everything I need, but thank you for offering."
+      },
+      {
+       "speaker": "Sandra",
+       "text": "Anytime. By the way, I am going to get a coffee at Tim Hortons later. Would you like to join me? I am buying."
+      },
+      {
+       "speaker": "Wei",
+       "text": "Thanks for asking, but I have to be at work in an hour. Maybe another time?"
+      },
+      {
+       "speaker": "Sandra",
+       "text": "Sure, no problem. Oh, and a quick tip: the garbage and recycling bins go out on different days. There is a schedule on the city website."
+      },
+      {
+       "speaker": "Wei",
+       "text": "Thanks, I will check it. I am still learning how everything works here."
+      },
+      {
+       "speaker": "Sandra",
+       "text": "You'll get used to it. Well, I'd better get back to shovelling. Stay warm!"
+      },
+      {
+       "speaker": "Wei",
+       "text": "You too. Have a great day!"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Small talk is short and friendly. Common topics are the weather, the weekend, sports and the neighbourhood. Good ways to start are \"Nice weather today, isn't it?\" or \"How is your day going?\" You do not have to give personal details, and it is polite to end the chat with a smile and a phrase such as \"Have a good one!\""
+    }
+   ],
+   "keywords": [
+    {
+     "word": "shovel",
+     "zh": "铲(雪)",
+     "definition": "to move snow with a tool that has a flat end",
+     "example": "I shovel the walkway every morning."
+    },
+    {
+     "word": "walkway",
+     "zh": "人行小路",
+     "definition": "a path for people to walk on",
+     "example": "She cleared the walkway in front of her door."
+    },
+    {
+     "word": "neighbour",
+     "zh": "邻居",
+     "definition": "a person who lives near you",
+     "example": "My neighbour waved to me."
+    },
+    {
+     "word": "freezing",
+     "zh": "冰冻的/极冷的",
+     "definition": "very cold, below the temperature at which water becomes ice",
+     "example": "It is freezing this morning."
+    },
+    {
+     "word": "dry cold",
+     "zh": "干冷",
+     "definition": "cold weather with little moisture in the air",
+     "example": "Calgary has a dry cold in winter."
+    },
+    {
+     "word": "chinook",
+     "zh": "奇努克风(阿尔伯塔的暖风)",
+     "definition": "a warm wind that blows down from the mountains in winter in Alberta",
+     "example": "A chinook arrived and the snow melted."
+    },
+    {
+     "word": "melt",
+     "zh": "融化",
+     "definition": "to change from ice or snow into water",
+     "example": "The snow will melt this afternoon."
+    },
+    {
+     "word": "borrow",
+     "zh": "借(入)",
+     "definition": "to take something and give it back later",
+     "example": "Can I borrow your shovel?"
+    },
+    {
+     "word": "salt",
+     "zh": "盐(融雪用)",
+     "definition": "a white substance that people put on ice so it melts",
+     "example": "He put salt on the stairs."
+    },
+    {
+     "word": "join",
+     "zh": "加入",
+     "definition": "to do something together with other people",
+     "example": "Would you like to join us?"
+    },
+    {
+     "word": "get used to",
+     "zh": "习惯",
+     "definition": "to become comfortable with something new",
+     "example": "You will get used to the cold."
+    },
+    {
+     "word": "small talk",
+     "zh": "闲聊",
+     "definition": "friendly conversation about unimportant things",
+     "example": "We made small talk in the elevator."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "What are Wei and Sandra doing?",
+     "options": [
+      "Shovelling snow",
+      "Painting a fence",
+      "Waiting for a bus"
+     ],
+     "answer": 0,
+     "explainZh": "夜里下了大雪,两人都在铲门前的路。"
+    },
+    {
+     "question": "What is a chinook?",
+     "options": [
+      "A kind of coffee",
+      "A warm wind that comes over the mountains",
+      "A snow shovel"
+     ],
+     "answer": 1,
+     "explainZh": "奇努克风是翻过山脉的暖风,温度会很快升高。"
+    },
+    {
+     "question": "How does Wei refuse the coffee invitation politely?",
+     "options": [
+      "He says he has to be at work soon and suggests another time",
+      "He says nothing",
+      "He says he hates coffee"
+     ],
+     "answer": 0,
+     "explainZh": "他先说谢谢,再说明原因并提出改天,这是礼貌的拒绝。"
+    },
+    {
+     "question": "What does Sandra offer to Wei?",
+     "options": [
+      "To borrow a shovel or a bag of salt",
+      "A car ride",
+      "Money"
+     ],
+     "answer": 0,
+     "explainZh": "桑德拉说他需要的话可以借铲子或融雪盐。"
+    },
+    {
+     "question": "What are good topics for small talk?",
+     "options": [
+      "Your salary and your problems",
+      "The weather, the weekend and the neighbourhood",
+      "Politics only"
+     ],
+     "answer": 1,
+     "explainZh": "闲聊要轻松、简短,天气、周末和社区都是安全的话题。"
+    }
+   ]
+  },
+  {
+   "id": "service-canada",
+   "title": "Service Canada: Health Card and SIN",
+   "titleZh": "办理健康卡和社会保险号",
+   "clb": 7,
+   "readingMinutes": 4,
+   "summary": "Nadia visits a government service centre in Alberta. She asks about a Social Insurance Number and a health card, learns what documents to bring and what happens next.",
+   "summaryZh": "娜迪亚去政府服务中心,咨询社会保险号(SIN)和健康卡,了解需要带什么证件、之后会发生什么。",
+   "canadaNoteZh": "SIN(社会保险号)是工作和报税都需要的 9 位号码,不要随便告诉别人或发在网上。健康卡由各省自己办理(阿尔伯塔、安大略、BC 的名称和流程都不同),通常要等一段时间才生效,办理前请到所在省的政府官方网站确认需要的材料。身份证件要带原件,办事前最好先在官网或电话预约。",
+   "verify": [
+    "SIN is issued by the federal government through Service Canada. The documents needed (proof of status in Canada, proof of identity, and so on) and whether it can be done online, by mail or in person with an immediate result differ. The text only says to bring original documents and does not list them in detail.",
+    "How long a SIN takes to arrive and whether it is given on the same day is not stated in the text.",
+    "Health cards are issued by each province, not by Service Canada. In Alberta, the card is applied for through Alberta Health, usually with a registry agent. The names and the process in the text are generic. Please confirm how health care registration works in Alberta.",
+    "A waiting period before health coverage begins applies in some provinces and not in others; the text mentions it in general terms without any time.",
+    "Whether the office takes appointments, walk-ins, or both, differs by office. The text has the worker mention a ticket and a number, which is a typical practice but not confirmed.",
+    "The ideas about protecting your SIN (do not share it casually, shred old papers) are general safety advice commonly given by the government; please confirm the exact wording.",
+    "The idea that an employer asks for your SIN within a time after you start is common practice, but the rule differs; the text says only that employers need it for payroll and tax reporting."
+   ],
+   "segments": [
+    {
+     "kind": "scene",
+     "text": "Nadia has just started a new job in Calgary, and her employer asked for her Social Insurance Number, or SIN. She also needs a health card. She goes to a Service Canada office and speaks to a clerk, Mr. Lee."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Mr. Lee",
+       "text": "Hello. How can I help you today?"
+      },
+      {
+       "speaker": "Nadia",
+       "text": "Hello. I recently moved here and I have a work permit. I need a Social Insurance Number, and I also want to know about a health card."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "I can help with the SIN. A health card is handled by the province, but I can tell you in general what to do. Let's start with the SIN. Do you have your original documents with you?"
+      },
+      {
+       "speaker": "Nadia",
+       "text": "I have my passport and my work permit."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Good. Those are your proof of identity and your status in Canada. I will check that they are valid. May I see them, please?"
+      },
+      {
+       "speaker": "Nadia",
+       "text": "Here you go."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Thank you. I will also need your current address and your date of birth. Please fill in this form."
+      },
+      {
+       "speaker": "Nadia",
+       "text": "Done. Is that enough?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Yes. Your SIN will be given to you in writing, and you should keep that paper in a safe place. Please do not share the number unless it is necessary, for example with your employer for payroll or for tax reporting."
+      },
+      {
+       "speaker": "Nadia",
+       "text": "Understood. What about the health card?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "For that, you have to apply with the province. Usually you complete an application and show documents that prove who you are, that you live in the province, and that you are allowed to stay in Canada. Check the provincial government website for the exact steps."
+      },
+      {
+       "speaker": "Nadia",
+       "text": "Is there a waiting period before the card starts to work?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "In some provinces there is, but it depends on your situation. Ask when you apply, and find out what to do about medical care while you wait. Some people buy private insurance for that time."
+      },
+      {
+       "speaker": "Nadia",
+       "text": "That is very useful. Where should I go to apply?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "The provincial website will tell you the nearest office. You may also be able to do part of it online. And remember to update your address with them whenever you move."
+      },
+      {
+       "speaker": "Nadia",
+       "text": "I will. Thank you for all your help."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "You're welcome. Good luck with your new job!"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Checklist for the visit: original passport and work or study permit (not photocopies), proof of your address, a pen, and a list of your questions. Take a number or ticket when you arrive, and wait until it is called."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Your SIN is private. Keep it in a safe place, do not carry the paper in your wallet, and do not give it to anyone who calls or writes to you without a good reason. Employers need it for payroll, and you will need it for your taxes. Your health card is also private, and you should show it only to the clinic or hospital."
+    }
+   ],
+   "keywords": [
+    {
+     "word": "Social Insurance Number",
+     "zh": "社会保险号",
+     "definition": "a nine-digit number that you need for working and paying taxes in Canada",
+     "example": "I gave my Social Insurance Number to my employer."
+    },
+    {
+     "word": "health card",
+     "zh": "健康卡",
+     "definition": "a card that shows you are covered by the provincial health system",
+     "example": "Bring your health card to the clinic."
+    },
+    {
+     "word": "clerk",
+     "zh": "办事员",
+     "definition": "a person who works at a desk and helps customers",
+     "example": "The clerk checked my documents."
+    },
+    {
+     "word": "work permit",
+     "zh": "工作许可",
+     "definition": "a document that allows a person to work in Canada",
+     "example": "She has a work permit."
+    },
+    {
+     "word": "proof",
+     "zh": "证明",
+     "definition": "something that shows a fact is true",
+     "example": "I need proof of my address."
+    },
+    {
+     "word": "identity",
+     "zh": "身份",
+     "definition": "who a person is",
+     "example": "Your passport shows your identity."
+    },
+    {
+     "word": "valid",
+     "zh": "有效的",
+     "definition": "accepted by law, not expired",
+     "example": "Is your passport still valid?"
+    },
+    {
+     "word": "original",
+     "zh": "原件",
+     "definition": "the first document, not a copy",
+     "example": "Please bring the original, not a photocopy."
+    },
+    {
+     "word": "payroll",
+     "zh": "工资发放/薪资系统",
+     "definition": "the system that pays workers their wages",
+     "example": "Your employer needs your SIN for payroll."
+    },
+    {
+     "word": "apply",
+     "zh": "申请",
+     "definition": "to ask officially for something",
+     "example": "You have to apply for a health card."
+    },
+    {
+     "word": "waiting period",
+     "zh": "等待期",
+     "definition": "a time that you must wait before something starts",
+     "example": "There may be a waiting period for health coverage."
+    },
+    {
+     "word": "private",
+     "zh": "私人的/保密的",
+     "definition": "not to be shared with others",
+     "example": "Your SIN is private information."
+    },
+    {
+     "word": "update",
+     "zh": "更新",
+     "definition": "to make information new and correct",
+     "example": "Please update your address."
+    }
+   ],
+   "quiz": [
+    {
+     "question": "Who handles the health card?",
+     "options": [
+      "The province",
+      "Only the employer",
+      "The bank"
+     ],
+     "answer": 0,
+     "explainZh": "健康卡由各省政府办理,不是联邦的服务中心。"
+    },
+    {
+     "question": "Why does Nadia need a SIN?",
+     "options": [
+      "For her new job and taxes",
+      "To buy a bus pass",
+      "To rent a car"
+     ],
+     "answer": 0,
+     "explainZh": "雇主需要它来发工资和报税。"
+    },
+    {
+     "question": "What documents does Nadia show?",
+     "options": [
+      "Her passport and work permit",
+      "A library card",
+      "A phone bill only"
+     ],
+     "answer": 0,
+     "explainZh": "护照证明身份,工作许可证明她在加拿大的身份与工作资格。"
+    },
+    {
+     "question": "How should Nadia treat her SIN?",
+     "options": [
+      "Post it online",
+      "Keep it private and share it only when it is necessary",
+      "Tell everyone"
+     ],
+     "answer": 1,
+     "explainZh": "SIN 很重要,只在必要时(如雇主发工资)才提供。"
+    },
+    {
+     "question": "What does Mr. Lee suggest about the waiting period?",
+     "options": [
+      "Ask about it when you apply and plan for medical care",
+      "Ignore it",
+      "Leave Canada"
+     ],
+     "answer": 0,
+     "explainZh": "申请时要问清楚等待期,并想好等待期间的医疗安排。"
+    }
+   ]
   }
  ]
 }
