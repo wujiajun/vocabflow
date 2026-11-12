@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.15.1] - 2026-11-11
+
+### Added
+
+- **Speech test: two more ways of listening (experimental)**, F and G, in the "Way of listening" choice of the One sentence test, to find out how to make a second Start work on an iPhone (the second recognizer gets audio but never hears speech). **F**: each recognizer is made in a new hidden frame of the page, and the frame is removed when the recognizer has ended; the log says whether the frame got a recognizer and whether it was counted as a tap. **G**: the first Start opens the microphone with `getUserMedia` and keeps that stream open over every Start and Stop, until you tap **Release microphone**, switch to another way, or leave the page; the log records the stream's track state (ready, muted, enabled) before each start and after each end. Speak this scene is not changed. Nothing is stored or sent; no backend change.
+
 ## [1.15.0] - 2026-11-11
 
 ### Added

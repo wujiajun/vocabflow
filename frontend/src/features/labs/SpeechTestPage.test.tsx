@@ -6,6 +6,7 @@ import { SpeechTestPage } from './pages/SpeechTestPage'
 
 afterEach(() => {
   cleanup()
+  Reflect.deleteProperty(navigator, 'mediaDevices')
   vi.unstubAllGlobals()
 })
 
@@ -243,4 +244,108 @@ test('E makes a new recognizer only after a pause following the end', async () =
   } finally {
     vi.useRealTimers()
   }
+})
+
+test('F makes each recognizer in a fresh hidden frame and removes the frame when it has ended', async () => {
+  const frames: unknown[] = []
+  Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+    configurable: true,
+    get() {
+      const w = { webkitSpeechRecognition: FakeRecognition, navigator: { userActivation: { isActive: true } } }
+      frames.push(w)
+      return w
+    },
+  })
+  try {
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    renderPage()
+    await choose('F')
+    await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+    const first = FakeRecognition.last!
+    expect(document.querySelectorAll('iframe')).toHaveLength(1)
+    expect(document.querySelector('iframe')!.getAttribute('allow')).toBe('microphone')
+    expect(logText()).toContain('F: new hidden frame; user activation: page')
+    expect(logText()).toContain('recognizer in the frame: yes')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' })) // the fake ends at once
+    await vi.waitFor(() => expect(document.querySelectorAll('iframe')).toHaveLength(0))
+    await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+    expect(FakeRecognition.last).not.toBe(first)
+    expect(document.querySelectorAll('iframe')).toHaveLength(1)
+    cleanup()
+    expect(document.querySelectorAll('iframe')).toHaveLength(0)
+  } finally {
+    delete (HTMLIFrameElement.prototype as unknown as Record<string, unknown>).contentWindow
+  }
+})
+
+test('F says so when the frame has no speech recognition', async () => {
+  Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', { configurable: true, get: () => ({ navigator: {} }) })
+  try {
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    renderPage()
+    await choose('F')
+    await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('hidden frame has no speech recognition')
+    expect(screen.getByRole('button', { name: 'Start speaking' })).toBeEnabled()
+  } finally {
+    delete (HTMLIFrameElement.prototype as unknown as Record<string, unknown>).contentWindow
+  }
+})
+
+function setMedia(getUserMedia: () => Promise<MediaStream>) {
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } })
+}
+
+function fakeStream() {
+  const track = { readyState: 'live', muted: false, enabled: true, stop: vi.fn(), addEventListener: vi.fn() }
+  return { track, stream: { getTracks: () => [track] } as unknown as MediaStream }
+}
+
+test('G opens the microphone once, keeps the stream over Start and Stop, and closes it when released', async () => {
+  const { track, stream } = fakeStream()
+  const getUserMedia = vi.fn(async () => stream)
+  setMedia(getUserMedia)
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await choose('G')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  await vi.waitFor(() => expect(FakeRecognition.last).toBeDefined())
+  expect(getUserMedia).toHaveBeenCalledWith({ audio: true })
+  expect(logText()).toContain('G: microphone stream open (1 track(s): readyState=live muted=false enabled=true)')
+  expect(logText()).toContain('G: stream before start: 1 track(s)')
+  const first = FakeRecognition.last!
+
+  await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  expect(logText()).toContain('G: stream after the end: 1 track(s)')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  expect(getUserMedia).toHaveBeenCalledTimes(1) // the stream is kept
+  expect(FakeRecognition.last).not.toBe(first)
+  expect(track.stop).not.toHaveBeenCalled()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Release microphone' }))
+  expect(track.stop).toHaveBeenCalled()
+  expect(logText()).toContain('G: microphone stream released')
+})
+
+test('G shows a refused microphone and leaving the page closes the stream', async () => {
+  const refused = vi.fn(async () => {
+    throw new DOMException('no', 'NotAllowedError')
+  })
+  setMedia(refused)
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await choose('G')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('could not be opened'))
+  expect(logText()).toContain('G: getUserMedia failed: NotAllowedError')
+  expect(screen.getByRole('button', { name: 'Start speaking' })).toBeEnabled()
+
+  const { track, stream } = fakeStream()
+  setMedia(vi.fn(async () => stream))
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  await vi.waitFor(() => expect(FakeRecognition.last).toBeDefined())
+  cleanup()
+  expect(track.stop).toHaveBeenCalled()
 })

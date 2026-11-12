@@ -23,7 +23,7 @@ export function SentenceTest() {
   const [index, setIndex] = useState(0)
   const [lang, setLang] = useState('en-US')
   const [variant, setVariant] = useState<Variant>('A')
-  const { supported, state, text, error, log, start, stop, clear, clearLog, note } = useSpeechRecognition(lang, variant)
+  const { supported, state, text, error, log, start, stop, clear, clearLog, note, streamHeld, releaseMicrophone } = useSpeechRecognition(lang, variant)
   const sentence = speechTestSentences[index]
   const comparison = text ? compareSpeech(sentence.text, text) : null
   const secure = window.isSecureContext
@@ -88,12 +88,17 @@ export function SentenceTest() {
 
       <button
         className="mt-4 min-h-11 w-full rounded-xl bg-indigo-700 px-4 text-base font-semibold text-white disabled:opacity-50 sm:w-auto"
-        disabled={!supported || state === 'stopping'}
+        disabled={!supported || state === 'stopping' || state === 'starting'}
         onClick={state === 'listening' ? stop : start}
         type="button"
       >
-        {state === 'listening' ? 'Stop' : state === 'stopping' ? 'Wait…' : 'Start speaking'}
+        {state === 'listening' ? 'Stop' : state === 'stopping' || state === 'starting' ? 'Wait…' : 'Start speaking'}
       </button>
+      {variant === 'G' && streamHeld && (
+        <button className="mt-2 ml-2 min-h-11 rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-800" onClick={releaseMicrophone} type="button">
+          Release microphone
+        </button>
+      )}
       {variant === 'D' && (
         <button className="mt-2 ml-2 min-h-11 rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-800" onClick={clear} type="button">
           Clear
