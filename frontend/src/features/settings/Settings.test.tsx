@@ -353,6 +353,11 @@ test('the reading voice and the other person’s voice can be picked and heard, 
   await browserUser.click(screen.getByRole('button', { name: 'Play the other person’s voice' }))
   expect(speech.lastUtterance().voice?.name).toBe('Ava')
 
+  await browserUser.selectOptions(first, 'system')
+  expect(window.localStorage.getItem('vocabflow.voice')).toBe('system')
+  await browserUser.click(screen.getByRole('button', { name: 'Play the voice' }))
+  expect(speech.lastUtterance().voice).toBeNull()
+
   await browserUser.selectOptions(first, '')
   expect(window.localStorage.getItem('vocabflow.voice')).toBeNull()
 })

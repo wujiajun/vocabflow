@@ -72,6 +72,10 @@ function stored(voices: readonly SpeechSynthesisVoice[], uri: string) {
  * American voice (Premium, then Enhanced, then the default), otherwise the most natural other English voice.
  */
 export function chooseVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('first')) {
+  // No voice is named, so the device uses its own English voice (on an iPhone, perhaps the one set in Spoken Content).
+  if (picked === systemVoice) {
+    return { voice: undefined, accent: 'american' as const }
+  }
   const chosen = stored(voices, picked) ?? rankVoices(voices, 'en-us')[0]
   if (chosen) {
     return { voice: chosen, accent: accentOf(chosen) }
@@ -87,9 +91,9 @@ export function chooseVoice(voices: readonly SpeechSynthesisVoice[], picked = ge
  */
 export function chooseSecondVoice(voices: readonly SpeechSynthesisVoice[], picked = getVoiceChoice('second')) {
   const first = chooseVoice(voices).voice
-  if (!first) return undefined
   const chosen = stored(voices, picked)
-  if (chosen && chosen.voiceURI !== first.voiceURI) return chosen
+  if (chosen && chosen.voiceURI !== first?.voiceURI) return chosen
+  if (!first) return undefined
   return rankVoices(voices, normalizedLang(first)).find(
     (voice) => voice.voiceURI !== first.voiceURI && baseName(voice) !== baseName(first),
   )
@@ -104,7 +108,13 @@ export type VoiceRole = 'first' | 'second'
 const choiceKeys: Record<VoiceRole, string> = { first: 'vocabflow.voice', second: 'vocabflow.secondVoice' }
 const secondPitch = 0.75
 
-/** The voice picked in Settings for this browser (its voiceURI); empty means automatic. */
+/**
+ * Picked in Settings to name no voice at all. iOS does not show web pages the Enhanced and Premium voices a
+ * learner downloads, but a page that names no voice may get the one chosen in Spoken Content.
+ */
+export const systemVoice = 'system'
+
+/** The voice picked in Settings for this browser (its voiceURI, or `systemVoice`); empty means automatic. */
 export function getVoiceChoice(role: VoiceRole) {
   try {
     return window.localStorage.getItem(choiceKeys[role]) ?? ''

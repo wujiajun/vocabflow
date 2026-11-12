@@ -6,6 +6,7 @@ import {
   isUsableVoice,
   setVoiceChoice,
   speakText,
+  systemVoice,
   voiceQuality,
   type VoiceRole,
 } from '../../../shared/speech/pronunciation'
@@ -64,7 +65,10 @@ export function VoiceSettings() {
         const id = `settings-voice-${role}`
         const auto = automatic[role]
         // A choice this device no longer has shows as automatic.
-        const value = english.some((voice) => voice.voiceURI === picked[role]) ? picked[role] : ''
+        const value =
+          (role === 'first' && picked[role] === systemVoice) || english.some((voice) => voice.voiceURI === picked[role])
+            ? picked[role]
+            : ''
         return (
           <div className={role === 'second' ? 'mt-3' : undefined} key={role}>
             <label className="block text-sm font-medium text-slate-800" htmlFor={id}>
@@ -73,6 +77,7 @@ export function VoiceSettings() {
             <div className="flex items-end gap-2">
               <select className={selectClass} id={id} onChange={(event) => pick(role, event.target.value)} value={value}>
                 <option value="">{auto ? `Automatic (${voiceLabel(auto)})` : 'Automatic (same voice, lower)'}</option>
+                {role === 'first' ? <option value={systemVoice}>This phone’s own English voice</option> : null}
                 {english.map((voice) => (
                   <option key={voice.voiceURI} value={voice.voiceURI}>
                     {voiceLabel(voice)}
@@ -95,8 +100,8 @@ export function VoiceSettings() {
         {hasNatural
           ? 'Premium and Enhanced voices sound the most natural. '
           : 'This device has no Premium or Enhanced English voice yet. '}
-        On an iPhone, download one in Settings → Accessibility → Spoken Content → Voices → English (for example Ava or Zoe,
-        Premium), then close VocabFlow and open it again.
+        On an iPhone, voices you download are not offered to web apps; choose them in Settings → Accessibility → Spoken
+        Content → Voices → English, then pick “This phone’s own English voice” here, which may use that one.
       </p>
     </div>
   )

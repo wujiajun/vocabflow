@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.18.1] - 2026-11-12
+
+### Added
+
+- **Voice: This phone’s own English voice.** iOS does not show web apps the Enhanced and Premium voices you download, so they never appear in the list. This choice names no voice at all, so the phone may use the English voice set in Settings → Accessibility → Spoken Content → Voices. The other person in a conversation is then that voice at a lower pitch, unless you pick a voice for them.
+
 ## [1.18.0] - 2026-11-12
 
 ### Added

@@ -10,6 +10,7 @@ import {
   setVoiceChoice,
   speakText,
   stopSpeaking,
+  systemVoice,
   voiceQuality,
 } from './pronunciation'
 
@@ -196,5 +197,17 @@ describe('natural voices', () => {
     expect(chooseSecondVoice([compact, zoe, ava])).toBe(compact)
     setVoiceChoice('first', compact.voiceURI)
     expect(chooseSecondVoice([compact, zoe, ava])).toBe(ava)
+  })
+
+  test('the phone’s own voice names no voice, and the second speaker is then that voice lower unless one is picked', () => {
+    setVoiceChoice('first', systemVoice)
+    expect(chooseVoice([compact, ava])).toEqual({ voice: undefined, accent: 'american' })
+    const speech = installSpeechSynthesis([compact, ava])
+    speakText('Hello', { onStart: vi.fn(), onEnd: vi.fn() })
+    expect(speech.lastUtterance()).toMatchObject({ voice: null, lang: 'en-US', pitch: 1 })
+
+    expect(chooseSecondVoice([compact, ava])).toBeUndefined()
+    setVoiceChoice('second', compact.voiceURI)
+    expect(chooseSecondVoice([compact, ava])).toBe(compact)
   })
 })
