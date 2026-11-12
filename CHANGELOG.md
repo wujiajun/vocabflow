@@ -14,6 +14,12 @@ first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Sett
 - Speaking a scene also counts as finishing it.
 - Backend: migration V22 adds `speaking_score` and `spoken_at` to `scenario_progress`; `PUT /api/v1/scenarios/{id}/speaking` with `{"score": 0-100}` (400 outside that range, 404 for an unknown scene); the list and the scene give `speakingScore` and `spokenAt`.
 
+## [1.16.4] - 2026-11-12
+
+### Added
+
+- **Cue sounds in Speak this scene**: a soft rising blip when **Speak now** shows, and a falling one when the phone has stopped listening by itself. They follow the sound switch in Settings. They are made with Web Audio, which is reported not to disturb the iPhone's speech recognition (an audio element does).
+
 ## [1.16.3] - 2026-11-12
 
 ### Changed

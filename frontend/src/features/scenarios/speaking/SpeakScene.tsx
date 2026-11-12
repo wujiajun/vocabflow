@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { GameProgress, Stars, gamePrimaryButton } from '../../learning/components/GameParts'
 import { starsForShare } from '../../learning/starsForShare'
+import { playListenEnd, playListenStart, unlockGameSound } from '../../../shared/sound/effects'
 import { speakText, stopSpeaking } from '../../../shared/speech/pronunciation'
 import { type HeardResult, recognitionErrorMessage, useSpeechRecognition } from '../../../shared/speech/useSpeechRecognition'
 import { type SceneLine, speakersOf } from './dialogueFromText'
@@ -167,7 +168,9 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
       setStuck(false)
       clearTimeout(readyTimer.current)
       readyTimer.current = setTimeout(() => {
-        if (kindRef.current === 'turn') setReady(true)
+        if (kindRef.current !== 'turn') return
+        setReady(true)
+        playListenStart()
       }, readyDelayMs)
     }
   }
@@ -189,7 +192,10 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
       return
     }
     if (phaseRef.current === 'running') {
-      if (kindRef.current === 'turn') judge()
+      if (kindRef.current === 'turn') {
+        playListenEnd() // the phone has stopped listening by itself
+        judge()
+      }
       else if (kindRef.current === 'finishing') {
         setResults((prev) => ({ ...prev, [stepRef.current]: null }))
         advance(stepRef.current + 1)
@@ -269,6 +275,7 @@ export function SpeakScene({ lines, onClose, onFinished }: { lines: SceneLine[];
     token.current++
     stopListenFirst.current?.()
     stopSpeaking()
+    if (!self) unlockGameSound() // the cue sounds come later, outside a press
     changePhase('running')
     advance(0)
   }
