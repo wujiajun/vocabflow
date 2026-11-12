@@ -407,3 +407,27 @@ test('a word in the chat can be tapped to add it with its line and the scene, bu
     link: '/app/reading/scenarios/cafe',
   })
 })
+
+test('the words of your scored line keep their colours and can be tapped to add them', () => {
+  const open = vi.fn()
+  render(
+    <WordTapContext.Provider value={{ open, spot: undefined }}>
+      <SpeakScene lines={lines} onClose={() => undefined} source={{ title: 'At the café', link: '/app/reading/scenarios/cafe' }} />
+    </WordTapContext.Provider>,
+  )
+  click('Customer')
+  click('Start speaking')
+  phoneDone()
+  micOpen()
+  latest().said(['I would like a medium tea please', true])
+  latest().end()
+  const coffee = screen.getByText('coffee')
+  expect(coffee.closest('[data-status]')).not.toHaveAttribute('data-status', 'correct') // said as tea
+  act(() => coffee.click())
+  expect(open).toHaveBeenCalledWith('coffee', expect.any(String), {
+    sentence: "I'd like a medium coffee, please.",
+    form: 'coffee',
+    title: 'At the café',
+    link: '/app/reading/scenarios/cafe',
+  })
+})

@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.19.1] - 2026-11-12
+
+### Fixed
+
+- **The words of your own scored line in Speak this scene can be tapped to add them too.** They keep their green, amber and red colours; as with the other lines, only while the phone is not listening.
+
 ## [1.19.0] - 2026-11-12
 
 ### Added

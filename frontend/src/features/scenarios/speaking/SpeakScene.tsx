@@ -33,12 +33,13 @@ const wordClass = {
 
 const refusals = new Set(['not-allowed', 'service-not-allowed', 'audio-capture', 'language-not-supported'])
 
-function Words({ score }: { score: LineScore }) {
+// A scored line keeps its colours; its words can still be tapped to add them while nothing listens.
+function Words({ score, sentence, source, tappable }: { score: LineScore; sentence: string; source?: { title: string; link: string }; tappable: boolean }) {
   return (
     <p className="mt-1 flex flex-wrap gap-1.5 text-base">
       {score.words.map((w, i) => (
         <span className={`rounded px-1.5 py-0.5 ${wordClass[w.status]}`} data-status={w.status} key={i}>
-          {w.word}
+          {tappable ? <TappableText sentence={sentence} source={source} text={w.word} /> : w.word}
         </span>
       ))}
     </p>
@@ -471,7 +472,7 @@ export function SpeakScene({
                       >
                         <p className={`text-xs font-semibold ${isMe && active && !r ? 'text-indigo-100' : 'text-slate-500'}`}>{isMe ? `${line.speaker} (you)` : line.speaker}</p>
                         {isMe && r?.score ? (
-                          <Words score={r.score} />
+                          <Words score={r.score} sentence={line.text} source={source} tappable={quiet} />
                         ) : (
                           <p className="mt-0.5 text-base">
                             {/* Tappable only while nothing listens, so a tap never opens the panel over Speak now. */}
