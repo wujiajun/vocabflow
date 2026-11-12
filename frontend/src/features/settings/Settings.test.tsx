@@ -309,3 +309,19 @@ test('the Chinese meaning can be shown by default, a choice kept on this device'
   expect(window.localStorage.getItem('vocabflow.showChinese')).toBe('off')
   window.localStorage.removeItem('vocabflow.showChinese')
 })
+
+test('links to the experimental speech test, and its back link returns to Settings', async () => {
+  stubApi({
+    'GET /api/v1/auth/me': () => jsonResponse(user),
+    'GET /api/v1/learning/study-queue': () => jsonResponse(emptyStudyQueue),
+    'GET /api/v1/reading/today': () => jsonResponse({ passageId: null }),
+  })
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/settings')
+  await browserUser.click(await screen.findByRole('link', { name: 'Speech test (experimental)' }))
+  expect(await screen.findByRole('heading', { name: 'Speech test' })).toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('link', { name: '← Back to Settings' }))
+  expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+})

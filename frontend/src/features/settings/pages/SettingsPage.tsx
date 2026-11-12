@@ -6,6 +6,8 @@ import { getSpeakOnAnswer, getSpeakOnCard, setSpeakOnAnswer, setSpeakOnCard } fr
 import { todayIn } from '../../../shared/date'
 import { isSpeechSupported } from '../../../shared/speech/pronunciation'
 import { canadianTimeZones, deviceTimeZone, otherTimeZones } from '../../../shared/timeZones'
+import { Link } from 'react-router'
+import { backState } from '../../../shared/navigation'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { authErrorMessage } from '../../auth/components/AuthError'
 import { clbLabel, clbLevels } from '../../auth/clbLevels'
@@ -243,6 +245,13 @@ export function SettingsPage() {
 
       {/* Which release this browser is running, to tell against CHANGELOG.md. */}
       <p className="mt-4 text-xs text-slate-600">VocabFlow {__APP_VERSION__}</p>
+      <Link
+        className="inline-flex min-h-11 items-center text-xs text-slate-600 underline underline-offset-4"
+        state={backState('/app/settings', 'Back to Settings')}
+        to="/app/labs/speech-test"
+      >
+        Speech test (experimental)
+      </Link>
     </div>
   )
 }
