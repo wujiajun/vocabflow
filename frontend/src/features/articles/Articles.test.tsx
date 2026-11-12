@@ -94,8 +94,8 @@ test('shows the albums for the learner’s own CLB level, and every level when a
   expect(within(list).getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual(['Middle reads'])
   expect(within(list).getByText('1 of 3 read')).toBeInTheDocument()
   expect(within(list).getByRole('link', { name: /Middle reads/ })).toHaveAttribute('href', '/app/reading/articles/albums/middle')
-  // The switch offers the three sections.
-  expect(within(screen.getByRole('navigation', { name: 'Reading sections' })).getAllByRole('link').map((link) => link.textContent)).toEqual(['Passages', 'Videos', 'Articles'])
+  // The switch offers the four sections.
+  expect(within(screen.getByRole('navigation', { name: 'Reading sections' })).getAllByRole('link').map((link) => link.textContent)).toEqual(['Passages', 'Videos', 'Articles', 'Canada'])
   await expectNoAxeViolations()
 
   await browserUser.click(screen.getByRole('link', { name: 'Show all levels' }))
