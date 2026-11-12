@@ -2,6 +2,7 @@ package com.vocabflow.push.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -95,5 +96,30 @@ class WebPushCryptoTest {
                 new java.security.spec.X509EncodedKeySpec(keys.getPublic().getEncoded())));
     verify.update((parts[0] + "." + parts[1]).getBytes(StandardCharsets.US_ASCII));
     assertThat(verify.verify(raw)).isTrue();
+  }
+
+  @Test
+  void aShortScalarIsPaddedWithZerosOnTheLeft() {
+    // A private key below 2^248 has a 31-byte two's-complement form; about 1 in 256 random keys.
+    BigInteger small =
+        new BigInteger("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f", 16);
+    assertThat(small.toByteArray()).hasSize(31);
+
+    byte[] fixed = WebPushCrypto.fixed32(small);
+
+    assertThat(fixed).hasSize(32);
+    assertThat(fixed[0]).isZero();
+    assertThat(new BigInteger(1, fixed)).isEqualTo(small);
+  }
+
+  @Test
+  void aScalarWithTheHighBitSetKeepsExactly32Bytes() {
+    BigInteger high = BigInteger.ONE.shiftLeft(255).add(BigInteger.ONE);
+    assertThat(high.toByteArray()).hasSize(33);
+
+    byte[] fixed = WebPushCrypto.fixed32(high);
+
+    assertThat(fixed).hasSize(32);
+    assertThat(new BigInteger(1, fixed)).isEqualTo(high);
   }
 }

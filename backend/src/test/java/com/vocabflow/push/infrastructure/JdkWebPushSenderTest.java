@@ -50,19 +50,8 @@ class JdkWebPushSenderTest {
         new JdkWebPushSender(
             WebPushCrypto.encode(WebPushCrypto.point((ECPublicKey) vapid.getPublic())),
             WebPushCrypto.encode(
-                java.util.Arrays.copyOfRange(
-                    ((java.security.interfaces.ECPrivateKey) vapid.getPrivate())
-                        .getS()
-                        .toByteArray(),
-                    ((java.security.interfaces.ECPrivateKey) vapid.getPrivate())
-                            .getS()
-                            .toByteArray()
-                            .length
-                        - 32,
-                    ((java.security.interfaces.ECPrivateKey) vapid.getPrivate())
-                        .getS()
-                        .toByteArray()
-                        .length)),
+                WebPushCrypto.fixed32(
+                    ((java.security.interfaces.ECPrivateKey) vapid.getPrivate()).getS())),
             "mailto:test@example.test",
             Clock.systemUTC());
     subscription =
