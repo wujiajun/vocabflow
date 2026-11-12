@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.13.4] - 2026-11-11
+
+### Added
+
+- **Speech test: diagnostics and five ways of listening (experimental)**. On the iPhone home-screen app a second Start after Stop showed the microphone but returned no text. The test page now has a collapsed **Diagnostic log** that records, with a time, every event of every recognizer (start, audio start, sound, speech, result with its final flag, no match, error with its code, speech end, audio end, end) and every `start()`, `stop()` and `abort()` call, with a Copy button. A new **Way of listening** choice, A (as before) to E: A a new recognizer each time and Stop = `stop()`; B Stop = `abort()`; C one recognizer reused; D continuous, started once, with a Clear button; E a new recognizer only 0.5 s after the last one ended. It is to learn which way the phone handles reliably. Nothing is stored or sent; no backend change.
+
 ## [1.13.3] - 2026-11-11
 
 ### Fixed
