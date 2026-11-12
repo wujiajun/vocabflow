@@ -111,3 +111,37 @@ export function playRight() {
   oscillator.start(start)
   oscillator.stop(start + 0.32)
 }
+
+// Two soft blips for spoken practice: rising when the phone starts listening ("speak now"), falling when it has
+// stopped by itself. Web Audio, not an audio element: on iOS 27 an audio element that plays leaves the next speech
+// recognizer deaf (WebKit bug 321436), while Web Audio beeps are reported not to.
+function blip(from: number, to: number) {
+  if (!getGameSound()) {
+    return
+  }
+  const sound = audio()
+  if (!sound) {
+    return
+  }
+  const start = sound.currentTime
+  const oscillator = sound.createOscillator()
+  const volume = sound.createGain()
+  oscillator.type = 'sine'
+  oscillator.frequency.setValueAtTime(from, start)
+  oscillator.frequency.exponentialRampToValueAtTime(to, start + 0.12)
+  volume.gain.setValueAtTime(0.0001, start)
+  volume.gain.linearRampToValueAtTime(0.09, start + 0.015)
+  volume.gain.exponentialRampToValueAtTime(0.0001, start + 0.18)
+  oscillator.connect(volume)
+  volume.connect(sound.destination)
+  oscillator.start(start)
+  oscillator.stop(start + 0.2)
+}
+
+export function playListenStart() {
+  blip(520, 880)
+}
+
+export function playListenEnd() {
+  blip(880, 520)
+}

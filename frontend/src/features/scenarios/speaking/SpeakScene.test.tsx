@@ -2,8 +2,15 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { primeGapMs } from '../../../shared/speech/useSpeechRecognition'
 import { installSpeechSynthesis } from '../../../test/speech'
+import { playListenEnd, playListenStart } from '../../../shared/sound/effects'
 import { SpeakScene } from './SpeakScene'
 import { readyDelayMs, turnCue, watchdogMs } from './turn'
+
+vi.mock('../../../shared/sound/effects', () => ({
+  playListenStart: vi.fn(),
+  playListenEnd: vi.fn(),
+  unlockGameSound: vi.fn(),
+}))
 
 class FakeRecognition {
   static instances: FakeRecognition[] = []
@@ -42,6 +49,8 @@ const lines = [
 let speech: ReturnType<typeof installSpeechSynthesis>
 
 beforeEach(() => {
+  vi.mocked(playListenStart).mockClear()
+  vi.mocked(playListenEnd).mockClear()
   FakeRecognition.instances = []
   vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
   speech = installSpeechSynthesis()
@@ -306,4 +315,17 @@ test('the start screen shows who you play and Start; the rest is folded under Op
   expect(options).toContainElement(screen.getByRole('button', { name: 'Self-rate (no microphone)' }))
   click('Close')
   expect(onClose).toHaveBeenCalled()
+})
+
+test('a rising cue sounds with Speak now, and a falling one when the phone stops listening by itself', () => {
+  begin('Customer')
+  phoneDone()
+  latest().fire('audiostart')
+  expect(playListenStart).not.toHaveBeenCalled()
+  tick(readyDelayMs)
+  expect(playListenStart).toHaveBeenCalledTimes(1)
+  latest().said(["I'd like a medium coffee please", true])
+  expect(playListenEnd).not.toHaveBeenCalled()
+  latest().end()
+  expect(playListenEnd).toHaveBeenCalledTimes(1)
 })
