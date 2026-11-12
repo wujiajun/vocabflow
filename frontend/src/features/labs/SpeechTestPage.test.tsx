@@ -1,7 +1,9 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
+import { primeFallbackMs, primeGapMs, uncutGiveUpMs } from '../../shared/speech/useSpeechRecognition'
+import { installSpeechSynthesis } from '../../test/speech'
 import { SpeechTestPage } from './pages/SpeechTestPage'
 
 afterEach(() => {
@@ -240,6 +242,94 @@ test('E makes a new recognizer only after a pause following the end', async () =
     act(() => vi.advanceTimersByTime(600))
     act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
     expect(FakeRecognition.last).not.toBe(first)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+// H: the workaround from WebKit bug 321436. The phone speaks the sentence first, a new recognizer starts
+// 0.4 s after the speech ends, and no recognizer is ever cut with stop() or abort().
+test('H speaks the sentence first, listens 0.4 s after the speech ends, and never cuts the recognizer', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  try {
+    const speech = installSpeechSynthesis()
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    FakeRecognition.last = undefined
+    renderPage()
+    act(() => void fireEvent.change(screen.getByLabelText('Way of listening (for testing)'), { target: { value: 'H' } }))
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+
+    expect(speech.lastUtterance().text).toBe('I would like a cup of coffee, please.')
+    expect(FakeRecognition.last).toBeUndefined()
+    expect(screen.getByRole('status')).toHaveTextContent('the phone reads the sentence')
+
+    act(() => speech.lastUtterance().onend?.())
+    act(() => void vi.advanceTimersByTime(399))
+    expect(FakeRecognition.last).toBeUndefined()
+    act(() => void vi.advanceTimersByTime(1))
+    const first = FakeRecognition.last!
+    expect(first.start).toHaveBeenCalled()
+    expect(first.continuous).toBe(false)
+
+    // Done does not cut it: it ends on its own after the pause.
+    act(() => screen.getByRole('button', { name: 'Done' }).click())
+    expect(first.stop).not.toHaveBeenCalled()
+    expect(first.abort).not.toHaveBeenCalled()
+    act(() => first.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'I would like a cup of coffee please' } }] }))
+    act(() => first.onend?.())
+    expect(screen.getByTestId('heard')).toHaveTextContent('coffee please')
+
+    // The next round speaks again before a new recognizer listens.
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+    expect(speech.spoken).toHaveLength(2)
+    act(() => speech.lastUtterance().onend?.())
+    act(() => void vi.advanceTimersByTime(400))
+    expect(FakeRecognition.last).not.toBe(first)
+    expect(FakeRecognition.last!.start).toHaveBeenCalled()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('H listens anyway when the phone never reports the end of its speech, and leaving does not cut it', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  try {
+    installSpeechSynthesis()
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    FakeRecognition.last = undefined
+    renderPage()
+    act(() => void fireEvent.change(screen.getByLabelText('Way of listening (for testing)'), { target: { value: 'H' } }))
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+    act(() => void vi.advanceTimersByTime(primeFallbackMs('I would like a cup of coffee, please.') + primeGapMs))
+    const rec = FakeRecognition.last!
+    expect(rec.start).toHaveBeenCalled()
+
+    cleanup()
+    expect(rec.abort).not.toHaveBeenCalled()
+    expect(rec.stop).not.toHaveBeenCalled()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('H gives up waiting for its own end only after a long time', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  try {
+    const speech = installSpeechSynthesis()
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    renderPage()
+    act(() => void fireEvent.change(screen.getByLabelText('Way of listening (for testing)'), { target: { value: 'H' } }))
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+    act(() => speech.lastUtterance().onend?.())
+    act(() => void vi.advanceTimersByTime(primeGapMs))
+    const rec = FakeRecognition.last!
+    act(() => screen.getByRole('button', { name: 'Done' }).click())
+    expect(screen.getByRole('button', { name: 'Wait…' })).toBeDisabled()
+    act(() => void vi.advanceTimersByTime(uncutGiveUpMs - 1))
+    expect(rec.abort).not.toHaveBeenCalled()
+    act(() => void vi.advanceTimersByTime(1))
+    expect(rec.abort).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Start speaking' })).toBeEnabled()
   } finally {
     vi.useRealTimers()
   }

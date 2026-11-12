@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.15.1] - 2026-11-12
+
+### Added
+
+- **Experimental page, way of listening H** (Settings → Speech test, One sentence): the phone first reads the sentence aloud, then listens, starting 0.4 s after its voice ends; listening is never cut by the page (it ends by itself when you pause, and **Done** only waits for that). This is the one workaround reported to work for an iPhone problem (WebKit bug 321436, iOS 27): after the first time, the microphone opens but hears nothing, and a recognizer that is cut is said to leave all later ones deaf until the app is closed. Close the app completely before testing H. The log now shows the time since the last recognizer ended and the audio session state. Nothing else changed.
+
 ## [1.15.0] - 2026-11-11
 
 ### Added

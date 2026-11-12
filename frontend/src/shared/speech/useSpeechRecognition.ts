@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { speakText, stopSpeaking } from './pronunciation'
 
 // The browser's own recognizer, in the two names it goes by. Experimental and not in lib.dom, so typed by hand.
 interface RecognitionResultLike {
@@ -49,26 +50,44 @@ export function recognitionErrorMessage(code: string): string {
   }
 }
 
-export type RecognitionState = 'idle' | 'listening' | 'stopping'
+export type RecognitionState = 'idle' | 'priming' | 'listening' | 'stopping'
 
 /**
  * Ways of driving the recognizer, to find out which one a phone's home-screen app handles reliably.
  * A: a new recognizer each time, Stop = stop(). B: Stop = abort(). C: one recognizer reused (start again
  * after its end). D: continuous, started once; Clear empties the display. E: a new recognizer, but
  * only 500 ms after the last one ended.
+ * H: the workaround reported in WebKit bug 321436 (iOS 27: every recognizer after the first one hears
+ * nothing): the phone first speaks a phrase, a new recognizer starts 0.4 s after that speech ends, and the
+ * recognizer is never cut with stop() or abort(): it ends by itself after a pause. A cut one is said to
+ * leave all later ones deaf until the app is closed.
  */
-export type Variant = 'A' | 'B' | 'C' | 'D' | 'E'
+export type Variant = 'A' | 'B' | 'C' | 'D' | 'E' | 'H'
 export const variantLabels: Record<Variant, string> = {
   A: 'A · New each time, Stop uses stop() (as before)',
   B: 'B · New each time, Stop uses abort()',
   C: 'C · Reuse one recognizer, start again after it ends',
   D: 'D · Continuous: Start once, keep talking, use Clear',
   E: 'E · New each time, wait 0.5 s after the end',
+  H: 'H · Phone reads the sentence first, then listens; never cut',
 }
 
 // iOS may never send `end` after stop(); after this long the recognizer is taken as finished.
 export const stopTimeoutMs = 3000
 export const cooldownMs = 500
+// H: listening starts this long after the phone's speech ended (the reported working gap).
+export const primeGapMs = 400
+// H: if the phone never reports the end of its speech, listening starts anyway after this long.
+export function primeFallbackMs(text: string) {
+  return 2500 + 90 * text.length
+}
+// H: Done does not cut the recognizer; only if it has still not ended after this long is it aborted.
+export const uncutGiveUpMs = 20000
+
+function audioSessionInfo() {
+  const session = (navigator as { audioSession?: { type?: string; state?: string } }).audioSession
+  return session ? `${session.type ?? '?'}/${session.state ?? '?'}` : 'n/a'
+}
 const logLimit = 400
 
 const plainEvents = ['start', 'audiostart', 'soundstart', 'speechstart', 'speechend', 'soundend', 'audioend', 'nomatch'] as const
@@ -98,11 +117,17 @@ export interface RecognitionListeners {
   onEvent?: (name: string) => void
 }
 
-export function useSpeechRecognition(lang: string, variant: Variant = 'A', listeners?: RecognitionListeners) {
+/** `primeText` is what the phone says before listening in variant H (the sentence to repeat). */
+export function useSpeechRecognition(lang: string, variant: Variant = 'A', listeners?: RecognitionListeners, primeText?: string) {
   const listenersRef = useRef(listeners)
+  const primeTextRef = useRef(primeText)
   useEffect(() => {
     listenersRef.current = listeners
+    primeTextRef.current = primeText
   })
+  const priming = useRef(false)
+  const primeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const lastEndAt = useRef<number | null>(null)
   const stopRequested = useRef(false)
   const [state, setState] = useState<RecognitionState>('idle')
   const [text, setText] = useState('')
@@ -129,6 +154,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     (recognition: RecognitionLike) => {
       if (ref.current !== recognition) return
       clearTimeout(stopTimer.current)
+      lastEndAt.current = Date.now()
       listenersRef.current?.onEnd?.({ requested: stopRequested.current })
       if (variantRef.current === 'E') {
         // The next recognizer may only start a little after this one ended.
@@ -187,15 +213,12 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     [finish, note],
   )
 
-  const start = useCallback(() => {
+  const begin = useCallback(() => {
     const Ctor = getRecognitionConstructor()
-    // A recognizer that is still stopping is waited for: starting another one then often fails silently.
     if (!Ctor) return
-    if (ref.current) {
-      note('start ignored: the last recognizer has not ended yet')
-      return
-    }
     const recognition = create(Ctor)
+    const gap = lastEndAt.current === null ? 'none before' : `${((Date.now() - lastEndAt.current) / 1000).toFixed(1)} s`
+    note(`${tag(recognition)} gap since the last recognizer ended: ${gap}; audio session ${audioSessionInfo()}`)
     recognition.lang = lang
     recognition.continuous = variantRef.current === 'D'
     recognition.interimResults = true
@@ -217,9 +240,78 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     }
   }, [create, lang, note])
 
+  const start = useCallback(() => {
+    // A recognizer that is still stopping is waited for: starting another one then often fails silently.
+    if (!getRecognitionConstructor()) return
+    if (ref.current || priming.current) {
+      note('start ignored: the last recognizer has not ended yet')
+      return
+    }
+    if (variantRef.current !== 'H') {
+      begin()
+      return
+    }
+    // H: speak first (in this press), listen 0.4 s after the speech ends.
+    const phrase = primeTextRef.current || 'Your turn.'
+    priming.current = true
+    setState('priming')
+    setText('')
+    setError('')
+    note(`H: the phone says "${phrase}" first; listening starts ${primeGapMs} ms after that speech ends`)
+    let over = false
+    const speechOver = (why: string) => {
+      if (over) return
+      over = true
+      clearTimeout(primeTimer.current)
+      note(`H: speech over (${why})`)
+      primeTimer.current = setTimeout(() => {
+        if (!priming.current) return
+        priming.current = false
+        begin()
+      }, primeGapMs)
+    }
+    primeTimer.current = setTimeout(() => speechOver('no end reported in time'), primeFallbackMs(phrase))
+    try {
+      speakText(phrase, {
+        onStart: () => note('H: speech onstart'),
+        onEnd: () => speechOver('ended'),
+        onError: (reason) => note(`H: speech error ${reason}`),
+      })
+    } catch (e) {
+      note(`H: speech could not start: ${e instanceof Error ? e.message : String(e)}`)
+      speechOver('no speech')
+    }
+  }, [begin, note])
+
   const stop = useCallback(() => {
+    if (priming.current) {
+      // Done before listening began: nothing to cut yet.
+      priming.current = false
+      clearTimeout(primeTimer.current)
+      stopSpeaking()
+      setState('idle')
+      note('H: cancelled before listening began')
+      return
+    }
     const recognition = ref.current
     if (!recognition) return
+    if (variantRef.current === 'H') {
+      // Never cut: wait for the recognizer to end on its own after the pause.
+      stopRequested.current = true
+      setState('stopping')
+      note(`${tag(recognition)} Done pressed: not cut, waiting for it to end on its own`)
+      clearTimeout(stopTimer.current)
+      stopTimer.current = setTimeout(() => {
+        note(`${tag(recognition)} still not ended after ${uncutGiveUpMs / 1000} s: abort() as a last resort`)
+        try {
+          recognition.abort()
+        } catch {
+          // ended below either way
+        }
+        finish(recognition)
+      }, uncutGiveUpMs)
+      return
+    }
     stopRequested.current = true
     setState('stopping')
     clearTimeout(stopTimer.current)
@@ -259,9 +351,13 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     () => () => {
       clearTimeout(stopTimer.current)
       clearTimeout(cooldownTimer.current)
+      clearTimeout(primeTimer.current)
+      if (priming.current) stopSpeaking()
+      priming.current = false
       const recognition = ref.current
       ref.current = null
-      recognition?.abort()
+      // H never cuts a recognizer, not even on leaving: it ends by itself and its events are ignored.
+      if (variantRef.current !== 'H') recognition?.abort()
     },
     [],
   )
