@@ -38,6 +38,8 @@ interface SpeakCallbacks {
   onEnd: () => void
   /** Called before onEnd when the browser reports an error (for example `interrupted`, `canceled`). */
   onError?: (reason: string) => void
+  /** Pause and resume as the browser reports them (a phone may pause speech on its own). */
+  onPauseResume?: (event: 'pause' | 'resume') => void
 }
 
 // Chrome on a computer drops an utterance that is spoken right after a cancel() of one that is still
@@ -55,7 +57,7 @@ function finishCurrent() {
   finished?.onEnd()
 }
 
-export function speakText(text: string, { onStart, onEnd, onError }: SpeakCallbacks) {
+export function speakText(text: string, { onStart, onEnd, onError, onPauseResume }: SpeakCallbacks) {
   const synth = window.speechSynthesis
   const request = ++latestRequest
   const interrupting = synth.speaking || synth.pending
@@ -74,6 +76,8 @@ export function speakText(text: string, { onStart, onEnd, onError }: SpeakCallba
     }
     utterance.rate = speechRate
     utterance.onstart = onStart
+    utterance.onpause = () => onPauseResume?.('pause')
+    utterance.onresume = () => onPauseResume?.('resume')
     const ended = () => {
       if (current?.utterance === utterance) {
         finishCurrent()

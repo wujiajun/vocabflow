@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { isSpeechSupported, speakText, stopSpeaking } from '../../shared/speech/pronunciation'
 import { compareSpeech } from './compareSpeech'
 import { DiagnosticLog } from './DiagnosticLog'
-import { dialogues, graceMs, isEchoWindow, turnSaid } from './dialogue'
+import { dialogues, graceMs, isEchoWindow, readingMs, speechTimeoutMs, turnSaid } from './dialogue'
 import { type HeardResult, useSpeechRecognition } from './useSpeechRecognition'
 
 type Phase = 'idle' | 'starting' | 'running' | 'ended' | 'failed' | 'finished'
@@ -22,6 +22,14 @@ const heartbeatMs = 15000
 export const watchdogMs = 10000
 const startFallbackMs = 1500
 const retryDelayMs = 400
+const pollMs = 500
+
+type Partner = 'speak' | 'text'
+
+function synthState() {
+  const synth = window.speechSynthesis
+  return `speaking=${synth.speaking} paused=${synth.paused} pending=${synth.pending}`
+}
 
 // One recognizer for the whole conversation (continuous), the phone speaks the other person's lines.
 // The microphone is asked for first, and nothing is spoken until it is ready: the permission prompt would
@@ -36,6 +44,9 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
   const [judged, setJudged] = useState<Judged[]>([])
   const [endedAfter, setEndedAfter] = useState(0)
   const [stuck, setStuck] = useState<Stuck | null>(null)
+  const [partner, setPartner] = useState<Partner>('speak')
+  const [blocked, setBlocked] = useState(false)
+  const [reading, setReading] = useState<number | null>(null)
 
   const phaseRef = useRef<Phase>('idle')
   const stepRef = useRef(0)
@@ -48,6 +59,10 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
   const startedAt = useRef(0)
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const fallback = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const partnerRef = useRef<Partner>('speak')
+  const speechTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const readTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const poll = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const dialogueRef = useRef(dialogue)
   const stateRef = useRef('idle')
   useEffect(() => {
@@ -88,9 +103,17 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
     }, watchdogMs)
   }
 
+  function clearSpeechTimers() {
+    clearTimeout(speechTimer.current)
+    clearTimeout(readTimer.current)
+    clearInterval(poll.current)
+    setReading(null)
+  }
+
   function goTo(index: number) {
     token.current++
     clearWatchdog()
+    clearSpeechTimers()
     stepRef.current = index
     setStep(index)
     setHeard('')
@@ -107,9 +130,8 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
       note(`your turn (line ${index + 1})`)
       return
     }
-    if (!isSpeechSupported()) {
-      note('this browser cannot speak; the other line is only shown')
-      goTo(index + 1)
+    if (partnerRef.current === 'text' || !isSpeechSupported()) {
+      readLine(index)
       return
     }
     speakLine(index, 0)
@@ -129,8 +151,28 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
     let started = false
     let failure = ''
     speaking.current = true
-    note(`tts line ${index + 1} speak, attempt ${attempt + 1}, recognizer ${stateRef.current}`)
+    clearSpeechTimers()
+    note(`tts line ${index + 1} speak, attempt ${attempt + 1}, recognizer ${stateRef.current}, synth before: ${synthState()}`)
     armWatchdog('speaking', `the phone speaking line ${index + 1}`, index)
+    // Does the speech go on while the microphone is open? Every change of the speech state is logged.
+    let last = ''
+    poll.current = setInterval(() => {
+      const now = synthState()
+      if (now !== last) {
+        last = now
+        note(`tts line ${index + 1} synth: ${now}`)
+      }
+    }, pollMs)
+    speechTimer.current = setTimeout(() => {
+      if (token.current !== mine) return
+      note(`TTS BLOCKED: line ${index + 1} ${started ? 'started but' : 'never started and'} gave no end in ${speechTimeoutMs(line.text)} ms while the microphone is on; synth: ${synthState()}; speech cancelled`)
+      stopSpeaking()
+      setBlocked(true)
+      partnerRef.current = 'text'
+      setPartner('text')
+      speaking.current = false
+      readLine(index)
+    }, speechTimeoutMs(line.text))
     speakText(line.text, {
       onStart: () => {
         if (token.current !== mine) return
@@ -142,8 +184,13 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
         failure = reason
         note(`tts line ${index + 1} onerror: ${reason}`)
       },
+      onPauseResume: (event) => {
+        if (token.current !== mine) return
+        note(`tts line ${index + 1} on${event}; synth: ${synthState()}`)
+      },
       onEnd: () => {
         if (token.current !== mine) return
+        clearSpeechTimers()
         if (!failure && started) {
           endSpeech(index, 'ended normally')
           return
@@ -158,6 +205,26 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
         }
       },
     })
+  }
+
+  // The other person's line is only shown; the learner reads it and taps, or it moves on after a time.
+  function readLine(index: number) {
+    const mine = ++token.current
+    clearSpeechTimers()
+    clearWatchdog()
+    speaking.current = false
+    setReading(index)
+    const wait = readingMs(dialogueRef.current.lines[index].text)
+    note(`line ${index + 1} is shown, not spoken; it moves on after ${wait} ms or when "I read it" is tapped`)
+    readTimer.current = setTimeout(() => {
+      if (token.current === mine) finishReading(index, 'time')
+    }, wait)
+  }
+
+  function finishReading(index: number, how: string) {
+    note(`line ${index + 1} read (${how})`)
+    baseline.current = resultCount.current
+    goTo(index + 1)
   }
 
   function retrySpeech(index: number) {
@@ -210,6 +277,7 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
   }
 
   function onRecognizerEvent(name: string) {
+    if (name === 'audiostart' && isSpeechSupported()) note(`speech state at audiostart: ${synthState()}`)
     if (phaseRef.current !== 'starting') return
     if (name === 'audiostart') {
       ready('onaudiostart')
@@ -235,6 +303,7 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
     speaking.current = false
     token.current++
     stopSpeaking()
+    clearSpeechTimers()
     setEndedAfter(seconds())
     changePhase('ended')
   }
@@ -260,6 +329,7 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
     token.current++
     clearTimeout(fallback.current)
     clearWatchdog()
+    clearSpeechTimers()
     speaking.current = false
     stopSpeaking()
     changePhase('idle')
@@ -293,6 +363,9 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
       token.current++
       clearTimeout(watchdog.current)
       clearTimeout(fallback.current)
+      clearTimeout(speechTimer.current)
+      clearTimeout(readTimer.current)
+      clearInterval(poll.current)
       stopSpeaking()
     },
     [],
@@ -336,6 +409,28 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
           ))}
         </select>
       </label>
+
+      <label className="mt-3 flex flex-col gap-1 text-sm text-slate-700">
+        Partner lines
+        <select
+          className="min-h-11 rounded-lg border border-slate-300 bg-white px-2"
+          disabled={phase === 'running' || phase === 'starting'}
+          onChange={(e) => {
+            partnerRef.current = e.target.value as Partner
+            setPartner(e.target.value as Partner)
+            setBlocked(false)
+          }}
+          value={partner}
+        >
+          <option value="speak">Speak (the phone reads them aloud)</option>
+          <option value="text">Text only (you read them)</option>
+        </select>
+      </label>
+      {blocked && (
+        <p className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="note">
+          The phone did not speak while the microphone was on, so the other person's lines are only shown from now on.
+        </p>
+      )}
 
       <ol className="mt-4 space-y-2" aria-label="Conversation">
         {dialogue.lines.map((l, i) => {
@@ -390,7 +485,17 @@ export function DialoguePrototype({ onBack }: { onBack?: () => void }) {
           Starting the microphone… if the phone asks, tap Allow. The conversation begins after that.
         </p>
       )}
-      {phase === 'running' && !yourTurn && step < dialogue.lines.length && !stuck && <p className="mt-3 text-sm text-slate-600">{dialogue.otherRole} is speaking…</p>}
+      {phase === 'running' && reading !== null && (
+        <div className="mt-3" role="status">
+          <p className="text-sm text-slate-600">Read what the {dialogue.otherRole.toLowerCase()} says, then tap.</p>
+          <button className="mt-2 min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" onClick={() => finishReading(reading, 'I read it')} type="button">
+            I read it
+          </button>
+        </div>
+      )}
+      {phase === 'running' && !yourTurn && reading === null && step < dialogue.lines.length && !stuck && (
+        <p className="mt-3 text-sm text-slate-600">{dialogue.otherRole} is speaking…</p>
+      )}
       {stuck && (
         <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
           <p>Nothing has moved for {watchdogMs / 1000} seconds: {stuck.where}.</p>

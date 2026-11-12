@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSpeechSynthesis } from '../../test/speech'
+import { readingMs } from './dialogue'
 import { SpeechTestPage } from './pages/SpeechTestPage'
 
 class FakeRecognition {
@@ -108,22 +109,66 @@ test('a speech cut off by the system is tried once more, then skipped', async ()
   expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument() // on to the learner's turn
 })
 
-test('a speech that never reports anything shows Retry and Skip after 10 seconds, and the log says where', async () => {
-  vi.useRealTimers()
-  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+function renderFaked() {
   render(
     <MemoryRouter>
       <SpeechTestPage />
     </MemoryRouter>,
   )
   act(() => screen.getByRole('button', { name: 'Conversation' }).click())
+}
+
+test('waiting for the microphone too long shows Cancel, and the log says where it stopped', () => {
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+  renderFaked()
   act(() => screen.getByRole('button', { name: 'Start the conversation' }).click())
-  FakeRecognition.instances[0].fire('audiostart')
   act(() => void vi.advanceTimersByTime(10100))
   expect(screen.getByRole('alert')).toHaveTextContent('Nothing has moved')
-  expect(log()).toContain('STUCK: no progress for 10 s at "the phone speaking line 1"')
-  act(() => screen.getByRole('button', { name: 'Skip this line' }).click())
+  expect(log()).toContain('STUCK: no progress for 10 s at "waiting for the microphone to start"')
+  expect(speech.spoken).toHaveLength(0)
+  act(() => screen.getByRole('button', { name: 'Cancel' }).click())
+  expect(screen.getByRole('button', { name: 'Start the conversation' })).toBeInTheDocument()
+})
+
+test('a speech that starts but never ends while the microphone is on is cancelled and the lines become text', () => {
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+  renderFaked()
+  act(() => screen.getByRole('button', { name: 'Start the conversation' }).click())
+  FakeRecognition.instances[0].fire('audiostart')
+  act(() => speech.lastUtterance().onstart?.()) // started, and then silence
+  act(() => void vi.advanceTimersByTime(5000))
+  expect(log()).toContain('TTS BLOCKED')
+  expect(log()).toContain('synth:')
+  expect(speech.synth.cancel).toHaveBeenCalled()
+  expect(screen.getByText(/did not speak while the microphone was on/)).toBeInTheDocument()
+  act(() => screen.getByRole('button', { name: 'I read it' }).click())
   expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument()
+})
+
+test('Text only shows the partner lines without speaking, and moves on by itself after a time', () => {
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+  renderFaked()
+  act(() => {
+    const select = screen.getByLabelText('Partner lines') as HTMLSelectElement
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(select, 'text')
+    select.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  act(() => screen.getByRole('button', { name: 'Start the conversation' }).click())
+  FakeRecognition.instances[0].fire('audiostart')
+  expect(speech.spoken).toHaveLength(0)
+  expect(screen.getByRole('button', { name: 'I read it' })).toBeInTheDocument()
+  act(() => void vi.advanceTimersByTime(readingMs('Hi there! What can I get for you?') + 100))
+  expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument()
+  expect(log()).toContain('read (time)')
+})
+
+test('the log records the speech state when the microphone starts and when a line is spoken', async () => {
+  await openAndReady()
+  expect(log()).toContain('speech state at audiostart: speaking=false paused=undefined')
+  expect(log()).toMatch(/tts line 1 speak, attempt 1, recognizer \w+, synth before: speaking=/)
 })
 
 test('one continuous recognizer; the phone speaks first and its echo is discarded', async () => {
