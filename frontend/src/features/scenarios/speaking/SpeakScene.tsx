@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { Stars } from '../../learning/components/GameParts'
 import { starsForShare } from '../../learning/starsForShare'
-import { stopSpeaking } from '../../../shared/speech/pronunciation'
-import { type HeardResult, useSpeechRecognition } from '../../../shared/speech/useSpeechRecognition'
+import { speakText, stopSpeaking } from '../../../shared/speech/pronunciation'
+import { type HeardResult, recognitionErrorMessage, useSpeechRecognition } from '../../../shared/speech/useSpeechRecognition'
 import { type SceneLine, speakersOf } from './dialogueFromText'
 import { ListenFirst } from './ListenFirst'
 import { type LineScore, scoreLine } from './lineScore'
-import { type SelfRating, quietMs, readingMs, selfLabel, selfShare, settleMs, turnText, watchdogMs } from './turn'
+import { type SelfRating, pitchFor, readyDelayMs, selfLabel, selfShare, turnText, watchdogMs } from './turn'
 
-type Phase = 'setup' | 'starting' | 'running' | 'ended' | 'failed' | 'finished'
-// partner: the other person's line is shown; turn: the learner's line, listening; settling: Done was pressed and
-// the last words are awaited; judged: the line has a score.
-type StepKind = 'partner' | 'turn' | 'settling' | 'judged'
+type Phase = 'setup' | 'running' | 'finished'
+// partner: the other person's line is read aloud and nobody listens (the next line is not the learner's, or
+//   self-rating); cue: the phone reads a line (the partner's, or the learner's own as a model) and then listens;
+// turn: listening for the learner's line; finishing: Skip was pressed while listening, the recognizer is left to
+//   end by itself; judged / nothing: the line has a score, or nothing was heard; self: the learner rates the line;
+// failed: the microphone was refused.
+type StepKind = 'partner' | 'cue' | 'turn' | 'finishing' | 'judged' | 'nothing' | 'self' | 'failed'
 
 interface LineResult {
   share: number
@@ -26,6 +29,8 @@ const wordClass = {
   wrong: 'bg-rose-100 text-rose-900',
 } as const
 
+const refusals = new Set(['not-allowed', 'service-not-allowed', 'audio-capture', 'language-not-supported'])
+
 function Words({ score }: { score: LineScore }) {
   return (
     <p className="mt-1 flex flex-wrap gap-1.5 text-base">
@@ -38,38 +43,47 @@ function Words({ score }: { score: LineScore }) {
   )
 }
 
-// Practise one side of a scenario's conversation. One recognizer is started once and kept for the whole practice
-// (an iPhone does not hear a recognizer that is started again), and the other person's lines are only shown, because
-// the microphone would catch the phone's own voice. Nothing is recorded, stored or sent; the result is shown, not kept.
+// Practise one side of a scenario's conversation. On an iPhone (iOS 27, WebKit bug 321436) a recognizer only hears
+// reliably when the phone has just spoken and the recognizer is never cut. So each turn goes: the phone reads the
+// line before (the other person's, or the learner's own as a model), a new recognizer starts 0.4 s later, "Speak
+// now" shows once the microphone is open, and the recognizer ends by itself when the learner pauses; then the line
+// is scored. Nothing is recorded, stored or sent; the result is shown, not kept.
 export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: () => void }) {
   const speakers = speakersOf(lines)
   const [me, setMe] = useState(speakers[0])
   const [phase, setPhase] = useState<Phase>('setup')
   const [kind, setKind] = useState<StepKind>('partner')
   const [step, setStep] = useState(0)
+  const [ready, setReady] = useState(false)
+  const [stuck, setStuck] = useState(false)
   const [heard, setHeard] = useState('')
   const [results, setResults] = useState<Record<number, LineResult | null>>({})
   const [selfMode, setSelfMode] = useState(false)
-  const [stuck, setStuck] = useState(false)
+  const [failure, setFailure] = useState('')
 
   const phaseRef = useRef<Phase>('setup')
   const kindRef = useRef<StepKind>('partner')
   const stepRef = useRef(0)
+  const turnRef = useRef(0) // the learner's line that the current cue leads to
   const meRef = useRef(me)
   const selfRef = useRef(false)
-  const baseline = useRef(0)
-  const resultCount = useRef(0)
-  const heardRef = useRef({ text: '', final: false })
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const heardRef = useRef('')
+  const token = useRef(0) // a newer step makes an older spoken line's end meaningless
+  const pending = useRef<(() => void) | null>(null) // to run once the last recognizer has ended
+  const readyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const watchdog = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const fallback = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const stopListenFirst = useRef<(() => void) | null>(null)
 
-  const recognition = useSpeechRecognition('en-US', 'D', {
+  const lastErrorCode = useRef('')
+  const { supported, listenAfterSpeaking, stop } = useSpeechRecognition('en-US', 'H', {
     onResults: (r) => onResults(r),
-    onEnd: ({ requested }) => onEnded(requested),
+    // The hook clears its recognizer just after this call; act once it has.
+    onEnd: () => void setTimeout(onEnded, 0),
     onEvent: (name) => onRecognizerEvent(name),
+    onError: (code) => {
+      lastErrorCode.current = code
+    },
   })
-  const { supported, error, start, stop } = recognition
 
   function changePhase(next: Phase) {
     phaseRef.current = next
@@ -79,83 +93,152 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     kindRef.current = next
     setKind(next)
   }
-  function clearTimers() {
-    clearTimeout(timer.current)
+  function show(index: number) {
+    stepRef.current = index
+    setStep(index)
   }
-  function clearWatchdog() {
+  function clearTimers() {
+    clearTimeout(readyTimer.current)
     clearTimeout(watchdog.current)
     setStuck(false)
   }
 
-  function goTo(index: number) {
+  // Starts listening after the phone says `phrase`; if the last recognizer is still ending, once it has ended.
+  function cue(phrase: string, speaker: string, turn: number) {
+    turnRef.current = turn
+    changeKind('cue')
+    const go = () => {
+      if (phaseRef.current !== 'running' || kindRef.current !== 'cue') return
+      if (!listenAfterSpeaking(phrase, pitchFor(speakers, speaker))) pending.current = go
+    }
+    go()
+  }
+
+  function advance(index: number) {
     clearTimers()
-    stepRef.current = index
-    setStep(index)
+    const mine = ++token.current
     setHeard('')
-    heardRef.current = { text: '', final: false }
+    heardRef.current = ''
     if (index >= lines.length) {
       changePhase('finished')
-      if (!selfRef.current) stop()
       return
     }
-    if (lines[index].speaker !== meRef.current) {
-      changeKind('partner')
-      timer.current = setTimeout(() => goTo(index + 1), readingMs(lines[index].text))
+    const line = lines[index]
+    show(index)
+    if (line.speaker === meRef.current) {
+      if (selfRef.current) changeKind('self')
+      else cue(line.text, line.speaker, index) // the learner's own line first, as a model
       return
     }
-    baseline.current = resultCount.current
-    changeKind('turn')
+    const next = lines[index + 1]
+    if (!selfRef.current && next && next.speaker === meRef.current) {
+      cue(line.text, line.speaker, index + 1)
+      return
+    }
+    // Nobody listens after this line: just read it aloud and move on.
+    changeKind('partner')
+    speakText(line.text, {
+      pitch: pitchFor(speakers, line.speaker),
+      onStart: () => undefined,
+      onEnd: () => {
+        if (token.current === mine && kindRef.current === 'partner') advance(index + 1)
+      },
+    })
+  }
+
+  function onRecognizerEvent(name: string) {
+    if (phaseRef.current !== 'running') return
+    if (name === 'primed' && kindRef.current === 'cue') {
+      // The phone has finished speaking: the learner's line is next.
+      show(turnRef.current)
+      setHeard('')
+      heardRef.current = ''
+      setReady(false)
+      changeKind('turn')
+      clearTimeout(watchdog.current)
+      setStuck(false)
+      watchdog.current = setTimeout(() => setStuck(true), watchdogMs)
+    } else if (name === 'audiostart' && kindRef.current === 'turn') {
+      clearTimeout(watchdog.current)
+      setStuck(false)
+      clearTimeout(readyTimer.current)
+      readyTimer.current = setTimeout(() => {
+        if (kindRef.current === 'turn') setReady(true)
+      }, readyDelayMs)
+    }
+  }
+
+  function onResults(all: HeardResult[]) {
+    if (phaseRef.current !== 'running') return
+    if (kindRef.current !== 'turn' && kindRef.current !== 'finishing') return
+    const said = turnText(all, 0).text
+    heardRef.current = said
+    setHeard(said)
+  }
+
+  function onEnded() {
+    const next = pending.current
+    pending.current = null
+    if (next) {
+      // A step that was waiting for the last recognizer to end (after leaving and starting again, say) goes now.
+      next()
+      return
+    }
+    if (phaseRef.current === 'running') {
+      if (kindRef.current === 'turn') judge()
+      else if (kindRef.current === 'finishing') {
+        setResults((prev) => ({ ...prev, [stepRef.current]: null }))
+        advance(stepRef.current + 1)
+      }
+    }
   }
 
   function judge() {
     clearTimers()
+    setReady(false)
     const index = stepRef.current
-    const said = heardRef.current.text
+    const said = heardRef.current
+    if (!said) {
+      const code = lastErrorCode.current
+      lastErrorCode.current = ''
+      if (refusals.has(code)) {
+        setFailure(recognitionErrorMessage(code))
+        changeKind('failed')
+      } else {
+        changeKind('nothing')
+      }
+      return
+    }
     const score = scoreLine(lines[index].text, said)
     setResults((prev) => ({ ...prev, [index]: { share: score.share, score, said } }))
     changeKind('judged')
   }
 
-  function onResults(all: HeardResult[]) {
-    resultCount.current = all.length
-    if (phaseRef.current !== 'running' || selfRef.current) return
-    if (kindRef.current !== 'turn' && kindRef.current !== 'settling') return
-    const said = turnText(all, baseline.current)
-    heardRef.current = said
-    setHeard(said.text)
-    clearTimeout(timer.current)
-    if (said.final && said.text) {
-      // After Done the final result is what was waited for; otherwise a short quiet means the line is over.
-      if (kindRef.current === 'settling') judge()
-      else timer.current = setTimeout(judge, quietMs)
-    }
-  }
-
-  function done() {
-    if (kindRef.current !== 'turn') return
-    if (heardRef.current.final && heardRef.current.text) {
-      judge()
-      return
-    }
-    // The last words are still on their way: wait a moment, or for the final result.
-    changeKind('settling')
-    clearTimeout(timer.current)
-    timer.current = setTimeout(judge, settleMs)
-  }
-
   function retry() {
-    clearTimers()
-    setResults((prev) => ({ ...prev, [stepRef.current]: null }))
-    setHeard('')
-    heardRef.current = { text: '', final: false }
-    baseline.current = resultCount.current
-    changeKind('turn')
+    const index = stepRef.current
+    setResults((prev) => ({ ...prev, [index]: null }))
+    advance(index) // the phone says the learner's line first, then listens
   }
 
   function skip() {
-    clearTimers()
-    setResults((prev) => ({ ...prev, [stepRef.current]: null }))
-    goTo(stepRef.current + 1)
+    const index = stepRef.current
+    if (kindRef.current === 'turn') {
+      // Never cut the recognizer: let it end by itself, then move on.
+      clearTimers()
+      changeKind('finishing')
+      stop()
+      return
+    }
+    if (kindRef.current === 'cue') {
+      stop() // only cancels the phone's speech; listening has not begun
+      setResults((prev) => ({ ...prev, [turnRef.current]: null }))
+      advance(turnRef.current + 1)
+      return
+    }
+    token.current++ // the end of the line being read is not a reason to move on twice
+    stopSpeaking()
+    if (lines[index].speaker === meRef.current) setResults((prev) => ({ ...prev, [index]: null }))
+    advance(index + 1)
   }
 
   function rate(rating: SelfRating) {
@@ -163,34 +246,11 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     changeKind('judged')
   }
 
-  function ready() {
-    if (phaseRef.current !== 'starting') return
-    clearTimeout(fallback.current)
-    clearWatchdog()
-    changePhase('running')
-    goTo(0)
-  }
-
-  function onRecognizerEvent(name: string) {
-    if (phaseRef.current !== 'starting') return
-    if (name === 'audiostart') {
-      ready()
-    } else if (name === 'start') {
-      clearTimeout(fallback.current)
-      fallback.current = setTimeout(ready, 1500)
-    }
-  }
-
-  function onEnded(requested: boolean) {
-    if (requested) return
-    clearTimeout(fallback.current)
-    if (phaseRef.current === 'starting') {
-      clearWatchdog()
-      changePhase('failed')
-    } else if (phaseRef.current === 'running') {
-      clearTimers()
-      changePhase('ended')
-    }
+  function selfRateRest() {
+    selfRef.current = true
+    setSelfMode(true)
+    if (kindRef.current === 'cue') stop()
+    advance(lines[stepRef.current].speaker === meRef.current ? stepRef.current : turnRef.current)
   }
 
   function begin(self: boolean) {
@@ -198,43 +258,34 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     selfRef.current = self
     setSelfMode(self)
     setResults({})
-    resultCount.current = 0
-    baseline.current = 0
+    setFailure('')
+    lastErrorCode.current = ''
+    pending.current = null
+    token.current++
+    stopListenFirst.current?.()
     stopSpeaking()
-    if (self) {
-      changePhase('running')
-      goTo(0)
-      return
-    }
-    changePhase('starting')
-    clearTimeout(watchdog.current)
-    setStuck(false)
-    watchdog.current = setTimeout(() => setStuck(true), watchdogMs)
-    start()
-  }
-
-  function continueSelfRated() {
-    selfRef.current = true
-    setSelfMode(true)
     changePhase('running')
-    goTo(stepRef.current)
+    advance(0)
   }
 
   function leave() {
     clearTimers()
-    clearWatchdog()
-    clearTimeout(fallback.current)
-    stop()
+    token.current++
+    pending.current = null
+    if (kindRef.current === 'cue') stop()
+    else if (kindRef.current !== 'turn' && kindRef.current !== 'finishing') stopSpeaking()
+    // A recognizer that is listening is left to end by itself: cutting it would leave the next ones deaf.
     changePhase('setup')
+    changeKind('partner')
     setResults({})
   }
 
   useEffect(
     () => () => {
-      clearTimeout(timer.current)
+      clearTimeout(readyTimer.current)
       clearTimeout(watchdog.current)
-      clearTimeout(fallback.current)
-      stopSpeaking()
+      token.current++
+      if (kindRef.current === 'partner') stopSpeaking()
     },
     [],
   )
@@ -244,6 +295,10 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
   const average = rated.length ? rated.reduce((sum, { i }) => sum + (results[i]?.share ?? 0), 0) / rated.length : 0
   const current = lines[Math.min(step, lines.length - 1)]
   const isLast = step === lines.length - 1
+  const ownLine = current.speaker === me
+  const button = 'min-h-11 rounded-xl px-4 font-semibold'
+  const plain = `${button} bg-white text-slate-800 ring-1 ring-slate-300`
+  const strong = `${button} bg-indigo-700 text-white`
 
   return (
     <section aria-label="Speak this scene" className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-4">
@@ -256,7 +311,9 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
 
       {phase === 'setup' && (
         <div>
-          <p className="mt-1 text-sm text-slate-700">Choose who you play. The other person&apos;s lines are shown, not spoken. Say only your own lines.</p>
+          <p className="mt-1 text-sm text-slate-700">
+            Choose who you play. The phone reads the other person&apos;s lines aloud. After each one, wait for <strong>Speak now</strong>, then say your line and pause: the phone stops listening by itself.
+          </p>
           <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="You play">
             {speakers.map((name) => (
               <button
@@ -270,112 +327,113 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
               </button>
             ))}
           </div>
-          <ListenFirst lines={lines} />
+          <ListenFirst lines={lines} stopRef={stopListenFirst} />
           <div className="mt-3 flex flex-wrap gap-2">
-            <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white disabled:opacity-50" disabled={!supported} onClick={() => begin(false)} type="button">
+            <button className={`${strong} disabled:opacity-50`} disabled={!supported} onClick={() => begin(false)} type="button">
               Start speaking
             </button>
-            <button className="min-h-11 rounded-xl bg-white px-4 font-semibold text-slate-800 ring-1 ring-slate-300" onClick={() => begin(true)} type="button">
+            <button className={plain} onClick={() => begin(true)} type="button">
               Self-rate (no microphone)
             </button>
           </div>
           {!supported && <p className="mt-2 text-sm text-amber-900">This browser has no speech recognition, so you can only self-rate.</p>}
-          <p className="mt-2 text-xs text-slate-600">The microphone is used by your browser&apos;s speech service, which may send the sound to Apple or Google. VocabFlow records and keeps nothing.</p>
-        </div>
-      )}
-
-      {phase === 'starting' && !stuck && (
-        <p className="mt-2 text-sm text-slate-700" role="status">
-          Starting the microphone… if the phone asks, tap Allow.
-        </p>
-      )}
-      {stuck && phase === 'starting' && (
-        <div className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
-          <p>The microphone has not started after {watchdogMs / 1000} seconds.</p>
-          <div className="mt-2 flex gap-2">
-            <button className="min-h-11 rounded-xl bg-amber-200 px-4 font-semibold" onClick={leave} type="button">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {phase === 'failed' && (
-        <div className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
-          <p>The microphone did not start. Check that it is allowed for this site, or rate yourself instead.</p>
-          {error && <p className="mt-1">{error}</p>}
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button className="min-h-11 rounded-xl bg-amber-200 px-4 font-semibold" onClick={() => begin(false)} type="button">
-              Try again
-            </button>
-            <button className="min-h-11 rounded-xl bg-amber-200 px-4 font-semibold" onClick={() => begin(true)} type="button">
-              Self-rate instead
-            </button>
-          </div>
-        </div>
-      )}
-
-      {phase === 'ended' && (
-        <div className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
-          <p>The phone stopped listening by itself. Starting it again often does not work on an iPhone, so we do not try. You can rate yourself for the rest of the scene.</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button className="min-h-11 rounded-xl bg-amber-200 px-4 font-semibold" onClick={continueSelfRated} type="button">
-              Self-rate the rest
-            </button>
-            <button className="min-h-11 rounded-xl bg-amber-200 px-4 font-semibold" onClick={() => { changePhase('finished') }} type="button">
-              See my result so far
-            </button>
-          </div>
+          <p className="mt-2 text-xs text-slate-600">
+            The first time, the phone asks for the microphone: tap Allow. Your browser&apos;s speech service may send the sound to Apple or Google. VocabFlow records and keeps nothing.
+          </p>
         </div>
       )}
 
       {phase === 'running' && (
         <div>
           <p className="mt-2 text-xs font-semibold text-indigo-900">
-            Line {step + 1} of {lines.length} · you are {me}. Say only your own lines, not the other person&apos;s.
+            Line {step + 1} of {lines.length} · you are {me}
           </p>
-          <div className="mt-2 rounded-xl bg-white px-3 py-2 ring-2 ring-indigo-200">
-            <p className="text-sm font-semibold text-slate-700">{current.speaker}</p>
+          <div className={`mt-2 rounded-xl bg-white px-3 py-2 ring-2 ${ownLine ? 'ring-indigo-500' : 'ring-indigo-200'}`}>
+            <p className="text-sm font-semibold text-slate-700">{ownLine ? `${current.speaker} (you)` : current.speaker}</p>
             <p className="text-base text-slate-900">{current.text}</p>
           </div>
 
-          {kind === 'partner' && (
+          {(kind === 'partner' || kind === 'cue') && (
             <div className="mt-2" role="status">
-              <p className="text-sm text-slate-600">Read this line. Your turn comes next.</p>
-              <button className="mt-1 min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" onClick={() => goTo(step + 1)} type="button">
-                I read it
+              <p className="text-sm text-slate-600">{ownLine ? 'Listen to your line first…' : 'Listen…'}</p>
+              <button className={`mt-1 ${plain}`} onClick={skip} type="button">
+                {kind === 'cue' && !ownLine ? 'Skip my next line' : 'Skip'}
               </button>
             </div>
           )}
 
-          {(kind === 'turn' || kind === 'settling') && !selfMode && (
+          {(kind === 'turn' || kind === 'finishing') && (
             <div className="mt-2" role="status">
-              <p className="text-sm text-slate-600">{kind === 'settling' ? 'Checking the last words…' : 'Your turn. Say the line, then tap Done.'}</p>
+              {kind === 'finishing' ? (
+                <p className="text-sm text-slate-600">Finishing… the phone stops listening after a short pause.</p>
+              ) : ready ? (
+                <p className="rounded-xl bg-emerald-600 px-4 py-3 text-center text-lg font-bold text-white" data-testid="speak-now">
+                  Speak now
+                </p>
+              ) : (
+                <p className="rounded-xl bg-amber-100 px-4 py-3 text-center text-base font-semibold text-amber-900">Get ready…</p>
+              )}
+              {kind === 'turn' && ready && <p className="mt-1 text-xs text-slate-600">Say your line, then pause. It stops listening by itself.</p>}
               <p className="mt-1 min-h-6 font-semibold" data-testid="heard-now">{heard}</p>
-              <div className="mt-1 flex gap-2">
-                <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white disabled:opacity-50" disabled={kind === 'settling'} onClick={done} type="button">
-                  Done
+              {stuck && (
+                <p className="mt-1 text-sm text-amber-900" role="alert">
+                  The microphone has not opened yet. If the phone asks, tap Allow; otherwise skip this line or rate yourself.
+                </p>
+              )}
+              {kind === 'turn' && (
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <button className={plain} onClick={skip} type="button">
+                    Skip
+                  </button>
+                  {stuck && (
+                    <button className={plain} onClick={selfRateRest} type="button">
+                      Self-rate the rest
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {kind === 'nothing' && (
+            <div className="mt-2" role="status">
+              <p className="text-sm font-semibold text-amber-900">Nothing was heard.</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <button className={strong} onClick={retry} type="button">
+                  Try again
                 </button>
-                <button className="min-h-11 rounded-xl bg-white px-4 font-semibold text-slate-800 ring-1 ring-slate-300" onClick={retry} type="button">
-                  Retry
-                </button>
-                <button className="min-h-11 rounded-xl bg-white px-4 font-semibold text-slate-800 ring-1 ring-slate-300" onClick={skip} type="button">
+                <button className={plain} onClick={skip} type="button">
                   Skip
+                </button>
+                <button className={plain} onClick={selfRateRest} type="button">
+                  Self-rate the rest
                 </button>
               </div>
             </div>
           )}
 
-          {kind === 'turn' && selfMode && (
+          {kind === 'failed' && (
+            <div className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+              <p>The microphone did not work. Check that it is allowed for this site, or rate yourself instead.</p>
+              {failure && <p className="mt-1">{failure}</p>}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button className={`${button} bg-amber-200`} onClick={selfRateRest} type="button">
+                  Self-rate the rest
+                </button>
+              </div>
+            </div>
+          )}
+
+          {kind === 'self' && (
             <div className="mt-2">
               <p className="text-sm text-slate-600">Say the line out loud, then rate yourself.</p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {(Object.keys(selfShare) as SelfRating[]).map((rating) => (
-                  <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" key={rating} onClick={() => rate(rating)} type="button">
+                  <button className={strong} key={rating} onClick={() => rate(rating)} type="button">
                     {selfLabel[rating]}
                   </button>
                 ))}
-                <button className="min-h-11 rounded-xl bg-white px-4 font-semibold text-slate-800 ring-1 ring-slate-300" onClick={skip} type="button">
+                <button className={plain} onClick={skip} type="button">
                   Skip
                 </button>
               </div>
@@ -391,11 +449,11 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
               {results[step]!.said && <p className="mt-1 text-xs text-slate-600">Heard: {results[step]!.said}</p>}
               <div className="mt-2 flex gap-2">
                 {!selfMode && (
-                  <button className="min-h-11 rounded-xl bg-white px-4 font-semibold text-slate-800 ring-1 ring-slate-300" onClick={retry} type="button">
-                    Retry this line
+                  <button className={plain} onClick={retry} type="button">
+                    Try again
                   </button>
                 )}
-                <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" onClick={() => goTo(step + 1)} type="button">
+                <button className={strong} onClick={() => advance(step + 1)} type="button">
                   {isLast ? 'Finish' : 'Next'}
                 </button>
               </div>
@@ -423,16 +481,11 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
             <p className="text-sm text-slate-600">No line was scored.</p>
           )}
           <div className="mt-2 flex gap-2">
-            <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" onClick={leave} type="button">
+            <button className={strong} onClick={leave} type="button">
               Practise again
             </button>
           </div>
         </div>
-      )}
-      {error && phase !== 'failed' && (
-        <p className="mt-2 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-          {error}
-        </p>
       )}
     </section>
   )

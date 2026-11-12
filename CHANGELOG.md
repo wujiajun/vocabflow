@@ -5,6 +5,14 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.16.0] - 2026-11-12
+
+### Changed
+
+- **Speak this scene now speaks the other person's lines aloud and listens after each one.** iPhones running iOS 27 hear only the first recognizer of a session ([WebKit bug 321436](https://bugs.webkit.org/show_bug.cgi?id=321436)); what works there, and was confirmed on our iPhone with way H of the speech test, is to let the phone speak, start a new recognizer 0.4 s later, and never cut it. So each turn now goes: the phone reads the line before yours (or, when you speak first or try again, your own line as a model), **Get ready…** shows while the microphone opens, **Speak now** shows half a second after it is open (words said earlier were often lost), and when you pause the phone stops listening by itself and the line is scored. There is no Done button any more. **Skip** while listening waits for the listening to end instead of cutting it, and so does **Stop practising**. If nothing was heard you can try again, skip, or rate yourself; a refused microphone offers self-rating. Self-rating now also reads the other person's lines aloud.
+- Starting while **Listen first** is reading stops that reading first, so it no longer cuts off the scene's first line.
+- Only the frontend changed.
+
 ## [1.15.1] - 2026-11-12
 
 ### Added
