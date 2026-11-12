@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.13.1] - 2026-11-10
+
+### Added
+
+- **Speech test (experimental)**: a small test page at `/app/labs/speech-test` (reached only by its address, not in the menu) that checks whether this phone or computer can hear you read a sentence. Pick one of seven sentences (easy to hard, with everyday Canadian ones), tap Start speaking, read it, tap Stop. The page shows what was heard and compares it word by word with the sentence (right, left out, or a different word; capitals and punctuation ignored), whether the page is on https, whether the browser has speech recognition, and a clear message when the microphone is refused or the speech service cannot be reached. It uses the browser's own recognizer; VocabFlow records, stores and sends nothing. It exists to learn how well recognition works on the iPhone before any speaking practice is designed. No backend change, no migration.
+
 ## [1.13.0] - 2026-11-10
 
 ### Added
