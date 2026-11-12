@@ -294,207 +294,378 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     [],
   )
 
+  // Keep the latest line in view, and stop the page behind the full-screen practice from scrolling.
+  const scroller = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = scroller.current
+    el?.scrollTo?.({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [step, kind, heard, phase])
+  useEffect(() => {
+    if (phase === 'setup') return
+    const before = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = before
+    }
+  }, [phase])
+
+  // A partner line can be heard again while nothing is listening or about to listen.
+  const quiet = kind === 'judged' || kind === 'nothing' || kind === 'self' || kind === 'failed' || phase === 'finished'
+  function replay(line: SceneLine) {
+    if (!quiet) return
+    speakText(line.text, { pitch: pitchFor(speakers, line.speaker), onStart: () => undefined, onEnd: () => undefined })
+  }
+
   const mine = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.speaker === me)
   const rated = mine.filter(({ i }) => results[i])
   const average = rated.length ? rated.reduce((sum, { i }) => sum + (results[i]?.share ?? 0), 0) / rated.length : 0
   const current = lines[Math.min(step, lines.length - 1)]
   const isLast = step === lines.length - 1
   const ownLine = current.speaker === me
-  const button = 'min-h-11 rounded-xl px-4 font-semibold'
+  const shown = phase === 'finished' ? lines : lines.slice(0, step + 1)
+  const speaking = (kind === 'partner' || kind === 'cue') && phase === 'running'
+  const result = results[step]
+  const tone = !result ? 'amber' : result.share >= 0.8 ? 'emerald' : result.share >= 0.5 ? 'amber' : 'rose'
+  const button = 'min-h-12 rounded-2xl px-5 text-base font-bold'
   const plain = `${button} bg-white text-slate-800 ring-1 ring-slate-300`
-  const strong = `${button} bg-indigo-700 text-white`
+  const strong = `${button} bg-indigo-600 text-white shadow-[0_4px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none`
+  const toneStrong = {
+    emerald: `${button} w-full bg-emerald-600 text-white shadow-[0_4px_0_0_#065f46] active:translate-y-0.5 active:shadow-none`,
+    amber: `${button} w-full bg-amber-500 text-white shadow-[0_4px_0_0_#92400e] active:translate-y-0.5 active:shadow-none`,
+    rose: `${button} w-full bg-rose-600 text-white shadow-[0_4px_0_0_#9f1239] active:translate-y-0.5 active:shadow-none`,
+  }
+  const sheet = {
+    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    amber: 'border-amber-200 bg-amber-50 text-amber-900',
+    rose: 'border-rose-200 bg-rose-50 text-rose-900',
+  }
 
-  return (
-    <section aria-label="Speak this scene" className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50/40 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">Speak this scene</h2>
-        <button className="min-h-11 text-sm font-semibold text-indigo-700 underline underline-offset-4" onClick={() => { leave(); onClose() }} type="button">
-          Close
-        </button>
-      </div>
-
-      {phase === 'setup' && (
-        <div>
-          <p className="mt-1 text-sm text-slate-700">
-            Choose who you play. The phone reads the other person&apos;s lines aloud. After each one, wait for <strong>Speak now</strong>, then say your line and pause: the phone stops listening by itself.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="You play">
-            {speakers.map((name) => (
-              <button
-                aria-pressed={me === name}
-                className={`min-h-11 rounded-xl px-4 text-sm font-semibold ${me === name ? 'bg-indigo-700 text-white' : 'bg-white text-slate-800 ring-1 ring-slate-300'}`}
-                key={name}
-                onClick={() => setMe(name)}
-                type="button"
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-          <label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-slate-800">
-            <input checked={model} className="h-5 w-5" onChange={(e) => setModel(e.target.checked)} type="checkbox" />
-            Read my line to me first (to repeat after it)
-          </label>
-          <ListenFirst lines={lines} stopRef={stopListenFirst} />
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button className={`${strong} disabled:opacity-50`} disabled={!supported} onClick={() => begin(false)} type="button">
-              Start speaking
-            </button>
-            <button className={plain} onClick={() => begin(true)} type="button">
-              Self-rate (no microphone)
-            </button>
-          </div>
-          {!supported && <p className="mt-2 text-sm text-amber-900">This browser has no speech recognition, so you can only self-rate.</p>}
-          <p className="mt-2 text-xs text-slate-600">
-            The first time, the phone asks for the microphone: tap Allow. Your browser&apos;s speech service may send the sound to Apple or Google. VocabFlow records and keeps nothing.
-          </p>
-        </div>
-      )}
-
-      {phase === 'running' && (
-        <div>
-          <p className="mt-2 text-xs font-semibold text-indigo-900">
-            Line {step + 1} of {lines.length} · you are {me}
-          </p>
-          <div className={`mt-2 rounded-xl bg-white px-3 py-2 ring-2 ${ownLine ? 'ring-indigo-500' : 'ring-indigo-200'}`}>
-            <p className="text-sm font-semibold text-slate-700">{ownLine ? `${current.speaker} (you)` : current.speaker}</p>
-            <p className="text-base text-slate-900">{current.text}</p>
-          </div>
-
-          {(kind === 'partner' || kind === 'cue') && (
-            <div className="mt-2" role="status">
-              <p className="text-sm text-slate-600">{ownLine ? (model ? 'Listen to your line first…' : 'Your turn is next…') : 'Listen…'}</p>
-              <button className={`mt-1 ${plain}`} onClick={skip} type="button">
-                {kind === 'cue' && !ownLine ? 'Skip my next line' : 'Skip'}
-              </button>
-            </div>
-          )}
-
-          {(kind === 'turn' || kind === 'finishing') && (
-            <div className="mt-2" role="status">
-              {kind === 'finishing' ? (
-                <p className="text-sm text-slate-600">Finishing… the phone stops listening after a short pause.</p>
-              ) : ready ? (
-                <p className="rounded-xl bg-emerald-600 px-4 py-3 text-center text-lg font-bold text-white" data-testid="speak-now">
-                  Speak now
-                </p>
-              ) : (
-                <p className="rounded-xl bg-amber-100 px-4 py-3 text-center text-base font-semibold text-amber-900">Get ready…</p>
-              )}
-              {kind === 'turn' && ready && <p className="mt-1 text-xs text-slate-600">Say your line, then pause. It stops listening by itself.</p>}
-              <p className="mt-1 min-h-6 font-semibold" data-testid="heard-now">{heard}</p>
-              {stuck && (
-                <p className="mt-1 text-sm text-amber-900" role="alert">
-                  The microphone has not opened yet. If the phone asks, tap Allow; otherwise skip this line or rate yourself.
-                </p>
-              )}
-              {kind === 'turn' && (
-                <div className="mt-1 flex flex-wrap gap-2">
-                  <button className={plain} onClick={skip} type="button">
-                    Skip
-                  </button>
-                  {stuck && (
-                    <button className={plain} onClick={selfRateRest} type="button">
-                      Self-rate the rest
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {kind === 'nothing' && (
-            <div className="mt-2" role="status">
-              <p className="text-sm font-semibold text-amber-900">Nothing was heard.</p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                <button className={strong} onClick={retry} type="button">
-                  Try again
-                </button>
-                <button className={plain} onClick={skip} type="button">
-                  Skip
-                </button>
-                <button className={plain} onClick={selfRateRest} type="button">
-                  Self-rate the rest
-                </button>
-              </div>
-            </div>
-          )}
-
-          {kind === 'failed' && (
-            <div className="mt-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
-              <p>The microphone did not work. Check that it is allowed for this site, or rate yourself instead.</p>
-              {failure && <p className="mt-1">{failure}</p>}
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button className={`${button} bg-amber-200`} onClick={selfRateRest} type="button">
-                  Self-rate the rest
-                </button>
-              </div>
-            </div>
-          )}
-
-          {kind === 'self' && (
-            <div className="mt-2">
-              <p className="text-sm text-slate-600">Say the line out loud, then rate yourself.</p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {(Object.keys(selfShare) as SelfRating[]).map((rating) => (
-                  <button className={strong} key={rating} onClick={() => rate(rating)} type="button">
-                    {selfLabel[rating]}
-                  </button>
-                ))}
-                <button className={plain} onClick={skip} type="button">
-                  Skip
-                </button>
-              </div>
-            </div>
-          )}
-
-          {kind === 'judged' && results[step] && (
-            <div className="mt-2" role="status">
-              <p className="text-sm font-semibold" data-testid="line-result">
-                {results[step]!.self ? `You rated yourself: ${Math.round(results[step]!.share * 100)}%` : `${Math.round(results[step]!.share * 100)}% of the words`}
-              </p>
-              {results[step]!.score && <Words score={results[step]!.score!} />}
-              {results[step]!.said && <p className="mt-1 text-xs text-slate-600">Heard: {results[step]!.said}</p>}
-              <div className="mt-2 flex gap-2">
-                {!selfMode && (
-                  <button className={plain} onClick={retry} type="button">
-                    Try again
-                  </button>
-                )}
-                <button className={strong} onClick={() => advance(step + 1)} type="button">
-                  {isLast ? 'Finish' : 'Next'}
-                </button>
-              </div>
-            </div>
-          )}
-          <button className="mt-3 min-h-11 text-sm font-semibold text-slate-700 underline underline-offset-4" onClick={leave} type="button">
-            Stop practising
+  if (phase === 'setup') {
+    return (
+      <section aria-label="Speak this scene" className="mt-4 rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-bold">Speak this scene</h2>
+          <button aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500" onClick={onClose} type="button">
+            <CloseIcon />
           </button>
         </div>
-      )}
+        <p className="mt-1 text-sm text-slate-700">
+          The phone plays the other person. After each of their lines, wait for <strong>Speak now</strong>, say your line and pause.
+        </p>
+        <p className="mt-3 text-sm font-semibold text-slate-800">Who do you play?</p>
+        <div className="mt-2 grid grid-cols-2 gap-2" role="group" aria-label="You play">
+          {speakers.map((name) => (
+            <button
+              aria-pressed={me === name}
+              className={`flex min-h-14 items-center gap-2 rounded-2xl px-3 text-left text-sm font-semibold ring-2 ${me === name ? 'bg-indigo-50 text-indigo-900 ring-indigo-500' : 'bg-white text-slate-800 ring-slate-200'}`}
+              key={name}
+              onClick={() => setMe(name)}
+              type="button"
+            >
+              <Avatar name={name} index={speakers.indexOf(name)} />
+              {name}
+            </button>
+          ))}
+        </div>
+        <label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-slate-800">
+          <input checked={model} className="h-5 w-5" onChange={(e) => setModel(e.target.checked)} type="checkbox" />
+          Read my line to me first (to repeat after it)
+        </label>
+        <ListenFirst lines={lines} stopRef={stopListenFirst} />
+        <div className="mt-4 flex flex-col gap-2">
+          <button className={`${strong} w-full disabled:opacity-50`} disabled={!supported} onClick={() => begin(false)} type="button">
+            Start speaking
+          </button>
+          <button className={`${plain} w-full`} onClick={() => begin(true)} type="button">
+            Self-rate (no microphone)
+          </button>
+        </div>
+        {!supported && <p className="mt-2 text-sm text-amber-900">This browser has no speech recognition, so you can only self-rate.</p>}
+        <p className="mt-3 text-xs text-slate-500">
+          The first time, the phone asks for the microphone: tap Allow. Your browser&apos;s speech service may send the sound to Apple or Google. VocabFlow records and keeps nothing.
+        </p>
+      </section>
+    )
+  }
 
-      {phase === 'finished' && (
-        <div className="mt-2" role="status">
-          {rated.length > 0 ? (
-            <>
-              <Stars share={average} />
-              <p className="font-semibold" data-testid="total">
-                {Math.round(average * 100)}% · {starsForShare(average)} of 3 stars
-              </p>
-              <p className="text-sm text-slate-600">
-                {rated.length} of {mine.length} of your lines {rated.some(({ i }) => results[i]?.self) ? '(some rated by you)' : ''}. This result is not saved.
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-slate-600">No line was scored.</p>
-          )}
-          <div className="mt-2 flex gap-2">
-            <button className={strong} onClick={leave} type="button">
-              Practise again
+  return (
+    <section aria-label="Speak this scene" className="fixed inset-0 z-30 flex h-[100dvh] flex-col bg-slate-50">
+      {/* Top: leave, and how far along the conversation is. */}
+      <div className="flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2">
+        <button aria-label="Stop practising" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500" onClick={leave} type="button">
+          <CloseIcon />
+        </button>
+        <div
+          aria-label={`Line ${Math.min(step + 1, lines.length)} of ${lines.length}`}
+          aria-valuemax={lines.length}
+          aria-valuemin={0}
+          aria-valuenow={phase === 'finished' ? lines.length : step + 1}
+          className="h-3 flex-1 overflow-hidden rounded-full bg-slate-200"
+          role="progressbar"
+        >
+          <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${((phase === 'finished' ? lines.length : step + 1) / lines.length) * 100}%` }} />
+        </div>
+      </div>
+
+      {/* The conversation so far, as a chat. */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4" ref={scroller}>
+        <p className="mb-3 text-center text-xs font-semibold text-slate-500">You are {me}</p>
+        <ol className="flex flex-col gap-3">
+          {shown.map((line, i) => {
+            const isMe = line.speaker === me
+            const r = results[i]
+            const active = phase === 'running' && i === step
+            return (
+              <li className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`} key={i}>
+                <Avatar name={line.speaker} index={speakers.indexOf(line.speaker)} />
+                <div
+                  className={`max-w-[80%] rounded-3xl px-4 py-3 text-base leading-snug shadow-sm ${
+                    isMe
+                      ? `rounded-br-md ${active && !r ? 'bg-indigo-600 text-white' : 'bg-white text-slate-900 ring-1 ring-indigo-200'}`
+                      : `rounded-bl-md bg-white text-slate-900 ${active ? 'ring-2 ring-sky-300' : 'ring-1 ring-slate-200'}`
+                  }`}
+                >
+                  <p className={`text-xs font-semibold ${isMe && active && !r ? 'text-indigo-100' : 'text-slate-500'}`}>
+                    {isMe ? `${line.speaker} (you)` : line.speaker}
+                  </p>
+                  {isMe && r?.score ? <Words score={r.score} /> : <p className="mt-0.5">{line.text}</p>}
+                  {!isMe && (
+                    <div className="mt-1 flex items-center gap-2">
+                      {active && speaking ? (
+                        <SoundBars />
+                      ) : (
+                        <button
+                          aria-label={`Hear again: ${line.text}`}
+                          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-sky-600 disabled:opacity-30"
+                          disabled={!quiet}
+                          onClick={() => replay(line)}
+                          type="button"
+                        >
+                          <SpeakerIcon />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {isMe && r && (
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{r.self ? `You rated yourself ${Math.round(r.share * 100)}%` : `${Math.round(r.share * 100)}%`}</p>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+      </div>
+
+      {/* Bottom: what to do now. */}
+      <div className="border-t border-slate-200 bg-white px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {phase === 'running' && (kind === 'partner' || kind === 'cue') && (
+          <div className="flex items-center justify-between gap-3" role="status">
+            <p className="text-base font-semibold text-slate-700">{ownLine ? (model ? 'Listen to your line first…' : 'Your turn is next…') : 'Listen…'}</p>
+            <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide text-slate-500" onClick={skip} type="button">
+              {kind === 'cue' && !ownLine ? 'Skip my next line' : 'Skip'}
             </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {phase === 'running' && (kind === 'turn' || kind === 'finishing') && (
+          <div className="flex flex-col items-center" role="status">
+            <p className="min-h-6 text-center text-base font-semibold text-slate-800" data-testid="heard-now">{heard}</p>
+            {kind === 'finishing' ? (
+              <p className="py-6 text-base font-semibold text-slate-600">Finishing… the phone stops listening after a short pause.</p>
+            ) : (
+              <>
+                <div className="relative my-2 flex h-20 w-20 items-center justify-center">
+                  {ready && <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />}
+                  <span className={`relative flex h-20 w-20 items-center justify-center rounded-full text-white ${ready ? 'bg-emerald-500 shadow-[0_5px_0_0_#047857]' : 'bg-slate-300'}`}>
+                    <MicIcon />
+                  </span>
+                </div>
+                {ready ? (
+                  <p className="text-lg font-extrabold text-emerald-700" data-testid="speak-now">
+                    Speak now
+                  </p>
+                ) : (
+                  <p className="text-lg font-bold text-slate-500">Get ready…</p>
+                )}
+                <p className="mt-0.5 text-xs text-slate-500">{ready ? 'Say your line, then pause. It stops listening by itself.' : 'The microphone is opening.'}</p>
+              </>
+            )}
+            {stuck && (
+              <p className="mt-2 text-center text-sm text-amber-900" role="alert">
+                The microphone has not opened yet. If the phone asks, tap Allow; otherwise skip this line or rate yourself.
+              </p>
+            )}
+            {kind === 'turn' && (
+              <div className="mt-1 flex flex-wrap justify-center gap-2">
+                <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide text-slate-500" onClick={skip} type="button">
+                  Skip
+                </button>
+                {stuck && (
+                  <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide text-slate-500" onClick={selfRateRest} type="button">
+                    Self-rate the rest
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {phase === 'running' && kind === 'judged' && result && (
+          <div className={`-mx-4 -mt-3 border-t-2 px-4 pt-3 motion-safe:animate-pop ${sheet[tone]}`} role="status">
+            <p className="text-xl font-extrabold">{result.self ? 'Noted' : tone === 'emerald' ? 'Great!' : tone === 'amber' ? 'Almost there' : 'Keep practising'}</p>
+            <p className="text-sm font-semibold" data-testid="line-result">
+              {result.self ? `You rated yourself: ${Math.round(result.share * 100)}%` : `${Math.round(result.share * 100)}% of the words`}
+            </p>
+            {result.said && <p className="mt-0.5 text-sm">Heard: {result.said}</p>}
+            {!result.self && result.share < 1 && <p className="mt-0.5 text-sm">Line: {current.text}</p>}
+            <div className="mt-3 flex flex-col gap-2">
+              <button className={toneStrong[tone]} onClick={() => advance(step + 1)} type="button">
+                {isLast ? 'Finish' : 'Continue'}
+              </button>
+              {!selfMode && (
+                <button className="min-h-11 text-sm font-bold uppercase tracking-wide" onClick={retry} type="button">
+                  Try again
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {phase === 'running' && kind === 'nothing' && (
+          <div className={`-mx-4 -mt-3 border-t-2 px-4 pt-3 ${sheet.amber}`} role="status">
+            <p className="text-xl font-extrabold">Nothing was heard.</p>
+            <p className="text-sm">Wait for Speak now, then say the line a little louder.</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button className={toneStrong.amber} onClick={retry} type="button">
+                Try again
+              </button>
+              <div className="flex justify-center gap-2">
+                <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide" onClick={skip} type="button">
+                  Skip
+                </button>
+                <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide" onClick={selfRateRest} type="button">
+                  Self-rate the rest
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {phase === 'running' && kind === 'failed' && (
+          <div className={`-mx-4 -mt-3 border-t-2 px-4 pt-3 ${sheet.rose}`} role="alert">
+            <p className="text-lg font-extrabold">The microphone did not work.</p>
+            <p className="text-sm">Check that it is allowed for this site, or rate yourself instead.</p>
+            {failure && <p className="mt-1 text-sm">{failure}</p>}
+            <button className={`mt-3 ${toneStrong.rose}`} onClick={selfRateRest} type="button">
+              Self-rate the rest
+            </button>
+          </div>
+        )}
+
+        {phase === 'running' && kind === 'self' && (
+          <div>
+            <p className="text-base font-semibold text-slate-800">Say the line out loud, then rate yourself.</p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {(Object.keys(selfShare) as SelfRating[]).map((rating) => (
+                <button className={`${plain} px-2 text-sm`} key={rating} onClick={() => rate(rating)} type="button">
+                  {selfLabel[rating]}
+                </button>
+              ))}
+            </div>
+            <div className="mt-1 flex justify-center">
+              <button className="min-h-11 px-3 text-sm font-bold uppercase tracking-wide text-slate-500" onClick={skip} type="button">
+                Skip
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase === 'finished' && (
+          <div className="flex flex-col items-center text-center" role="status">
+            {rated.length > 0 ? (
+              <>
+                <Stars share={average} />
+                <p className="text-xl font-extrabold" data-testid="total">
+                  {Math.round(average * 100)}% · {starsForShare(average)} of 3 stars
+                </p>
+                <p className="text-sm text-slate-600">
+                  {rated.length} of {mine.length} of your lines{rated.some(({ i }) => results[i]?.self) ? ' (some rated by you)' : ''}. This result is not saved.
+                </p>
+              </>
+            ) : (
+              <p className="text-base text-slate-600">No line was scored.</p>
+            )}
+            <div className="mt-3 flex w-full flex-col gap-2">
+              <button className={`${strong} w-full`} onClick={leave} type="button">
+                Practise again
+              </button>
+              <button
+                className={`${plain} w-full`}
+                onClick={() => {
+                  leave()
+                  onClose()
+                }}
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
+  )
+}
+
+const avatarColors = ['bg-sky-500', 'bg-amber-500', 'bg-violet-500', 'bg-rose-500']
+
+function Avatar({ name, index }: { name: string; index: number }) {
+  const initials = name
+    .replace(/^(Mr|Mrs|Ms|Dr)\.?\s+/i, '')
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  return (
+    <span aria-hidden="true" className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarColors[index % avatarColors.length]}`}>
+      {initials}
+    </span>
+  )
+}
+
+function SoundBars() {
+  return (
+    <span aria-label="Speaking" className="flex h-11 items-center gap-1" role="img">
+      {[0, 150, 300, 450].map((delay) => (
+        <span className="h-4 w-1 rounded-full bg-sky-500 motion-safe:animate-pulse" key={delay} style={{ animationDelay: `${delay}ms` }} />
+      ))}
+    </span>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2.5} viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  )
+}
+
+function SpeakerIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M4 9h4l5-4v14l-5-4H4z" />
+      <path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2} />
+    </svg>
+  )
+}
+
+function MicIcon() {
+  return (
+    <svg aria-hidden="true" className="h-9 w-9" fill="currentColor" viewBox="0 0 24 24">
+      <rect height="12" rx="3.5" width="7" x="8.5" y="2.5" />
+      <path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={2} />
+    </svg>
   )
 }

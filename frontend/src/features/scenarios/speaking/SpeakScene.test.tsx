@@ -109,7 +109,7 @@ test('each turn has its own recognizer, none is ever cut, and the total counts o
   const first = latest()
   first.said(["I'd like a medium coffee please", true])
   first.end()
-  click('Next')
+  click('Continue')
 
   expect(spoken()).toBe('That will be six dollars and fifty cents.')
   phoneDone()
@@ -214,7 +214,7 @@ test('self-rating reads the other lines aloud and never listens', () => {
   expect(spoken()).toBe('Hi there! What can I get for you?')
   act(() => speech.lastUtterance().onend?.())
   click('Went well')
-  click('Next')
+  click('Continue')
   act(() => speech.lastUtterance().onend?.())
   click('So-so')
   click('Finish')
@@ -275,4 +275,22 @@ test('Read my line to me first reads your own line as a model before you say it'
   latest().end()
   click('Try again')
   expect(spoken()).toBe('Hi there! What can I get for you?')
+})
+
+test('the chat shows the lines so far; a partner line can be heard again only while nothing listens', () => {
+  begin('Customer')
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1')
+  phoneDone()
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
+  const again = screen.getByRole('button', { name: /Hear again: Hi there/ })
+  expect(again).toBeDisabled() // the microphone is about to listen
+  micOpen()
+  latest().said(["I'd like a medium coffee please", true])
+  latest().end()
+  expect(again).toBeEnabled()
+  const before = speech.spoken.length
+  act(() => again.click())
+  expect(speech.spoken).toHaveLength(before + 1)
+  expect(spoken()).toBe('Hi there! What can I get for you?')
+  expect(screen.getByText('Great!')).toBeInTheDocument()
 })

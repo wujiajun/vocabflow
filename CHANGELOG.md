@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.16.2] - 2026-11-12
+
+### Changed
+
+- **Speak this scene looks like a chat now.** Once you start, it fills the screen: a progress bar and a close button at the top, the conversation as chat bubbles (the other person on the left with a round initial, you on the right, highlighted while it is your turn), and everything to do at the bottom. While the other person speaks, little sound bars move in their bubble; a speaker button in each of their bubbles plays the line again whenever nothing is listening. Your turn shows a big microphone: grey with **Get ready…**, then green and pulsing with **Speak now**, with what the phone hears under it. Your line is then coloured word by word inside your bubble, and a green, amber or red panel slides up ("Great!", "Almost there", "Keep practising") with what was heard, the line, **Continue** and **Try again**. The end shows the stars over the whole conversation. Choosing who you play now shows each speaker with their initial.
+- How the practice works is unchanged; only the frontend changed.
+
 ## [1.16.1] - 2026-11-12
 
 ### Changed
