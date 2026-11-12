@@ -50,6 +50,7 @@ function GlossaryRow({ word, signal }: { word: GlossaryWord; signal: number }) {
       <p className="min-w-0 flex-1 text-sm leading-6 text-slate-800">
         <span className="font-semibold text-slate-950">{word.word}</span>
         {word.zh ? <span className="text-slate-900"> – {word.zh}</span> : null} <span className="text-slate-700">{word.zh ? `· ${word.definition}` : `– ${word.definition}`}</span>
+        {word.example ? <span className="block text-slate-600 italic">e.g. {word.example}</span> : null}
         {add.isError && !already ? (
           <span className="block text-rose-800" role="alert">
             Couldn’t add “{word.word}”. Try again.

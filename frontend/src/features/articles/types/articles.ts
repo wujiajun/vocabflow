@@ -33,6 +33,8 @@ export interface GlossaryWord {
   definition: string
   // A Chinese meaning, when the list has one (scenarios do).
   zh?: string
+  // An example sentence, when the list has one (scenarios do).
+  example?: string
 }
 
 export interface Article {

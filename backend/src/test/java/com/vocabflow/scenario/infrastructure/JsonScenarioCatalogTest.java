@@ -29,8 +29,9 @@ class JsonScenarioCatalogTest {
     assertThat(catalog.scenarios())
         .allSatisfy(
             s -> {
-              assertThat(s.quiz()).as(s.id() + " quiz").hasSizeGreaterThanOrEqualTo(3);
-              assertThat(s.keywords()).as(s.id() + " keywords").hasSizeGreaterThanOrEqualTo(8);
+              assertThat(s.quiz()).as(s.id() + " quiz").hasSizeGreaterThanOrEqualTo(4);
+              assertThat(s.keywords()).as(s.id() + " keywords").hasSizeGreaterThanOrEqualTo(12);
+              assertThat(s.clb()).as(s.id() + " level").isBetween(6, 7);
               assertThat(s.verify()).as(s.id() + " verify").isNotEmpty();
               assertThat(s.text()).doesNotContain("[[");
             });

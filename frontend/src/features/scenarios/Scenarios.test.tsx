@@ -95,6 +95,7 @@ test('a scenario shows its text, note and keywords, and "Add all" skips a word a
   expect(screen.getByText('签约前要读完租约。')).toBeInTheDocument()
   const words = screen.getByRole('region', { name: 'Keywords' })
   expect(within(words).getByText(/租约/)).toBeInTheDocument()
+  expect(within(words).getByText('e.g. I signed a lease.')).toBeInTheDocument()
 
   await browserUser.click(within(words).getByRole('button', { name: 'Add all 2 words' }))
   await within(words).findByText('Added ✓')

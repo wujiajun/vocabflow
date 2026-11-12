@@ -6,120 +6,560 @@
    "titleZh": "看房租房",
    "clb": 6,
    "readingMinutes": 3,
-   "summary": "Sam views a one-bedroom apartment and asks the landlord about utilities, the lease, references and repairs.",
-   "summaryZh": "山姆去看一居室公寓,向房东问水电、租约、推荐人和维修等问题。",
+   "summary": "Sam views a one-bedroom apartment and asks the landlord about utilities, the lease, references and repairs. It also has a short lease clause.",
+   "summaryZh": "山姆去看一居室公寓,向房东问水电、租约、推荐人和维修等问题。另附一段租约条款。",
    "canadaNoteZh": "租房规则(押金、租约、退租通知)各省差别很大。签约前一定要读完租约,不懂就问,并保留租约和所有收据的副本。",
    "verify": [
-     "Deposit rules differ by province (whether one is allowed, what it can be called). The text says only that a deposit may be asked for and that it should be in writing.",
-     "Renewal as month-to-month after a fixed lease is common but the rule differs by province.",
-     "Written notice to end a tenancy and its length differ by province and lease type. The text gives no length.",
-     "Landlords may ask for references and proof of income in many places, but some provinces limit what can be asked. The text keeps to the general case.",
-     "Heat and water included in rent is an example in the story, not a rule."
+    "Deposit rules differ by province (whether one is allowed, what it can be called). The text says only that a deposit may be asked for and that it should be in writing.",
+    "Renewal as month-to-month after a fixed lease is common but the rule differs by province.",
+    "Written notice to end a tenancy and its length differ by province and lease type. The text gives no length.",
+    "Landlords may ask for references and proof of income in many places, but some provinces limit what can be asked. The text keeps to the general case.",
+    "Heat and water included in rent is an example in the story, not a rule.",
+    "The lease excerpt is written for the story. It is not a real lease and must not be taken as the legal wording of any province."
    ],
    "segments": [
-    {"kind": "scene", "text": "Sam is looking for a one-bedroom apartment. He has arranged a viewing, and the landlord, Ms. Patel, is showing him around."},
-    {"kind": "dialogue", "lines": [
-     {"speaker": "Ms. Patel", "text": "Welcome, Sam. This is the unit I told you about. As you can see, the kitchen was renovated recently."},
-     {"speaker": "Sam", "text": "It looks great, and there is plenty of natural light. Could you tell me what the rent includes?"},
-     {"speaker": "Ms. Patel", "text": "Heat and water are included. The other utilities, electricity and internet, are yours to pay, and you would set up those accounts in your own name."},
-     {"speaker": "Sam", "text": "That is good to know. What kind of lease is it? Is it for a fixed term?"},
-     {"speaker": "Ms. Patel", "text": "Yes, it is a one-year lease. After that, it can continue month to month if we both agree."},
-     {"speaker": "Sam", "text": "I see. Do you ask for a deposit?"},
-     {"speaker": "Ms. Patel", "text": "I do, before you move in. I will put the details in writing, and you will get a receipt for everything you pay."},
-     {"speaker": "Sam", "text": "Understood. What do you need from me to apply?"},
-     {"speaker": "Ms. Patel", "text": "A rental application, proof of income such as a recent pay stub or a letter from your employer, and two references. A previous landlord is the best reference."},
-     {"speaker": "Sam", "text": "I have lived in my current place for three years, so my landlord can speak for me. What about pets? I have a small cat."},
-     {"speaker": "Ms. Patel", "text": "Cats are fine, but please let me know so I can add it to the lease. Smoking is not allowed anywhere in the building."},
-     {"speaker": "Sam", "text": "That is not a problem for me. If something breaks, like the stove, who should I contact?"},
-     {"speaker": "Ms. Patel", "text": "Contact me or the building manager. We fix small problems within a few days, and emergencies, such as a flood, right away."},
-     {"speaker": "Sam", "text": "Would you recommend tenant insurance?"},
-     {"speaker": "Ms. Patel", "text": "Strongly. My insurance covers the building, not your belongings, and many landlords now ask tenants to have it."},
-     {"speaker": "Sam", "text": "One last question. If I decide to move out, how much notice do I have to give?"},
-     {"speaker": "Ms. Patel", "text": "You must give written notice. The rules depend on the type of lease, so I will explain them before you sign anything."},
-     {"speaker": "Sam", "text": "Thank you. I would like to apply."},
-     {"speaker": "Ms. Patel", "text": "Wonderful. Send me your documents by the end of the week, and I will give you my decision within a few days."}
-    ]},
-    {"kind": "text", "text": "Tip: Before you sign a lease, read it carefully and ask about anything you do not understand. Keep a copy of the lease and every receipt. On moving day, take photos of the apartment, so you can show its condition later."}
+    {
+     "kind": "scene",
+     "text": "Sam is looking for a one-bedroom apartment. He has arranged a viewing, and the landlord, Ms. Patel, is showing him around."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Ms. Patel",
+       "text": "Welcome, Sam. This is the unit I told you about. As you can see, the kitchen was renovated recently."
+      },
+      {
+       "speaker": "Sam",
+       "text": "Wow, this is a big improvement over my last place. Is it all right if I have a look around?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Of course, take your time."
+      },
+      {
+       "speaker": "Sam",
+       "text": "It looks great, and there is plenty of natural light. Could you tell me what the rent includes?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Heat and water are included. The other utilities, electricity and internet, are yours to pay, and you would set up those accounts in your own name."
+      },
+      {
+       "speaker": "Sam",
+       "text": "That is good to know. What kind of lease is it? Is it for a fixed term?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Yes, it is a one-year lease. After that, it can continue month to month if we both agree."
+      },
+      {
+       "speaker": "Sam",
+       "text": "I see. Do you ask for a deposit?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "I do, before you move in. I will put the details in writing, and you will get a receipt for everything you pay."
+      },
+      {
+       "speaker": "Sam",
+       "text": "Understood. What do you need from me to apply?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "A rental application, proof of income such as a recent pay stub or a letter from your employer, and two references. A previous landlord is the best reference."
+      },
+      {
+       "speaker": "Sam",
+       "text": "I have lived in my current place for three years, so my landlord can speak for me. What about pets? I have a small cat."
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Cats are fine, but please let me know so I can add it to the lease. Smoking is not allowed anywhere in the building."
+      },
+      {
+       "speaker": "Sam",
+       "text": "That is not a problem for me. If something breaks, like the stove, who should I contact?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Contact me or the building manager. We fix small problems within a few days, and emergencies, such as a flood, right away."
+      },
+      {
+       "speaker": "Sam",
+       "text": "Would you recommend tenant insurance?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Strongly. My insurance covers the building, not your belongings, and many landlords now ask tenants to have it."
+      },
+      {
+       "speaker": "Sam",
+       "text": "One last question. If I decide to move out, how much notice do I have to give?"
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "You must give written notice. The rules depend on the type of lease, so I will explain them before you sign anything."
+      },
+      {
+       "speaker": "Sam",
+       "text": "Thank you. I would like to apply."
+      },
+      {
+       "speaker": "Ms. Patel",
+       "text": "Wonderful. Send me your documents by the end of the week, and I will give you my decision within a few days. Just a heads up: good units go fast around here."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "From the lease: The tenant agrees to pay the rent on or before the first day of each month. The tenant shall keep the unit clean and shall not make changes to it without the landlord's written consent. The landlord shall carry out repairs within a reasonable time after being notified. A tenant who wishes to end the tenancy must give written notice as required by law."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Before you sign a lease, read it carefully and ask about anything you do not understand. Keep a copy of the lease and every receipt. On moving day, take photos of the apartment, so you can show its condition later."
+    }
    ],
    "keywords": [
-    {"word": "landlord", "zh": "房东", "definition": "the person who owns a home and rents it to others", "example": "My landlord lives in the same building."},
-    {"word": "viewing", "zh": "看房", "definition": "a visit to see a home before you rent or buy it", "example": "We booked a viewing for Saturday morning."},
-    {"word": "utilities", "zh": "水电燃气等费用", "definition": "services such as electricity, water and heat", "example": "The rent does not include utilities."},
-    {"word": "lease", "zh": "租约", "definition": "a written agreement to rent a home for a period of time", "example": "I signed a one-year lease."},
-    {"word": "deposit", "zh": "押金/订金", "definition": "money you pay in advance before you move in", "example": "The deposit is written in the lease."},
-    {"word": "proof of income", "zh": "收入证明", "definition": "a document that shows how much money you earn", "example": "A pay stub is proof of income."},
-    {"word": "reference", "zh": "推荐人/推荐信", "definition": "a person who can say good things about you, or what they say", "example": "My old landlord gave me a reference."},
-    {"word": "belongings", "zh": "个人物品", "definition": "the things that you own", "example": "She packed all her belongings in boxes."},
-    {"word": "tenant insurance", "zh": "租客保险", "definition": "insurance that covers a renter's belongings and some accidents", "example": "Tenant insurance protects my furniture."},
-    {"word": "notice", "zh": "通知(提前告知)", "definition": "a warning that you will do something, such as move out", "example": "You must give written notice."},
-    {"word": "move out", "zh": "搬出", "definition": "to leave the home where you live", "example": "We move out at the end of the month."}
+    {
+     "word": "landlord",
+     "zh": "房东",
+     "definition": "the person who owns a home and rents it to others",
+     "example": "My landlord lives in the same building."
+    },
+    {
+     "word": "viewing",
+     "zh": "看房",
+     "definition": "a visit to see a home before you rent or buy it",
+     "example": "We booked a viewing for Saturday morning."
+    },
+    {
+     "word": "utilities",
+     "zh": "水电燃气等费用",
+     "definition": "services such as electricity, water and heat",
+     "example": "The rent does not include utilities."
+    },
+    {
+     "word": "lease",
+     "zh": "租约",
+     "definition": "a written agreement to rent a home for a period of time",
+     "example": "I signed a one-year lease."
+    },
+    {
+     "word": "deposit",
+     "zh": "押金/订金",
+     "definition": "money you pay in advance before you move in",
+     "example": "The deposit is written in the lease."
+    },
+    {
+     "word": "proof of income",
+     "zh": "收入证明",
+     "definition": "a document that shows how much money you earn",
+     "example": "A pay stub is proof of income."
+    },
+    {
+     "word": "reference",
+     "zh": "推荐人/推荐信",
+     "definition": "a person who can say good things about you, or what they say",
+     "example": "My old landlord gave me a reference."
+    },
+    {
+     "word": "belongings",
+     "zh": "个人物品",
+     "definition": "the things that you own",
+     "example": "She packed all her belongings in boxes."
+    },
+    {
+     "word": "tenant insurance",
+     "zh": "租客保险",
+     "definition": "insurance that covers a renter's belongings and some accidents",
+     "example": "Tenant insurance protects my furniture."
+    },
+    {
+     "word": "notice",
+     "zh": "通知(提前告知)",
+     "definition": "a warning that you will do something, such as move out",
+     "example": "You must give written notice."
+    },
+    {
+     "word": "move out",
+     "zh": "搬出",
+     "definition": "to leave the home where you live",
+     "example": "We move out at the end of the month."
+    },
+    {
+     "word": "have a look around",
+     "zh": "随便看看",
+     "definition": "to walk through a place and see what it is like",
+     "example": "Feel free to have a look around."
+    },
+    {
+     "word": "take your time",
+     "zh": "慢慢来(不用急)",
+     "definition": "do not hurry",
+     "example": "Take your time and read the lease."
+    },
+    {
+     "word": "heads up",
+     "zh": "提前提醒",
+     "definition": "a warning given before something happens",
+     "example": "Just a heads up: the rent goes up next year."
+    },
+    {
+     "word": "go fast",
+     "zh": "很快被抢走",
+     "definition": "to be taken or sold quickly",
+     "example": "Cheap apartments go fast."
+    },
+    {
+     "word": "written consent",
+     "zh": "书面同意",
+     "definition": "permission that is given in writing",
+     "example": "You need written consent to paint the walls."
+    },
+    {
+     "word": "within a reasonable time",
+     "zh": "在合理时间内",
+     "definition": "not too long, in a way that most people would accept",
+     "example": "Repairs are done within a reasonable time."
+    },
+    {
+     "word": "tenancy",
+     "zh": "租赁关系/租期",
+     "definition": "the time during which someone rents a home",
+     "example": "Her tenancy ended in the spring."
+    },
+    {
+     "word": "on or before",
+     "zh": "不迟于(某日)",
+     "definition": "at the latest on that day",
+     "example": "Pay the rent on or before the first of the month."
+    }
    ],
    "quiz": [
-    {"question": "What does Ms. Patel say the rent includes?", "options": ["Heat and water", "Electricity and internet", "All utilities"], "answer": 0, "explainZh": "房租包含 heat and water(暖气和水),电和网络要自己付。"},
-    {"question": "Which documents does Sam need to apply?", "options": ["Only a rental application", "An application, proof of income and two references", "A letter from his doctor"], "answer": 1, "explainZh": "需要申请表、收入证明(如工资单)和两位推荐人。"},
-    {"question": "Why does Ms. Patel recommend tenant insurance?", "options": ["It is required by law", "Her insurance does not cover Sam's belongings", "It makes the rent cheaper"], "answer": 1, "explainZh": "房东的保险保的是楼,不包租客的个人物品。"},
-    {"question": "What will Ms. Patel do before Sam signs?", "options": ["Explain the notice rules", "Ask for a second deposit", "Change the lease term"], "answer": 0, "explainZh": "她说签约前会解释提前通知(notice)的规则。"}
+    {
+     "question": "What does Ms. Patel say the rent includes?",
+     "options": [
+      "Heat and water",
+      "Electricity and internet",
+      "All utilities"
+     ],
+     "answer": 0,
+     "explainZh": "房租包含 heat and water(暖气和水),电和网络要自己付。"
+    },
+    {
+     "question": "Which documents does Sam need to apply?",
+     "options": [
+      "Only a rental application",
+      "An application, proof of income and two references",
+      "A letter from his doctor"
+     ],
+     "answer": 1,
+     "explainZh": "需要申请表、收入证明(如工资单)和两位推荐人。"
+    },
+    {
+     "question": "Why does Ms. Patel recommend tenant insurance?",
+     "options": [
+      "It is required by law",
+      "Her insurance does not cover Sam's belongings",
+      "It makes the rent cheaper"
+     ],
+     "answer": 1,
+     "explainZh": "房东的保险保的是楼,不包租客的个人物品。"
+    },
+    {
+     "question": "What will Ms. Patel do before Sam signs?",
+     "options": [
+      "Explain the notice rules",
+      "Ask for a second deposit",
+      "Change the lease term"
+     ],
+     "answer": 0,
+     "explainZh": "她说签约前会解释提前通知(notice)的规则。"
+    },
+    {
+     "question": "According to the lease, what must the tenant have before changing the unit?",
+     "options": [
+      "The landlord's written consent",
+      "A new key",
+      "Tenant insurance"
+     ],
+     "answer": 0,
+     "explainZh": "租约条款:没有房东的书面同意(written consent)不得改动房子。"
+    }
    ]
   },
   {
    "id": "opening-a-bank-account",
    "title": "Opening a Bank Account",
    "titleZh": "银行开户",
-   "clb": 6,
+   "clb": 7,
    "readingMinutes": 3,
-   "summary": "Amira meets a banker to open a chequing account and learns about fees, a debit card and online banking.",
-   "summaryZh": "阿米拉到银行开支票账户,了解费用、借记卡和网上银行。",
+   "summary": "Amira meets a banker to open a chequing account and learns about fees, a debit card and online banking. It also has a short fee notice.",
+   "summaryZh": "阿米拉到银行开支票账户,了解费用、借记卡和网上银行。另附一则费用变更通知。",
    "canadaNoteZh": "加拿大的银行不会通过电话、短信或邮件向你索要密码或 PIN。收到这类消息就是诈骗,不要回复。",
    "verify": [
-     "Which identification a bank accepts, and how many pieces, differs by bank. The text says only that ID is needed.",
-     "Whether a bank asks for a SIN when opening an account (it is usually requested for tax reporting on interest) and what is possible without one. The text does not mention it.",
-     "Newcomer packages and fee waivers differ by bank and change over time. The text says only that some accounts have a monthly fee that can be avoided in some cases.",
-     "Interac e-Transfer is widely used, but daily limits and fees differ by bank. The text gives no numbers.",
-     "Overdraft protection and its charges differ by bank."
+    "Which identification a bank accepts, and how many pieces, differs by bank. The text says only that ID is needed.",
+    "Whether a bank asks for a SIN when opening an account (it is usually requested for tax reporting on interest) and what is possible without one. The text does not mention it.",
+    "Newcomer packages and fee waivers differ by bank and change over time. The text says only that some accounts have a monthly fee that can be avoided in some cases.",
+    "Interac e-Transfer is widely used, but daily limits and fees differ by bank. The text gives no numbers.",
+    "Overdraft protection and its charges differ by bank.",
+    "The fee notice is written for the story and is not the wording of any real bank. Whether a customer may close an account without penalty after a fee change depends on the bank and the rules; check before relying on it."
    ],
    "segments": [
-    {"kind": "scene", "text": "Amira has a job offer and needs a bank account for her pay. She has come to a bank branch and is speaking with a banker, Mr. Lee."},
-    {"kind": "dialogue", "lines": [
-     {"speaker": "Mr. Lee", "text": "Good morning. How can I help you today?"},
-     {"speaker": "Amira", "text": "Hello. I would like to open a bank account. I will start a new job soon, and I want my pay to go straight into the account."},
-     {"speaker": "Mr. Lee", "text": "Congratulations. That is called direct deposit, and it is easy to set up. Do you have identification with you?"},
-     {"speaker": "Amira", "text": "Yes, I brought my passport and a document with my home address."},
-     {"speaker": "Mr. Lee", "text": "Perfect. Most people start with a chequing account, which you use for everyday spending. You can also open a savings account, which pays interest on the money you keep in it."},
-     {"speaker": "Amira", "text": "What is the difference in practice?"},
-     {"speaker": "Mr. Lee", "text": "With chequing, you can pay bills, use your debit card and send money to other people. A savings account is better for money you do not plan to spend soon."},
-     {"speaker": "Amira", "text": "Is there a monthly fee?"},
-     {"speaker": "Mr. Lee", "text": "Some chequing accounts have one. You can often avoid it by keeping a minimum balance. I will show you the options and explain the details on paper, so you can compare them."},
-     {"speaker": "Amira", "text": "Thank you. Will I get a debit card?"},
-     {"speaker": "Mr. Lee", "text": "Yes. You will choose a PIN, a secret number that you must never share with anyone, even someone from the bank. You can tap the card in most stores."},
-     {"speaker": "Amira", "text": "What if I spend more money than I have in the account?"},
-     {"speaker": "Mr. Lee", "text": "That is called an overdraft, and the bank may charge you for it. Some accounts have overdraft protection. I suggest you check your balance often."},
-     {"speaker": "Amira", "text": "Can I do that online?"},
-     {"speaker": "Mr. Lee", "text": "Of course. We will set up online banking and a mobile app. You can see your statements, pay bills and send an e-transfer to friends."},
-     {"speaker": "Amira", "text": "That sounds convenient. Is it safe?"},
-     {"speaker": "Mr. Lee", "text": "Yes, if you are careful. Use a strong password and never click a link in a message that asks for your banking details. We will never ask for your password by phone or e-mail."},
-     {"speaker": "Amira", "text": "Good to know. I would like to open the chequing account today."},
-     {"speaker": "Mr. Lee", "text": "Wonderful. Let me review the agreement with you, and then we can begin."}
-    ]},
-    {"kind": "text", "text": "Tip: Ask the bank to explain every fee before you agree. Check your statement every month, and report anything you do not recognize right away."}
+    {
+     "kind": "scene",
+     "text": "Amira has a job offer and needs a bank account for her pay. She has come to a bank branch and is speaking with a banker, Mr. Lee."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Mr. Lee",
+       "text": "Good morning. How can I help you today?"
+      },
+      {
+       "speaker": "Amira",
+       "text": "Hello. I would like to open a bank account. I will start a new job soon, and I want my pay to go straight into the account."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Sure thing. Have a seat, and I will get you set up."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Congratulations. That is called direct deposit, and it is easy to set up. Do you have identification with you?"
+      },
+      {
+       "speaker": "Amira",
+       "text": "Yes, I brought my passport and a document with my home address."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Perfect. Most people start with a chequing account, which you use for everyday spending. You can also open a savings account, which pays interest on the money you keep in it."
+      },
+      {
+       "speaker": "Amira",
+       "text": "What is the difference in practice?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "With chequing, you can pay bills, use your debit card and send money to other people. A savings account is better for money you do not plan to spend soon."
+      },
+      {
+       "speaker": "Amira",
+       "text": "Is there a monthly fee?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Some chequing accounts have one. You can often avoid it by keeping a minimum balance. I will show you the options and explain the details on paper, so you can compare them."
+      },
+      {
+       "speaker": "Amira",
+       "text": "Thank you. Will I get a debit card?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Yes. You will choose a PIN, a secret number that you must never share with anyone, even someone from the bank. You can tap the card in most stores."
+      },
+      {
+       "speaker": "Amira",
+       "text": "What if I spend more money than I have in the account?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "That is called an overdraft, and the bank may charge you for it. Some accounts have overdraft protection. I suggest you check your balance often."
+      },
+      {
+       "speaker": "Amira",
+       "text": "Can I do that online?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Of course. We will set up online banking and a mobile app. You can see your statements, pay bills and send an e-transfer to friends."
+      },
+      {
+       "speaker": "Amira",
+       "text": "That sounds convenient. Is it safe?"
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Yes, if you are careful. Use a strong password and never click a link in a message that asks for your banking details. We will never ask for your password by phone or e-mail."
+      },
+      {
+       "speaker": "Amira",
+       "text": "Good to know. I would like to open the chequing account today."
+      },
+      {
+       "speaker": "Mr. Lee",
+       "text": "Wonderful. Let me review the agreement with you, and then we can begin."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "Notice: Changes to your account fees. From time to time we may change the fees on your account. We will tell you in writing before a change is due to take effect. If you do not agree to the change, you may close your account without penalty. Please read this notice carefully and keep it for your records."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Ask the bank to explain every fee before you agree. Check your statement every month, and report anything you do not recognize right away."
+    }
    ],
    "keywords": [
-    {"word": "branch", "zh": "银行分行/营业网点", "definition": "a local office of a bank", "example": "The nearest branch is on Main Street."},
-    {"word": "identification", "zh": "身份证明", "definition": "a document that shows who you are", "example": "Please bring two pieces of identification."},
-    {"word": "direct deposit", "zh": "工资直接存入账户", "definition": "a way for an employer to pay you straight into your account", "example": "My pay comes by direct deposit."},
-    {"word": "chequing account", "zh": "支票账户(日常账户)", "definition": "a bank account for everyday spending and paying bills", "example": "I pay my rent from my chequing account."},
-    {"word": "savings account", "zh": "储蓄账户", "definition": "a bank account where you keep money you do not plan to spend soon", "example": "She puts money in her savings account every month."},
-    {"word": "interest", "zh": "利息", "definition": "extra money a bank pays you for keeping money with it", "example": "The account pays a little interest."},
-    {"word": "minimum balance", "zh": "最低余额", "definition": "the least amount of money that you must keep in an account", "example": "There is no fee if you keep the minimum balance."},
-    {"word": "PIN", "zh": "银行卡密码", "definition": "a secret number you use with your bank card", "example": "Never tell anyone your PIN."},
-    {"word": "overdraft", "zh": "透支", "definition": "spending more money than you have in your account", "example": "The overdraft cost me a fee."},
-    {"word": "statement", "zh": "对账单", "definition": "a record of the money that went in and out of your account", "example": "I check my statement every month."},
-    {"word": "e-transfer", "zh": "电子转账", "definition": "a way to send money to someone by e-mail or phone", "example": "He sent me the money by e-transfer."}
+    {
+     "word": "branch",
+     "zh": "银行分行/营业网点",
+     "definition": "a local office of a bank",
+     "example": "The nearest branch is on Main Street."
+    },
+    {
+     "word": "identification",
+     "zh": "身份证明",
+     "definition": "a document that shows who you are",
+     "example": "Please bring two pieces of identification."
+    },
+    {
+     "word": "direct deposit",
+     "zh": "工资直接存入账户",
+     "definition": "a way for an employer to pay you straight into your account",
+     "example": "My pay comes by direct deposit."
+    },
+    {
+     "word": "chequing account",
+     "zh": "支票账户(日常账户)",
+     "definition": "a bank account for everyday spending and paying bills",
+     "example": "I pay my rent from my chequing account."
+    },
+    {
+     "word": "savings account",
+     "zh": "储蓄账户",
+     "definition": "a bank account where you keep money you do not plan to spend soon",
+     "example": "She puts money in her savings account every month."
+    },
+    {
+     "word": "interest",
+     "zh": "利息",
+     "definition": "extra money a bank pays you for keeping money with it",
+     "example": "The account pays a little interest."
+    },
+    {
+     "word": "minimum balance",
+     "zh": "最低余额",
+     "definition": "the least amount of money that you must keep in an account",
+     "example": "There is no fee if you keep the minimum balance."
+    },
+    {
+     "word": "PIN",
+     "zh": "银行卡密码",
+     "definition": "a secret number you use with your bank card",
+     "example": "Never tell anyone your PIN."
+    },
+    {
+     "word": "overdraft",
+     "zh": "透支",
+     "definition": "spending more money than you have in your account",
+     "example": "The overdraft cost me a fee."
+    },
+    {
+     "word": "statement",
+     "zh": "对账单",
+     "definition": "a record of the money that went in and out of your account",
+     "example": "I check my statement every month."
+    },
+    {
+     "word": "e-transfer",
+     "zh": "电子转账",
+     "definition": "a way to send money to someone by e-mail or phone",
+     "example": "He sent me the money by e-transfer."
+    },
+    {
+     "word": "sure thing",
+     "zh": "没问题",
+     "definition": "a friendly way to say yes",
+     "example": "Can you help me? Sure thing."
+    },
+    {
+     "word": "get you set up",
+     "zh": "帮你办好",
+     "definition": "to help you start using something",
+     "example": "I will get you set up with online banking."
+    },
+    {
+     "word": "from time to time",
+     "zh": "有时/不时",
+     "definition": "sometimes, but not often",
+     "example": "Banks change their fees from time to time."
+    },
+    {
+     "word": "take effect",
+     "zh": "生效",
+     "definition": "to start to apply",
+     "example": "The new rules take effect next month."
+    },
+    {
+     "word": "without penalty",
+     "zh": "不受罚/无罚金",
+     "definition": "with no extra charge or punishment",
+     "example": "You may cancel without penalty."
+    },
+    {
+     "word": "for your records",
+     "zh": "留存备查",
+     "definition": "so that you have it if you need it later",
+     "example": "Keep this letter for your records."
+    }
    ],
    "quiz": [
-    {"question": "Why does Amira want a bank account?", "options": ["To buy a house", "To receive her pay by direct deposit", "To send money abroad"], "answer": 1, "explainZh": "她马上要开始新工作,希望工资直接存入账户。"},
-    {"question": "What is a good way to avoid a monthly fee, according to Mr. Lee?", "options": ["Close the account often", "Use only cash", "Keep a minimum balance"], "answer": 2, "explainZh": "他说通常可以通过保持最低余额(minimum balance)免月费。"},
-    {"question": "What should Amira do with her PIN?", "options": ["Share it with the bank", "Keep it secret from everyone", "Write it on her card"], "answer": 1, "explainZh": "PIN 不能告诉任何人,包括银行的人。"},
-    {"question": "What does Mr. Lee say the bank will never do?", "options": ["Send statements", "Ask for her password by phone or e-mail", "Set up online banking"], "answer": 1, "explainZh": "银行不会通过电话或邮件向你要密码。"}
+    {
+     "question": "Why does Amira want a bank account?",
+     "options": [
+      "To buy a house",
+      "To receive her pay by direct deposit",
+      "To send money abroad"
+     ],
+     "answer": 1,
+     "explainZh": "她马上要开始新工作,希望工资直接存入账户。"
+    },
+    {
+     "question": "What is a good way to avoid a monthly fee, according to Mr. Lee?",
+     "options": [
+      "Close the account often",
+      "Use only cash",
+      "Keep a minimum balance"
+     ],
+     "answer": 2,
+     "explainZh": "他说通常可以通过保持最低余额(minimum balance)免月费。"
+    },
+    {
+     "question": "What should Amira do with her PIN?",
+     "options": [
+      "Share it with the bank",
+      "Keep it secret from everyone",
+      "Write it on her card"
+     ],
+     "answer": 1,
+     "explainZh": "PIN 不能告诉任何人,包括银行的人。"
+    },
+    {
+     "question": "What does Mr. Lee say the bank will never do?",
+     "options": [
+      "Send statements",
+      "Ask for her password by phone or e-mail",
+      "Set up online banking"
+     ],
+     "answer": 1,
+     "explainZh": "银行不会通过电话或邮件向你要密码。"
+    },
+    {
+     "question": "What may a customer do if they do not agree to a fee change, according to the notice?",
+     "options": [
+      "Close the account without penalty",
+      "Ignore the notice",
+      "Pay twice"
+     ],
+     "answer": 0,
+     "explainZh": "通知里说:不同意可以无罚金地关闭账户(without penalty)。"
+    }
    ]
   },
   {
@@ -128,55 +568,261 @@
    "titleZh": "家长会",
    "clb": 6,
    "readingMinutes": 3,
-   "summary": "Daniel meets his daughter's teacher to talk about her report card, her strengths and how to help with math at home.",
-   "summaryZh": "丹尼尔与女儿的老师见面,谈成绩单、优点,以及在家怎样帮助数学。",
+   "summary": "Daniel meets his daughter's teacher to talk about her report card, her strengths and how to help with math at home. It also has a school newsletter notice.",
+   "summaryZh": "丹尼尔与女儿的老师见面,谈成绩单、优点,以及在家怎样帮助数学。另附一则学校通知。",
    "canadaNoteZh": "在加拿大,老师欢迎家长主动沟通,提问和提出担忧是正常的。很多学校可以安排口译或翻译帮助,可以向学校询问。",
    "verify": [
-     "How often report cards and parent-teacher meetings happen differs by school board. The text gives no schedule.",
-     "Whether a school provides an interpreter or extra English-language support differs by school board. The text says only that a parent can ask.",
-     "The story assumes the grade is five. Grade names and structure are the same across provinces, but the story does not depend on them."
+    "How often report cards and parent-teacher meetings happen differs by school board. The text gives no schedule.",
+    "Whether a school provides an interpreter or extra English-language support differs by school board. The text says only that a parent can ask.",
+    "The story assumes the grade is five. Grade names and structure are the same across provinces, but the story does not depend on them.",
+    "The newsletter excerpt is invented for the story; real schools arrange interviews in different ways."
    ],
    "segments": [
-    {"kind": "scene", "text": "Daniel's daughter Lina is in grade five. Tonight is the parent-teacher meeting, and Daniel is talking with Lina's teacher, Ms. Roberts."},
-    {"kind": "dialogue", "lines": [
-     {"speaker": "Ms. Roberts", "text": "Thank you for coming, Mr. Haddad. Lina is a pleasure to have in my class."},
-     {"speaker": "Daniel", "text": "I am glad to hear that. We read her report card together last week, but I have a few questions."},
-     {"speaker": "Ms. Roberts", "text": "Of course. Let me start with her strengths. She reads well, she participates in discussions, and she is kind to the other students."},
-     {"speaker": "Daniel", "text": "That is wonderful. At home she reads before bed every night."},
-     {"speaker": "Ms. Roberts", "text": "It shows. Her writing is improving too. The area where she tends to struggle a little is math, especially word problems."},
-     {"speaker": "Daniel", "text": "Yes, I noticed that she gets frustrated with her math homework. Sometimes she says she does not understand the question."},
-     {"speaker": "Ms. Roberts", "text": "That is common for students who are learning English as well. The math itself is not too difficult for her. The language in the problems is the challenge."},
-     {"speaker": "Daniel", "text": "What can we do at home to help?"},
-     {"speaker": "Ms. Roberts", "text": "Ask her to explain the problem in her own words before she solves it. If she can say it in Arabic first, that is perfectly fine, and then practise the English words. Reading the problems aloud also helps."},
-     {"speaker": "Daniel", "text": "We can do that. Is there any extra help at school?"},
-     {"speaker": "Ms. Roberts", "text": "There is a homework club after school, and I can ask the support teacher to work with her in small groups. I will send you the details."},
-     {"speaker": "Daniel", "text": "That would be very helpful. How can I reach you if I have a concern?"},
-     {"speaker": "Ms. Roberts", "text": "You can write to me in her agenda or send me an e-mail. I usually reply within a couple of days. If it is urgent, please call the school office."},
-     {"speaker": "Daniel", "text": "Thank you. One more thing: if I do not understand something at a meeting, may I ask for an interpreter?"},
-     {"speaker": "Ms. Roberts", "text": "Absolutely. Please tell the school office in advance and they will see what they can arrange."},
-     {"speaker": "Daniel", "text": "I appreciate it. We will work on the math together."},
-     {"speaker": "Ms. Roberts", "text": "Wonderful. Let us check in again in a few weeks and see how she is progressing."}
-    ]},
-    {"kind": "text", "text": "Tip: Before the meeting, write down two or three questions. Ask the teacher for examples of the child's work, and ask what you can do at home. Teachers like to hear from parents."}
+    {
+     "kind": "scene",
+     "text": "Daniel's daughter Lina is in grade five. Tonight is the parent-teacher meeting, and Daniel is talking with Lina's teacher, Ms. Roberts."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Thank you for coming, Mr. Haddad. Lina is a pleasure to have in my class."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "I am glad to hear that. We read her report card together last week, but I have a few questions."
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Of course. Let me start with her strengths. She reads well, she participates in discussions, and she is kind to the other students."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "That is wonderful. At home she reads before bed every night."
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Please do not worry. She is doing fine overall, and I will keep an eye on how she does with word problems."
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "It shows. Her writing is improving too. The area where she tends to struggle a little is math, especially word problems."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Yes, I noticed that she gets frustrated with her math homework. Sometimes she says she does not understand the question."
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "That is common for students who are learning English as well. The math itself is not too difficult for her. The language in the problems is the challenge."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "What can we do at home to help?"
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Ask her to explain the problem in her own words before she solves it. If she can say it in Arabic first, that is perfectly fine, and then practise the English words. Reading the problems aloud also helps."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "We can do that. Is there any extra help at school?"
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "There is a homework club after school, and I can ask the support teacher to work with her in small groups. I will send you the details."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "That would be very helpful. How can I reach you if I have a concern?"
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "You can write to me in her agenda or send me an e-mail. I usually reply within a couple of days. If it is urgent, please call the school office."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "Thank you. One more thing: if I do not understand something at a meeting, may I ask for an interpreter?"
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Absolutely. Please tell the school office in advance and they will see what they can arrange."
+      },
+      {
+       "speaker": "Daniel",
+       "text": "I appreciate it. We will work on the math together."
+      },
+      {
+       "speaker": "Ms. Roberts",
+       "text": "Wonderful. Let us check in again in a few weeks and see how she is progressing."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "From the school newsletter: Parent-teacher interviews will take place next week. Please sign up for a time slot using the form sent home with your child. If you need an interpreter or have any questions, contact the school office."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Before the meeting, write down two or three questions. Ask the teacher for examples of the child's work, and ask what you can do at home. Teachers like to hear from parents."
+    }
    ],
    "keywords": [
-    {"word": "report card", "zh": "成绩单", "definition": "a paper that shows how a student is doing in school", "example": "Her report card was very good."},
-    {"word": "strength", "zh": "优点/强项", "definition": "something a person does well", "example": "Reading is her greatest strength."},
-    {"word": "participate", "zh": "参与", "definition": "to take part in an activity", "example": "He likes to participate in class discussions."},
-    {"word": "struggle", "zh": "吃力/有困难", "definition": "to find something difficult", "example": "Many students struggle with fractions."},
-    {"word": "homework", "zh": "家庭作业", "definition": "school work that a student does at home", "example": "I help my son with his homework."},
-    {"word": "frustrated", "zh": "沮丧的", "definition": "upset because you cannot do something", "example": "She felt frustrated with the long question."},
-    {"word": "word problem", "zh": "应用题", "definition": "a math question written as a short story", "example": "Word problems need careful reading."},
-    {"word": "support teacher", "zh": "辅助/支援教师", "definition": "a teacher who gives extra help to students", "example": "The support teacher works with small groups."},
-    {"word": "concern", "zh": "担忧/顾虑", "definition": "a worry about something important", "example": "I have a concern about his marks."},
-    {"word": "interpreter", "zh": "口译员", "definition": "a person who translates spoken words into another language", "example": "The school arranged an interpreter."},
-    {"word": "progress", "zh": "进步(动词/名词)", "definition": "to improve over time; the improvement itself", "example": "She is making good progress."}
+    {
+     "word": "report card",
+     "zh": "成绩单",
+     "definition": "a paper that shows how a student is doing in school",
+     "example": "Her report card was very good."
+    },
+    {
+     "word": "strength",
+     "zh": "优点/强项",
+     "definition": "something a person does well",
+     "example": "Reading is her greatest strength."
+    },
+    {
+     "word": "participate",
+     "zh": "参与",
+     "definition": "to take part in an activity",
+     "example": "He likes to participate in class discussions."
+    },
+    {
+     "word": "struggle",
+     "zh": "吃力/有困难",
+     "definition": "to find something difficult",
+     "example": "Many students struggle with fractions."
+    },
+    {
+     "word": "homework",
+     "zh": "家庭作业",
+     "definition": "school work that a student does at home",
+     "example": "I help my son with his homework."
+    },
+    {
+     "word": "frustrated",
+     "zh": "沮丧的",
+     "definition": "upset because you cannot do something",
+     "example": "She felt frustrated with the long question."
+    },
+    {
+     "word": "word problem",
+     "zh": "应用题",
+     "definition": "a math question written as a short story",
+     "example": "Word problems need careful reading."
+    },
+    {
+     "word": "support teacher",
+     "zh": "辅助/支援教师",
+     "definition": "a teacher who gives extra help to students",
+     "example": "The support teacher works with small groups."
+    },
+    {
+     "word": "concern",
+     "zh": "担忧/顾虑",
+     "definition": "a worry about something important",
+     "example": "I have a concern about his marks."
+    },
+    {
+     "word": "interpreter",
+     "zh": "口译员",
+     "definition": "a person who translates spoken words into another language",
+     "example": "The school arranged an interpreter."
+    },
+    {
+     "word": "progress",
+     "zh": "进步(动词/名词)",
+     "definition": "to improve over time; the improvement itself",
+     "example": "She is making good progress."
+    },
+    {
+     "word": "doing fine overall",
+     "zh": "总体不错",
+     "definition": "good when you look at everything together",
+     "example": "He is doing fine overall."
+    },
+    {
+     "word": "keep an eye on",
+     "zh": "留意/关注",
+     "definition": "to watch something carefully over time",
+     "example": "We will keep an eye on her marks."
+    },
+    {
+     "word": "take place",
+     "zh": "举行",
+     "definition": "to happen at a planned time",
+     "example": "The meeting will take place in the gym."
+    },
+    {
+     "word": "sign up",
+     "zh": "报名/登记",
+     "definition": "to put your name on a list",
+     "example": "Please sign up for a time slot."
+    },
+    {
+     "word": "time slot",
+     "zh": "时间段",
+     "definition": "a period of time that is set aside for something",
+     "example": "I chose the last time slot of the evening."
+    },
+    {
+     "word": "sent home",
+     "zh": "发给家长带回家",
+     "definition": "given to a child to take home to the family",
+     "example": "A form was sent home today."
+    }
    ],
    "quiz": [
-    {"question": "What is one of Lina's strengths?", "options": ["Math word problems", "Reading and taking part in discussions", "Art"], "answer": 1, "explainZh": "老师说她阅读好、积极参与讨论,也对同学友善。"},
-    {"question": "According to Ms. Roberts, why does Lina struggle with math?", "options": ["The math is too hard", "She does not do homework", "The language in the problems is difficult"], "answer": 2, "explainZh": "数学本身不难,困难在于题目里的英语。"},
-    {"question": "Which of these does Ms. Roberts suggest for home?", "options": ["Let Lina explain the problem in her own words first", "Stop math homework", "Hire a tutor"], "answer": 0, "explainZh": "先让孩子用自己的话(甚至母语)讲题,再练习英文词汇。"},
-    {"question": "What should Daniel do if he needs an interpreter?", "options": ["Bring his own", "Tell the school office in advance", "Skip the meeting"], "answer": 1, "explainZh": "提前告诉学校办公室,学校会看能怎样安排。"}
+    {
+     "question": "What is one of Lina's strengths?",
+     "options": [
+      "Math word problems",
+      "Reading and taking part in discussions",
+      "Art"
+     ],
+     "answer": 1,
+     "explainZh": "老师说她阅读好、积极参与讨论,也对同学友善。"
+    },
+    {
+     "question": "According to Ms. Roberts, why does Lina struggle with math?",
+     "options": [
+      "The math is too hard",
+      "She does not do homework",
+      "The language in the problems is difficult"
+     ],
+     "answer": 2,
+     "explainZh": "数学本身不难,困难在于题目里的英语。"
+    },
+    {
+     "question": "Which of these does Ms. Roberts suggest for home?",
+     "options": [
+      "Let Lina explain the problem in her own words first",
+      "Stop math homework",
+      "Hire a tutor"
+     ],
+     "answer": 0,
+     "explainZh": "先让孩子用自己的话(甚至母语)讲题,再练习英文词汇。"
+    },
+    {
+     "question": "What should Daniel do if he needs an interpreter?",
+     "options": [
+      "Bring his own",
+      "Tell the school office in advance",
+      "Skip the meeting"
+     ],
+     "answer": 1,
+     "explainZh": "提前告诉学校办公室,学校会看能怎样安排。"
+    },
+    {
+     "question": "How do parents choose a time for the interview, according to the newsletter?",
+     "options": [
+      "They call the teacher at night",
+      "They sign up for a time slot with the form",
+      "They wait for a letter"
+     ],
+     "answer": 1,
+     "explainZh": "通讯里说用随孩子带回家的表格报名时间段(time slot)。"
+    }
    ]
   },
   {
@@ -185,55 +831,254 @@
    "titleZh": "求职面试",
    "clb": 7,
    "readingMinutes": 3,
-   "summary": "Omar interviews for a customer service job. He talks about his experience, a team project and his availability.",
-   "summaryZh": "奥马尔面试客服职位,谈到工作经验、团队合作的例子和可工作的时间。",
+   "summary": "Omar interviews for a customer service job. He talks about his experience, a team project and his availability. It also has a short job posting.",
+   "summaryZh": "奥马尔面试客服职位,谈到工作经验、团队合作的例子和可工作的时间。另附一则招聘启事。",
    "canadaNoteZh": "加拿大的面试常用\"举例说明\"的方式:被问到优点或困难时,讲一个具体的真实例子。面试官通常重视准时和礼貌,面试后发一封感谢邮件是常见做法。",
    "verify": [
-     "Which questions an employer may not ask (age, family status, religion and so on) is set by provincial human rights law and differs. The text does not name any.",
-     "Whether employers ask about the right to work: allowed in general, but the text avoids the topic.",
-     "A thank-you e-mail after an interview is common practice, not a rule.",
-     "The question about salary expectations is left out on purpose, because norms vary by job."
+    "Which questions an employer may not ask (age, family status, religion and so on) is set by provincial human rights law and differs. The text does not name any.",
+    "Whether employers ask about the right to work: allowed in general, but the text avoids the topic.",
+    "A thank-you e-mail after an interview is common practice, not a rule.",
+    "The question about salary expectations is left out on purpose, because norms vary by job.",
+    "The job posting is invented for the story. Whether availability may be required, and how, differs by employer."
    ],
    "segments": [
-    {"kind": "scene", "text": "Omar is interviewing for a customer service position at a large store. The manager, Ms. Chen, welcomes him into her office."},
-    {"kind": "dialogue", "lines": [
-     {"speaker": "Ms. Chen", "text": "Hello, Omar. Thank you for coming. Please have a seat. Could you start by telling me a little about yourself?"},
-     {"speaker": "Omar", "text": "Thank you for meeting me. I moved to Canada last year. In my home country I worked for four years in a mobile phone shop, where I helped customers choose plans and fixed simple problems. Since I arrived, I have also volunteered at a community centre."},
-     {"speaker": "Ms. Chen", "text": "That sounds relevant. What would you say is your greatest strength?"},
-     {"speaker": "Omar", "text": "I stay calm with upset customers. I listen first, repeat the problem to make sure I understand, and then look for a solution."},
-     {"speaker": "Ms. Chen", "text": "Can you give me an example?"},
-     {"speaker": "Omar", "text": "Certainly. Once, a customer was angry because his phone had been repaired twice and still did not work. I apologized, checked the repair history and called the technician. In the end, we replaced the phone, and he thanked me before he left."},
-     {"speaker": "Ms. Chen", "text": "Nice. This job involves a lot of teamwork. Tell me about a time when you worked with others to reach a goal."},
-     {"speaker": "Omar", "text": "At the community centre, our team organized a food drive. I was responsible for the schedule, so I asked each volunteer which hours suited them. We collected more food than we had planned."},
-     {"speaker": "Ms. Chen", "text": "Good. And what is an area you are still working to improve?"},
-     {"speaker": "Omar", "text": "My spoken English is not perfect yet, especially on the phone. I practise every day, and I take notes during calls, so that I do not miss any details."},
-     {"speaker": "Ms. Chen", "text": "I appreciate your honesty. This position involves shifts, including some evenings and weekends. Is that a problem?"},
-     {"speaker": "Omar", "text": "No, I am flexible. I can work evenings and weekends, and I can start as soon as you need me."},
-     {"speaker": "Ms. Chen", "text": "Excellent. Do you have any questions for me?"},
-     {"speaker": "Omar", "text": "Yes. What does training look like for new employees, and who would I report to?"},
-     {"speaker": "Ms. Chen", "text": "New employees train with an experienced colleague for the first weeks, and you would report to me. We will contact your references this week and let you know our decision soon."},
-     {"speaker": "Omar", "text": "Thank you very much for your time. I am very interested in the job."}
-    ]},
-    {"kind": "text", "text": "Tip: Arrive a few minutes early, bring a copy of your résumé, and prepare an example for each strength you mention. After the interview, it is polite to send a short e-mail to thank the interviewer."}
+    {
+     "kind": "scene",
+     "text": "Omar is interviewing for a customer service position at a large store. The manager, Ms. Chen, welcomes him into her office."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Ms. Chen",
+       "text": "Hello, Omar. Thank you for coming. Please have a seat. Could you start by telling me a little about yourself?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "Thank you for meeting me. I moved to Canada last year. In my home country I worked for four years in a mobile phone shop, where I helped customers choose plans and fixed simple problems. Since I arrived, I have also volunteered at a community centre."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "That sounds relevant. What would you say is your greatest strength?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "I stay calm with upset customers. I listen first, repeat the problem to make sure I understand, and then look for a solution."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "Can you give me an example?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "Certainly. Once, a customer was angry because his phone had been repaired twice and still did not work. I apologized, checked the repair history and called the technician. In the end, we replaced the phone, and he thanked me before he left."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "Nice. This job involves a lot of teamwork. Tell me about a time when you worked with others to reach a goal."
+      },
+      {
+       "speaker": "Omar",
+       "text": "At the community centre, our team organized a food drive. I was responsible for the schedule, so I asked each volunteer which hours suited them. We collected more food than we had planned."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "Good. And what is an area you are still working to improve?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "My spoken English is not perfect yet, especially on the phone. I practise every day, and I take notes during calls, so that I do not miss any details."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "I appreciate your honesty. This position involves shifts, including some evenings and weekends. Is that a problem?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "No, I am flexible. I can work evenings and weekends, and I can start as soon as you need me."
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "Excellent. Do you have any questions for me?"
+      },
+      {
+       "speaker": "Omar",
+       "text": "Yes. What does training look like for new employees, and who would I report to?"
+      },
+      {
+       "speaker": "Ms. Chen",
+       "text": "New employees train with an experienced colleague for the first weeks, and you would report to me. We will contact your references this week and we will be in touch soon with our decision."
+      },
+      {
+       "speaker": "Omar",
+       "text": "Thank you very much for your time. I am very interested in the job."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "From the job posting: We are looking for a friendly, reliable team member. Responsibilities include helping customers, handling cash and returns, and keeping the sales floor tidy. Customer service experience is an asset. Availability for evenings and weekends is required. The ability to work in a fast-paced environment is important. To apply, send your résumé and a cover letter."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Arrive a few minutes early, bring a copy of your résumé, and prepare an example for each strength you mention. After the interview, it is polite to send a short e-mail to thank the interviewer."
+    }
    ],
    "keywords": [
-    {"word": "position", "zh": "职位", "definition": "a job at a company", "example": "She applied for a position in the bank."},
-    {"word": "customer service", "zh": "客户服务", "definition": "help that a company gives to the people who buy from it", "example": "He works in customer service."},
-    {"word": "relevant", "zh": "相关的", "definition": "closely connected to what is being discussed", "example": "Your experience is relevant to this job."},
-    {"word": "strength", "zh": "优点/强项", "definition": "something a person does well", "example": "Patience is my strength."},
-    {"word": "solution", "zh": "解决办法", "definition": "an answer to a problem", "example": "We found a solution together."},
-    {"word": "teamwork", "zh": "团队合作", "definition": "the work of a group of people who help each other", "example": "Good teamwork saves time."},
-    {"word": "volunteer", "zh": "做志愿者/志愿者", "definition": "to work without pay to help others; a person who does this", "example": "She volunteers at the library."},
-    {"word": "shift", "zh": "班次", "definition": "a period of time that a worker is scheduled to work", "example": "I work the evening shift."},
-    {"word": "flexible", "zh": "灵活的", "definition": "able to change plans easily", "example": "I am flexible about my hours."},
-    {"word": "reference", "zh": "推荐人", "definition": "a person who can say good things about your work", "example": "My former boss is my reference."},
-    {"word": "résumé", "zh": "简历", "definition": "a short document that lists your education and work experience", "example": "I updated my résumé last night."}
+    {
+     "word": "position",
+     "zh": "职位",
+     "definition": "a job at a company",
+     "example": "She applied for a position in the bank."
+    },
+    {
+     "word": "customer service",
+     "zh": "客户服务",
+     "definition": "help that a company gives to the people who buy from it",
+     "example": "He works in customer service."
+    },
+    {
+     "word": "relevant",
+     "zh": "相关的",
+     "definition": "closely connected to what is being discussed",
+     "example": "Your experience is relevant to this job."
+    },
+    {
+     "word": "strength",
+     "zh": "优点/强项",
+     "definition": "something a person does well",
+     "example": "Patience is my strength."
+    },
+    {
+     "word": "solution",
+     "zh": "解决办法",
+     "definition": "an answer to a problem",
+     "example": "We found a solution together."
+    },
+    {
+     "word": "teamwork",
+     "zh": "团队合作",
+     "definition": "the work of a group of people who help each other",
+     "example": "Good teamwork saves time."
+    },
+    {
+     "word": "volunteer",
+     "zh": "做志愿者/志愿者",
+     "definition": "to work without pay to help others; a person who does this",
+     "example": "She volunteers at the library."
+    },
+    {
+     "word": "shift",
+     "zh": "班次",
+     "definition": "a period of time that a worker is scheduled to work",
+     "example": "I work the evening shift."
+    },
+    {
+     "word": "flexible",
+     "zh": "灵活的",
+     "definition": "able to change plans easily",
+     "example": "I am flexible about my hours."
+    },
+    {
+     "word": "reference",
+     "zh": "推荐人",
+     "definition": "a person who can say good things about your work",
+     "example": "My former boss is my reference."
+    },
+    {
+     "word": "résumé",
+     "zh": "简历",
+     "definition": "a short document that lists your education and work experience",
+     "example": "I updated my résumé last night."
+    },
+    {
+     "word": "be in touch",
+     "zh": "会联系你",
+     "definition": "to contact someone later",
+     "example": "We will be in touch next week."
+    },
+    {
+     "word": "responsibilities",
+     "zh": "职责",
+     "definition": "the duties that are part of a job",
+     "example": "Her responsibilities include answering the phone."
+    },
+    {
+     "word": "an asset",
+     "zh": "加分项",
+     "definition": "something that is useful and gives you an advantage",
+     "example": "Speaking two languages is an asset."
+    },
+    {
+     "word": "availability",
+     "zh": "可工作的时间",
+     "definition": "the times when you are able to work",
+     "example": "Please list your availability on the form."
+    },
+    {
+     "word": "fast-paced",
+     "zh": "节奏快的",
+     "definition": "with a lot of things happening quickly",
+     "example": "It is a fast-paced kitchen."
+    },
+    {
+     "word": "cover letter",
+     "zh": "求职信",
+     "definition": "a letter that you send with your résumé to explain why you want the job",
+     "example": "I wrote a cover letter for the store."
+    }
    ],
    "quiz": [
-    {"question": "What strength does Omar describe?", "options": ["He speaks fast", "He stays calm with upset customers", "He knows many languages"], "answer": 1, "explainZh": "他说自己面对生气的顾客能保持冷静,先倾听再找解决办法。"},
-    {"question": "How did Omar solve the angry customer's problem?", "options": ["He ignored him", "He gave a free gift", "He checked the repair history and the phone was replaced"], "answer": 2, "explainZh": "他道歉、查维修记录、联系技术员,最后换了新手机。"},
-    {"question": "What does Omar say he is working to improve?", "options": ["His spoken English on the phone", "His math", "His schedule"], "answer": 0, "explainZh": "他坦率说电话里的英语口语还要练,所以通话时做笔记。"},
-    {"question": "What will happen after the interview?", "options": ["Omar starts work today", "The store will contact his references", "Omar must pay a fee"], "answer": 1, "explainZh": "陈女士说本周会联系他的推荐人,然后通知结果。"}
+    {
+     "question": "What strength does Omar describe?",
+     "options": [
+      "He speaks fast",
+      "He stays calm with upset customers",
+      "He knows many languages"
+     ],
+     "answer": 1,
+     "explainZh": "他说自己面对生气的顾客能保持冷静,先倾听再找解决办法。"
+    },
+    {
+     "question": "How did Omar solve the angry customer's problem?",
+     "options": [
+      "He ignored him",
+      "He gave a free gift",
+      "He checked the repair history and the phone was replaced"
+     ],
+     "answer": 2,
+     "explainZh": "他道歉、查维修记录、联系技术员,最后换了新手机。"
+    },
+    {
+     "question": "What does Omar say he is working to improve?",
+     "options": [
+      "His spoken English on the phone",
+      "His math",
+      "His schedule"
+     ],
+     "answer": 0,
+     "explainZh": "他坦率说电话里的英语口语还要练,所以通话时做笔记。"
+    },
+    {
+     "question": "What will happen after the interview?",
+     "options": [
+      "Omar starts work today",
+      "The store will contact his references",
+      "Omar must pay a fee"
+     ],
+     "answer": 1,
+     "explainZh": "陈女士说本周会联系他的推荐人,然后通知结果。"
+    },
+    {
+     "question": "In the job posting, what is \"an asset\"?",
+     "options": [
+      "Something required",
+      "Customer service experience, which is useful but not required",
+      "The pay"
+     ],
+     "answer": 1,
+     "explainZh": "An asset 是加分项:有更好,没有也可以申请。"
+    }
    ]
   },
   {
@@ -242,53 +1087,247 @@
    "titleZh": "报税入门",
    "clb": 7,
    "readingMinutes": 3,
-   "summary": "Wei asks his neighbour Elena how a first income tax return works: slips, refunds, deadlines and where to get help.",
-   "summaryZh": "魏向邻居埃琳娜请教第一次报税:税表、退税、截止日期和哪里可以得到帮助。",
+   "summary": "Wei asks his neighbour Elena how a first income tax return works: slips, refunds, deadlines and where to get help. It also has an excerpt from a tax agency letter.",
+   "summaryZh": "魏向邻居埃琳娜请教第一次报税:税表、退税、截止日期和哪里可以得到帮助。另附一段税务局来信节选。",
    "canadaNoteZh": "在加拿大,即使收入不高也建议每年报税,很多福利和退税要靠报税才能领取。截止日期每年可能不同,请到加拿大税务局(CRA)官网核对。",
    "verify": [
-     "The yearly filing deadline: the text gives no date, only that there is a deadline and where to check it.",
-     "Free community tax clinics (CRA's volunteer program) exist, but their rules for who can use them change. The text says only that free help exists for people with simple returns and modest income, and to check the CRA website.",
-     "A T4 is the usual slip from an employer for employment income. Other slips exist. The text mentions only the T4.",
-     "A notice of assessment is sent by the CRA after the return is processed. How it is received (online or by mail) depends on the person's settings.",
-     "Whether a return is needed even with no income, and which credits a newcomer may claim, is not covered by the text."
+    "The yearly filing deadline: the text gives no date, only that there is a deadline and where to check it.",
+    "Free community tax clinics (CRA's volunteer program) exist, but their rules for who can use them change. The text says only that free help exists for people with simple returns and modest income, and to check the CRA website.",
+    "A T4 is the usual slip from an employer for employment income. Other slips exist. The text mentions only the T4.",
+    "A notice of assessment is sent by the CRA after the return is processed. How it is received (online or by mail) depends on the person's settings.",
+    "Whether a return is needed even with no income, and which credits a newcomer may claim, is not covered by the text.",
+    "The letter is invented for the story. How and by when an objection can be filed is not stated; check the official website."
    ],
    "segments": [
-    {"kind": "scene", "text": "Wei started working in Canada last year, and now he must file his first income tax return. He asks his neighbour Elena for advice."},
-    {"kind": "dialogue", "lines": [
-     {"speaker": "Wei", "text": "Elena, I got a letter about taxes. Do I really have to file a tax return?"},
-     {"speaker": "Elena", "text": "Almost everyone who earned money here does. Once a year, you report your income to the Canada Revenue Agency, or the CRA. Even if you do not owe anything, filing is a good idea, because many benefits and credits depend on it."},
-     {"speaker": "Wei", "text": "What do I need to do first?"},
-     {"speaker": "Elena", "text": "Collect your documents. Your employer should send you a T4, a slip that shows how much you earned and how much tax was already taken from your pay. Also keep receipts for anything that may count as a deduction, for example some education costs or child care."},
-     {"speaker": "Wei", "text": "How do I actually file?"},
-     {"speaker": "Elena", "text": "Most people use tax software and file online. If your situation is simple and your income is modest, you may also get free help from a community volunteer tax clinic. Check the CRA website to see if you qualify."},
-     {"speaker": "Wei", "text": "And what happens after I file?"},
-     {"speaker": "Elena", "text": "The CRA sends a notice of assessment, which says whether your return was accepted. If you paid more tax during the year than you needed to, you get a refund. If you paid too little, you will have a balance owing, and you must pay it."},
-     {"speaker": "Wei", "text": "Is there a deadline?"},
-     {"speaker": "Elena", "text": "Yes, there is a deadline every year, and it can change, so look at the CRA website instead of trusting me. If you file late and you owe money, you may be charged a penalty and interest."},
-     {"speaker": "Wei", "text": "That makes me nervous. What if I make a mistake?"},
-     {"speaker": "Elena", "text": "Do not worry. You can correct a return later, and the CRA is used to helping people who are new. Just be honest and keep your papers for several years, in case they have questions."},
-     {"speaker": "Wei", "text": "Thank you. I will gather my documents this weekend."}
-    ]},
-    {"kind": "text", "text": "Tip: Be careful of phone calls, texts or e-mails that say you owe taxes and must pay at once, especially with gift cards or by sending money. The CRA does not work like that. If you are unsure, hang up and check the official CRA website."}
+    {
+     "kind": "scene",
+     "text": "Wei started working in Canada last year, and now he must file his first income tax return. He asks his neighbour Elena for advice."
+    },
+    {
+     "kind": "dialogue",
+     "lines": [
+      {
+       "speaker": "Wei",
+       "text": "Elena, I got a letter about taxes. Do I really have to file a tax return?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "Almost everyone who earned money here does. Once a year, you report your income to the Canada Revenue Agency, or the CRA. Even if you do not owe anything, filing is a good idea, because many benefits and credits depend on it."
+      },
+      {
+       "speaker": "Elena",
+       "text": "Honestly, it is not as scary as it sounds. Just do not leave it to the last minute."
+      },
+      {
+       "speaker": "Wei",
+       "text": "What do I need to do first?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "Collect your documents. Your employer should send you a T4, a slip that shows how much you earned and how much tax was already taken from your pay. Also keep receipts for anything that may count as a deduction, for example some education costs or child care."
+      },
+      {
+       "speaker": "Wei",
+       "text": "How do I actually file?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "Most people use tax software and file online. If your situation is simple and your income is modest, you may also get free help from a community volunteer tax clinic. Check the CRA website to see if you qualify."
+      },
+      {
+       "speaker": "Wei",
+       "text": "And what happens after I file?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "The CRA sends a notice of assessment, which says whether your return was accepted. If you paid more tax during the year than you needed to, you get a refund. If you paid too little, you will have a balance owing, and you must pay it."
+      },
+      {
+       "speaker": "Wei",
+       "text": "Is there a deadline?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "Yes, there is a deadline every year, and it can change, so look at the CRA website instead of trusting me. If you file late and you owe money, you may be charged a penalty and interest."
+      },
+      {
+       "speaker": "Wei",
+       "text": "That makes me nervous. What if I make a mistake?"
+      },
+      {
+       "speaker": "Elena",
+       "text": "Do not worry. You can correct a return later, and the CRA is used to helping people who are new. Just be honest and keep your papers for several years, in case they have questions."
+      },
+      {
+       "speaker": "Wei",
+       "text": "Thank you. I will gather my documents this weekend."
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "text": "From a letter of the tax agency: We have reviewed your return and issued your notice of assessment. If you disagree with our decision, you may file an objection. If you have a balance owing, please pay by the due date to avoid interest. Keep your receipts and supporting documents in case we ask to see them."
+    },
+    {
+     "kind": "text",
+     "text": "Tip: Be careful of phone calls, texts or e-mails that say you owe taxes and must pay at once, especially with gift cards or by sending money. The CRA does not work like that. If you are unsure, hang up and check the official CRA website."
+    }
    ],
    "keywords": [
-    {"word": "tax return", "zh": "纳税申报表", "definition": "a form that reports your income and the tax you owe", "example": "I filed my tax return online."},
-    {"word": "file", "zh": "提交(申报)", "definition": "to send a form or document to an office", "example": "You must file every year."},
-    {"word": "income", "zh": "收入", "definition": "the money a person earns", "example": "Her income increased last year."},
-    {"word": "T4", "zh": "T4 税单(雇主开出的工资税单)", "definition": "a slip from an employer that shows pay and tax taken off", "example": "My T4 arrived in the mail."},
-    {"word": "deduction", "zh": "(税前)扣除额", "definition": "an amount that you can take off your income to pay less tax", "example": "Some costs count as a deduction."},
-    {"word": "receipt", "zh": "收据", "definition": "a paper that shows you paid for something", "example": "Keep every receipt."},
-    {"word": "notice of assessment", "zh": "税务评估通知书", "definition": "a letter from the tax agency that says your return was processed", "example": "My notice of assessment says I get a refund."},
-    {"word": "refund", "zh": "退款/退税", "definition": "money paid back to you", "example": "I received a tax refund."},
-    {"word": "balance owing", "zh": "应补税款", "definition": "the amount of tax that you still have to pay", "example": "He has a small balance owing."},
-    {"word": "deadline", "zh": "截止日期", "definition": "the last time by which something must be done", "example": "The deadline is coming soon."},
-    {"word": "penalty", "zh": "罚款/处罚", "definition": "a punishment, often a fee, for breaking a rule", "example": "A late return can bring a penalty."}
+    {
+     "word": "tax return",
+     "zh": "纳税申报表",
+     "definition": "a form that reports your income and the tax you owe",
+     "example": "I filed my tax return online."
+    },
+    {
+     "word": "file",
+     "zh": "提交(申报)",
+     "definition": "to send a form or document to an office",
+     "example": "You must file every year."
+    },
+    {
+     "word": "income",
+     "zh": "收入",
+     "definition": "the money a person earns",
+     "example": "Her income increased last year."
+    },
+    {
+     "word": "T4",
+     "zh": "T4 税单(雇主开出的工资税单)",
+     "definition": "a slip from an employer that shows pay and tax taken off",
+     "example": "My T4 arrived in the mail."
+    },
+    {
+     "word": "deduction",
+     "zh": "(税前)扣除额",
+     "definition": "an amount that you can take off your income to pay less tax",
+     "example": "Some costs count as a deduction."
+    },
+    {
+     "word": "receipt",
+     "zh": "收据",
+     "definition": "a paper that shows you paid for something",
+     "example": "Keep every receipt."
+    },
+    {
+     "word": "notice of assessment",
+     "zh": "税务评估通知书",
+     "definition": "a letter from the tax agency that says your return was processed",
+     "example": "My notice of assessment says I get a refund."
+    },
+    {
+     "word": "refund",
+     "zh": "退款/退税",
+     "definition": "money paid back to you",
+     "example": "I received a tax refund."
+    },
+    {
+     "word": "balance owing",
+     "zh": "应补税款",
+     "definition": "the amount of tax that you still have to pay",
+     "example": "He has a small balance owing."
+    },
+    {
+     "word": "deadline",
+     "zh": "截止日期",
+     "definition": "the last time by which something must be done",
+     "example": "The deadline is coming soon."
+    },
+    {
+     "word": "penalty",
+     "zh": "罚款/处罚",
+     "definition": "a punishment, often a fee, for breaking a rule",
+     "example": "A late return can bring a penalty."
+    },
+    {
+     "word": "last minute",
+     "zh": "最后一刻",
+     "definition": "the very end of the time you have",
+     "example": "Do not leave it to the last minute."
+    },
+    {
+     "word": "issue",
+     "zh": "签发/出具",
+     "definition": "to officially give out a document",
+     "example": "They issued my notice of assessment."
+    },
+    {
+     "word": "objection",
+     "zh": "异议",
+     "definition": "a formal statement that you disagree with a decision",
+     "example": "She filed an objection to the decision."
+    },
+    {
+     "word": "due date",
+     "zh": "到期日",
+     "definition": "the day by which something must be paid or done",
+     "example": "The due date is on the form."
+    },
+    {
+     "word": "supporting documents",
+     "zh": "证明文件",
+     "definition": "papers that prove the information you gave",
+     "example": "Bring your supporting documents."
+    },
+    {
+     "word": "in case",
+     "zh": "以防",
+     "definition": "because something might happen",
+     "example": "Take a receipt in case there is a problem."
+    }
    ],
    "quiz": [
-    {"question": "Why does Elena say filing is a good idea even if you owe nothing?", "options": ["It is fun", "Many benefits and credits depend on it", "The CRA gives a gift"], "answer": 1, "explainZh": "很多福利和抵免要靠报税才能获得。"},
-    {"question": "What does a T4 show?", "options": ["What you earned and the tax already taken from your pay", "Your health history", "Your bank balance"], "answer": 0, "explainZh": "T4 是雇主开的税单,列出收入和已扣的税。"},
-    {"question": "What is a balance owing?", "options": ["Money the CRA pays you", "Tax you still have to pay", "A kind of receipt"], "answer": 1, "explainZh": "Balance owing 是还需要补交的税款;多交了才是 refund。"},
-    {"question": "Where does Elena tell Wei to check the deadline?", "options": ["On a neighbour's phone", "In a flyer", "On the CRA website"], "answer": 2, "explainZh": "截止日期每年可能变,要到 CRA 官网核对。"}
+    {
+     "question": "Why does Elena say filing is a good idea even if you owe nothing?",
+     "options": [
+      "It is fun",
+      "Many benefits and credits depend on it",
+      "The CRA gives a gift"
+     ],
+     "answer": 1,
+     "explainZh": "很多福利和抵免要靠报税才能获得。"
+    },
+    {
+     "question": "What does a T4 show?",
+     "options": [
+      "What you earned and the tax already taken from your pay",
+      "Your health history",
+      "Your bank balance"
+     ],
+     "answer": 0,
+     "explainZh": "T4 是雇主开的税单,列出收入和已扣的税。"
+    },
+    {
+     "question": "What is a balance owing?",
+     "options": [
+      "Money the CRA pays you",
+      "Tax you still have to pay",
+      "A kind of receipt"
+     ],
+     "answer": 1,
+     "explainZh": "Balance owing 是还需要补交的税款;多交了才是 refund。"
+    },
+    {
+     "question": "Where does Elena tell Wei to check the deadline?",
+     "options": [
+      "On a neighbour's phone",
+      "In a flyer",
+      "On the CRA website"
+     ],
+     "answer": 2,
+     "explainZh": "截止日期每年可能变,要到 CRA 官网核对。"
+    },
+    {
+     "question": "What should a taxpayer who disagrees with the decision do, according to the letter?",
+     "options": [
+      "Ignore it",
+      "File an objection",
+      "Move away"
+     ],
+     "answer": 1,
+     "explainZh": "信里说不同意可以提出异议(file an objection)。"
+    }
    ]
   }
  ]

@@ -100,7 +100,7 @@ export function ScenarioPage() {
           </aside>
         ) : null}
 
-        <GlossaryList title="Keywords" withAddAll words={current.keywords.map((keyword) => ({ word: keyword.word, zh: keyword.zh, definition: keyword.definition }))} />
+        <GlossaryList title="Keywords" withAddAll words={current.keywords.map((keyword) => ({ word: keyword.word, zh: keyword.zh, definition: keyword.definition, example: keyword.example }))} />
 
         {current.quiz.length > 0 ? <QuizBlock onChecked={(score) => complete.mutate(score)} questions={current.quiz} /> : null}
         {/* The end of the page, quiz included: reaching it marks the scenario as finished. */}
