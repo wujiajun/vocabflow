@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BackLink } from '../../../shared/BackLink'
 import { usePageTitle } from '../../../shared/usePageTitle'
 import { compareSpeech } from '../compareSpeech'
-import { useSpeechRecognition } from '../useSpeechRecognition'
+import { type Variant, useSpeechRecognition, variantLabels } from '../useSpeechRecognition'
 
 const speechTestSentences = [
   { level: 'Easy', text: 'I would like a cup of coffee, please.' },
@@ -25,7 +25,8 @@ export function SpeechTestPage() {
   usePageTitle('Speech test')
   const [index, setIndex] = useState(0)
   const [lang, setLang] = useState('en-US')
-  const { supported, state, text, error, start, stop } = useSpeechRecognition(lang)
+  const [variant, setVariant] = useState<Variant>('A')
+  const { supported, state, text, error, log, start, stop, clear, clearLog, note } = useSpeechRecognition(lang, variant)
   const sentence = speechTestSentences[index]
   const comparison = text ? compareSpeech(sentence.text, text) : null
   const secure = window.isSecureContext
@@ -76,6 +77,22 @@ export function SpeechTestPage() {
         </select>
       </label>
 
+      <label className="mt-3 flex flex-col gap-1 text-sm text-slate-700">
+        Way of listening (for testing)
+        <select
+          className="min-h-11 rounded-lg border border-slate-300 bg-white px-2"
+          disabled={state !== 'idle'}
+          onChange={(e) => setVariant(e.target.value as Variant)}
+          value={variant}
+        >
+          {(Object.keys(variantLabels) as Variant[]).map((v) => (
+            <option key={v} value={v}>
+              {variantLabels[v]}
+            </option>
+          ))}
+        </select>
+      </label>
+
       <p className="mt-4 text-xl font-semibold leading-snug">{sentence.text}</p>
 
       <button
@@ -86,9 +103,14 @@ export function SpeechTestPage() {
       >
         {state === 'listening' ? 'Stop' : state === 'stopping' ? 'Wait…' : 'Start speaking'}
       </button>
+      {variant === 'D' && (
+        <button className="mt-2 ml-2 min-h-11 rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-800" onClick={clear} type="button">
+          Clear
+        </button>
+      )}
       {state === 'listening' && (
         <p className="mt-2 text-sm text-slate-600" role="status">
-          Listening… read the sentence, then tap Stop.
+          {variant === 'D' ? 'Listening… keep talking; tap Clear between sentences.' : 'Listening… read the sentence, then tap Stop.'}
         </p>
       )}
       {error && (
@@ -116,6 +138,55 @@ export function SpeechTestPage() {
           <p className="mt-2 text-xs text-slate-500">Green = right, red = a different word heard, struck-through = left out. Capitals and punctuation are ignored.</p>
         </section>
       )}
+
+      <DiagnosticLog lang={lang} lines={log} onClear={clearLog} onNote={note} variant={variant} />
     </div>
+  )
+}
+
+function DiagnosticLog({ lines, onClear, onNote, variant, lang }: { lines: string[]; onClear: () => void; onNote: (line: string) => void; variant: Variant; lang: string }) {
+  const [copied, setCopied] = useState<'' | 'yes' | 'no'>('')
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
+  const header = [
+    `variant ${variant}, lang ${lang}`,
+    `secure ${window.isSecureContext}, home-screen app ${standalone ? 'yes' : 'no'}`,
+    navigator.userAgent,
+  ].join('\n')
+  const all = `${header}\n${lines.join('\n')}`
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(all)
+      setCopied('yes')
+    } catch {
+      setCopied('no')
+    }
+  }
+
+  return (
+    <details className="mt-6 rounded-xl bg-slate-50 px-4 py-3 text-sm">
+      <summary className="min-h-11 cursor-pointer py-2 font-semibold text-slate-700">Diagnostic log ({lines.length})</summary>
+      <div className="flex gap-2">
+        <button className="min-h-11 rounded-xl bg-indigo-700 px-4 font-semibold text-white" onClick={() => void copy()} type="button">
+          Copy log
+        </button>
+        <button
+          className="min-h-11 rounded-xl bg-slate-200 px-4 font-semibold text-slate-800"
+          onClick={() => {
+            onClear()
+            setCopied('')
+          }}
+          type="button"
+        >
+          Clear log
+        </button>
+        <button className="min-h-11 rounded-xl bg-slate-200 px-4 font-semibold text-slate-800" onClick={() => onNote('--- mark ---')} type="button">
+          Mark
+        </button>
+      </div>
+      {copied === 'yes' && <p className="mt-1 text-emerald-800" role="status">Copied.</p>}
+      {copied === 'no' && <p className="mt-1 text-amber-900" role="status">Could not copy. Select the text below and copy it by hand.</p>}
+      <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-words text-xs text-slate-700">{all}</pre>
+    </details>
   )
 }

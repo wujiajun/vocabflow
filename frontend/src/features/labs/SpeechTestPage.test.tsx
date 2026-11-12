@@ -148,3 +148,99 @@ test('gives up waiting for end after a few seconds', async () => {
     vi.useRealTimers()
   }
 })
+
+async function choose(variant: string) {
+  await userEvent.selectOptions(screen.getByLabelText('Way of listening (for testing)'), variant)
+}
+
+function logText() {
+  return document.querySelector('details pre')!.textContent!
+}
+
+test('the log lists every event with the recognizer it came from, and can be cleared', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  const rec = FakeRecognition.last!
+  act(() => {
+    ;(rec as unknown as Record<string, () => void>).onaudiostart()
+    rec.onresult?.({ resultIndex: 0, results: [{ isFinal: false, 0: { transcript: 'hello' } }] })
+  })
+  await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  const text = logText()
+  expect(text).toContain('#1 new recognizer')
+  expect(text).toContain('#1 start() called (variant A')
+  expect(text).toContain('#1 onaudiostart')
+  expect(text).toContain('#1 onresult n=1 final=false "hello"')
+  expect(text).toContain('#1 stop() called')
+  expect(text).toContain('#1 onend')
+  await userEvent.click(screen.getByRole('button', { name: 'Clear log' }))
+  expect(logText()).not.toContain('#1')
+})
+
+test('B stops with abort()', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await choose('B')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  const rec = FakeRecognition.last!
+  await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  expect(rec.abort).toHaveBeenCalled()
+  expect(rec.stop).not.toHaveBeenCalled()
+})
+
+test('C starts the same recognizer again after it ended', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await choose('C')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  const rec = FakeRecognition.last!
+  await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  expect(FakeRecognition.last).toBe(rec)
+  expect(rec.start).toHaveBeenCalledTimes(2)
+})
+
+test('D is continuous and Clear skips what was said before', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  renderPage()
+  await choose('D')
+  await userEvent.click(screen.getByRole('button', { name: 'Start speaking' }))
+  const rec = FakeRecognition.last!
+  expect(rec.continuous).toBe(true)
+  const one = { isFinal: true, 0: { transcript: 'I would like a cup of tea' } }
+  const two = { isFinal: true, 0: { transcript: 'where is the bus stop' } }
+  act(() => rec.onresult?.({ resultIndex: 0, results: [one] }))
+  expect(screen.getByTestId('heard')).toHaveTextContent('cup of tea')
+  await userEvent.click(screen.getByRole('button', { name: 'Clear' }))
+  expect(screen.queryByTestId('heard')).toBeNull()
+  act(() => rec.onresult?.({ resultIndex: 1, results: [one, two] }))
+  expect(screen.getByTestId('heard')).toHaveTextContent(/^where is the bus stop$/)
+})
+
+test('E makes a new recognizer only after a pause following the end', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  try {
+    vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+    renderPage()
+    act(() => void 0)
+    await act(async () => {
+      screen.getByLabelText('Way of listening (for testing)').focus()
+    })
+    const select = screen.getByLabelText('Way of listening (for testing)') as HTMLSelectElement
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!
+      setter.call(select, 'E')
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+    const first = FakeRecognition.last!
+    act(() => screen.getByRole('button', { name: 'Stop' }).click()) // the fake ends at once
+    expect(screen.getByRole('button', { name: 'Wait…' })).toBeDisabled()
+    act(() => vi.advanceTimersByTime(600))
+    act(() => screen.getByRole('button', { name: 'Start speaking' }).click())
+    expect(FakeRecognition.last).not.toBe(first)
+  } finally {
+    vi.useRealTimers()
+  }
+})
