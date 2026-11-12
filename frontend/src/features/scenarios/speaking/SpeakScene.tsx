@@ -6,7 +6,7 @@ import { type HeardResult, recognitionErrorMessage, useSpeechRecognition } from 
 import { type SceneLine, speakersOf } from './dialogueFromText'
 import { ListenFirst } from './ListenFirst'
 import { type LineScore, scoreLine } from './lineScore'
-import { type SelfRating, pitchFor, readyDelayMs, selfLabel, selfShare, turnText, watchdogMs } from './turn'
+import { type SelfRating, pitchFor, readyDelayMs, selfLabel, selfShare, turnCue, turnText, watchdogMs } from './turn'
 
 type Phase = 'setup' | 'running' | 'finished'
 // partner: the other person's line is read aloud and nobody listens (the next line is not the learner's, or
@@ -59,6 +59,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
   const [heard, setHeard] = useState('')
   const [results, setResults] = useState<Record<number, LineResult | null>>({})
   const [selfMode, setSelfMode] = useState(false)
+  const [model, setModel] = useState(false) // read the learner's own line to them before they say it
   const [failure, setFailure] = useState('')
 
   const phaseRef = useRef<Phase>('setup')
@@ -67,6 +68,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
   const turnRef = useRef(0) // the learner's line that the current cue leads to
   const meRef = useRef(me)
   const selfRef = useRef(false)
+  const modelRef = useRef(false)
   const heardRef = useRef('')
   const token = useRef(0) // a newer step makes an older spoken line's end meaningless
   const pending = useRef<(() => void) | null>(null) // to run once the last recognizer has ended
@@ -109,7 +111,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     changeKind('cue')
     const go = () => {
       if (phaseRef.current !== 'running' || kindRef.current !== 'cue') return
-      if (!listenAfterSpeaking(phrase, pitchFor(speakers, speaker))) pending.current = go
+      if (!listenAfterSpeaking(phrase, speaker ? pitchFor(speakers, speaker) : undefined)) pending.current = go
     }
     go()
   }
@@ -127,7 +129,8 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
     show(index)
     if (line.speaker === meRef.current) {
       if (selfRef.current) changeKind('self')
-      else cue(line.text, line.speaker, index) // the learner's own line first, as a model
+      // Nothing is read just before this line: a short cue, or the learner's own line as a model if they asked.
+      else cue(modelRef.current ? line.text : turnCue, modelRef.current ? line.speaker : '', index)
       return
     }
     const next = lines[index + 1]
@@ -217,7 +220,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
   function retry() {
     const index = stepRef.current
     setResults((prev) => ({ ...prev, [index]: null }))
-    advance(index) // the phone says the learner's line first, then listens
+    advance(index) // the phone says the cue (or the learner's line) first, then listens
   }
 
   function skip() {
@@ -255,6 +258,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
 
   function begin(self: boolean) {
     meRef.current = me
+    modelRef.current = model
     selfRef.current = self
     setSelfMode(self)
     setResults({})
@@ -327,6 +331,10 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
               </button>
             ))}
           </div>
+          <label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-slate-800">
+            <input checked={model} className="h-5 w-5" onChange={(e) => setModel(e.target.checked)} type="checkbox" />
+            Read my line to me first (to repeat after it)
+          </label>
           <ListenFirst lines={lines} stopRef={stopListenFirst} />
           <div className="mt-3 flex flex-wrap gap-2">
             <button className={`${strong} disabled:opacity-50`} disabled={!supported} onClick={() => begin(false)} type="button">
@@ -355,7 +363,7 @@ export function SpeakScene({ lines, onClose }: { lines: SceneLine[]; onClose: ()
 
           {(kind === 'partner' || kind === 'cue') && (
             <div className="mt-2" role="status">
-              <p className="text-sm text-slate-600">{ownLine ? 'Listen to your line first…' : 'Listen…'}</p>
+              <p className="text-sm text-slate-600">{ownLine ? (model ? 'Listen to your line first…' : 'Your turn is next…') : 'Listen…'}</p>
               <button className={`mt-1 ${plain}`} onClick={skip} type="button">
                 {kind === 'cue' && !ownLine ? 'Skip my next line' : 'Skip'}
               </button>
