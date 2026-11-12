@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { speakText, stopSpeaking } from './pronunciation'
+import { speakText, stopSpeaking, type VoiceRole } from './pronunciation'
 
 // The browser's own recognizer, in the two names it goes by. Experimental and not in lib.dom, so typed by hand.
 interface RecognitionResultLike {
@@ -244,7 +244,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     }
   }, [create, lang, note])
 
-  const primeThenListen = useCallback((phrase: string, pitch?: number) => {
+  const primeThenListen = useCallback((phrase: string, role?: VoiceRole) => {
     priming.current = true
     setState('priming')
     setText('')
@@ -266,7 +266,7 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
     primeTimer.current = setTimeout(() => speechOver('no end reported in time'), primeFallbackMs(phrase))
     try {
       speakText(phrase, {
-        pitch,
+        role,
         onStart: () => note('H: speech onstart'),
         onEnd: () => speechOver('ended'),
         onError: (reason) => note(`H: speech error ${reason}`),
@@ -279,13 +279,13 @@ export function useSpeechRecognition(lang: string, variant: Variant = 'A', liste
 
   // H: speak first, listen 0.4 s after the speech ends. Returns false when a recognizer is still busy.
   const listenAfterSpeaking = useCallback(
-    (phrase: string, pitch?: number) => {
+    (phrase: string, role?: VoiceRole) => {
       if (!getRecognitionConstructor()) return false
       if (ref.current || priming.current) {
         note('start ignored: the last recognizer has not ended yet')
         return false
       }
-      primeThenListen(phrase, pitch)
+      primeThenListen(phrase, role)
       return true
     },
     [note, primeThenListen],

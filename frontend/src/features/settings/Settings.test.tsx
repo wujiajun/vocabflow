@@ -325,3 +325,34 @@ test('links to the experimental speech test, and its back link returns to Settin
   await browserUser.click(screen.getByRole('link', { name: '← Back to Settings' }))
   expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
 })
+
+test('the reading voice and the other person’s voice can be picked and heard, a choice kept on this device', async () => {
+  stubApi({ 'GET /api/v1/auth/me': () => jsonResponse(user) })
+  const speech = installSpeechSynthesis([
+    voice('Samantha', 'en-US', true, 'compact.Samantha'),
+    voice('Ava', 'en-US', false, 'com.apple.voice.premium.en-US.Ava'),
+    voice('Zoe (Enhanced)', 'en-US', false, 'com.apple.voice.enhanced.en-US.Zoe'),
+    voice('Fred', 'en-US'),
+    voice('Amélie', 'fr-FR'),
+  ])
+  const browserUser = userEvent.setup()
+  renderApp('/app/settings')
+
+  const first = await screen.findByLabelText('Voice')
+  expect(first).toHaveValue('')
+  expect(screen.getByRole('option', { name: 'Automatic (Ava (Premium) · en-US)' })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: 'Automatic (Zoe (Enhanced) · en-US)' })).toBeInTheDocument()
+  // Joke voices and other languages are not offered.
+  expect(screen.queryByRole('option', { name: /Fred|Amélie/ })).not.toBeInTheDocument()
+
+  await browserUser.selectOptions(first, 'compact.Samantha')
+  expect(window.localStorage.getItem('vocabflow.voice')).toBe('compact.Samantha')
+  await browserUser.click(screen.getByRole('button', { name: 'Play the voice' }))
+  expect(speech.lastUtterance().voice?.name).toBe('Samantha')
+
+  await browserUser.click(screen.getByRole('button', { name: 'Play the other person’s voice' }))
+  expect(speech.lastUtterance().voice?.name).toBe('Ava')
+
+  await browserUser.selectOptions(first, '')
+  expect(window.localStorage.getItem('vocabflow.voice')).toBeNull()
+})

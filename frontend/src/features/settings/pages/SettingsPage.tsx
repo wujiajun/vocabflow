@@ -14,6 +14,7 @@ import { clbLabel, clbLevels } from '../../auth/clbLevels'
 import { useAuth, useUpdateSettings } from '../../auth/hooks/useAuth'
 import type { ClbLevel, UpdateSettingsRequest } from '../../auth/types/auth'
 import { ReminderSettings } from '../../reminders/components/ReminderSettings'
+import { VoiceSettings } from '../components/VoiceSettings'
 
 export function SettingsPage() {
   usePageTitle('Settings')
@@ -226,6 +227,7 @@ export function SettingsPage() {
             <p className="mt-2 text-sm leading-6 text-slate-600" id="settings-speak-hint">
               Uses this device’s voice.
             </p>
+            <VoiceSettings />
           </>
         ) : null}
         <label className="mt-4 flex items-center gap-3 text-sm font-medium text-slate-800">

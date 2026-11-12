@@ -15,6 +15,26 @@ export function useVoiceAccent(): VoiceAccent {
   return useSyncExternalStore(subscribeToVoices, currentVoiceAccent, () => 'unknown')
 }
 
+// getVoices() may hand back a new list on every call; the same voices must give the same snapshot.
+let lastVoices: readonly SpeechSynthesisVoice[] = []
+let lastKey = ''
+const noVoices: readonly SpeechSynthesisVoice[] = []
+function voicesSnapshot() {
+  if (!isSpeechSupported()) return noVoices
+  const voices = window.speechSynthesis.getVoices()
+  const key = voices.map((voice) => `${voice.voiceURI}|${voice.lang}`).join('\n')
+  if (key !== lastKey) {
+    lastKey = key
+    lastVoices = voices
+  }
+  return lastVoices
+}
+
+/** This device's voices, kept up to date as the browser loads them. */
+export function useVoices(): readonly SpeechSynthesisVoice[] {
+  return useSyncExternalStore(subscribeToVoices, voicesSnapshot, () => noVoices)
+}
+
 export function usePronunciation(text: string) {
   const [speaking, setSpeaking] = useState(false)
   const speakingRef = useRef(false)

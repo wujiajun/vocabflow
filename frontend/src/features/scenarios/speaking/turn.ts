@@ -1,3 +1,4 @@
+import type { VoiceRole } from '../../../shared/speech/pronunciation'
 import type { HeardResult } from '../../../shared/speech/useSpeechRecognition'
 
 /**
@@ -14,9 +15,9 @@ export const turnCue = 'Your turn. Go ahead.'
 /** A turn whose microphone has not opened after this long is offered a way out. */
 export const watchdogMs = 10000
 
-/** One voice for the first speaker and a lower one for the second, as in Listen first. */
-export function pitchFor(speakers: readonly string[], speaker: string): number {
-  return speakers.indexOf(speaker) % 2 === 0 ? 1 : 0.75
+/** The first voice for the first speaker and the second voice for the other, as in Listen first. */
+export function roleFor(speakers: readonly string[], speaker: string): VoiceRole {
+  return speakers.indexOf(speaker) % 2 === 0 ? 'first' : 'second'
 }
 
 /**

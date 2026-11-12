@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 
-export function voice(name: string, lang: string, isDefault = false) {
-  return { name, lang, default: isDefault, localService: true, voiceURI: name } as SpeechSynthesisVoice
+export function voice(name: string, lang: string, isDefault = false, voiceURI = name) {
+  return { name, lang, default: isDefault, localService: true, voiceURI } as SpeechSynthesisVoice
 }
 
 export class FakeUtterance {
