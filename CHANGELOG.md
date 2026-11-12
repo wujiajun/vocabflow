@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.16.4] - 2026-11-12
+
+### Added
+
+- **Cue sounds in Speak this scene**: a soft rising blip when **Speak now** shows, and a falling one when the phone has stopped listening by itself. They follow the sound switch in Settings. They are made with Web Audio, which is reported not to disturb the iPhone's speech recognition (an audio element does).
+
 ## [1.16.3] - 2026-11-12
 
 ### Changed
