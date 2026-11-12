@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.16.3] - 2026-11-12
+
+### Changed
+
+- **Speak this scene in the app's own look.** The chat-style layout from 1.16.2 stays, but its colours and buttons now match the rest of VocabFlow (indigo buttons and progress bar as in the games, white cards, the green, amber or red result bar of Listen and choose, a big indigo microphone like its play button) instead of a look of its own.
+- **A simpler start.** Speak this scene now opens full screen like the games: "Who do you play?" with the two speakers as round initials, and one **Start speaking** button. Listen first, Read my line to me first, Self-rate and the note on the microphone are folded under **Options**.
+
 ## [1.16.2] - 2026-11-12
 
 ### Changed
