@@ -901,3 +901,39 @@ test('a word with one meaning is not told which meaning, and the word-first card
   expect(screen.getByRole('tab', { name: 'noun · document' })).toHaveAttribute('aria-selected', 'true')
   window.localStorage.removeItem('vocabflow.cardStart')
 })
+
+test('an example sentence can be heard before the answer in every start mode, and each press says the next one', async () => {
+  const twoExamples = hooked()
+  twoExamples.senses = twoExamples.senses.map((sense, index) => (index === 0 ? { ...sense, examples: ['I felt overwhelmed.', 'The work overwhelmed him.'] } : sense))
+  for (const start of ['word', 'picture', 'sound']) {
+    window.localStorage.setItem('vocabflow.cardStart', start)
+    window.localStorage.setItem('vocabflow.speakOnCard', 'off')
+    const speech = installSpeechSynthesis([voice('Samantha', 'en-US')])
+    stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: { ...twoExamples, version: 0 } })) })
+    const browserUser = userEvent.setup()
+    const view = renderApp('/app/study')
+
+    await browserUser.click(await screen.findByRole('button', { name: 'Hear an example' }))
+    expect(speech.spoken.at(-1)?.text).toBe('I felt overwhelmed.')
+    await browserUser.click(screen.getByRole('button', { name: 'Hear another example' }))
+    expect(speech.spoken.at(-1)?.text).toBe('The work overwhelmed him.')
+    await browserUser.click(screen.getByRole('button', { name: 'Hear another example' }))
+    expect(speech.spoken.at(-1)?.text).toBe('I felt overwhelmed.')
+
+    await browserUser.click(screen.getByRole('button', { name: 'Show answer' }))
+    expect(screen.queryByRole('button', { name: /Hear (an|another|the) example/ })).not.toBeInTheDocument()
+    view.unmount()
+  }
+  window.localStorage.removeItem('vocabflow.cardStart')
+  window.localStorage.removeItem('vocabflow.speakOnCard')
+})
+
+test('no example button on a card without an example, or where the device cannot speak', async () => {
+  window.localStorage.removeItem('vocabflow.cardStart')
+  installSpeechSynthesis([voice('Samantha', 'en-US')])
+  const bare = card({ senses: [{ partOfSpeech: 'noun', label: null, phonetic: null, definition: 'A thing.', examples: [], collocations: [] }] })
+  stubApi({ ...signedIn(), 'GET /api/v1/learning/study-queue': () => jsonResponse(queue({ nextCard: bare })) })
+  renderApp('/app/study')
+  await screen.findByRole('button', { name: 'Show answer' })
+  expect(screen.queryByRole('button', { name: /Hear (an|another|the) example/ })).not.toBeInTheDocument()
+})
