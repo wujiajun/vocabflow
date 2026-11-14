@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.22.0] - 2026-11-14
+
+### Added
+
+- **Hear an example before you show the answer.** The front of a study card, whichever way it starts (the word, the picture or the sound), has a **Hear an example** button that reads an example sentence of the meaning being asked, or of the first meaning that has one. Each press reads the next example. It is not shown when the card has no example or the device cannot speak.
+
 ## [1.21.0] - 2026-11-12
 
 ### Added

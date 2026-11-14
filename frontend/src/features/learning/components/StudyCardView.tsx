@@ -67,6 +67,11 @@ export function StudyCardView({
   const phonetics =
     [...new Set((card.senses.length > 0 ? card.senses.map((sense) => sense.phonetic) : [card.phonetic]).filter(Boolean))].join(' · ') ||
     null
+  // An example sentence can be heard before the answer, in every start mode: the meaning being asked when there is
+  // a cue, otherwise the first meaning that has one. Each press says the next example of that meaning.
+  const exampleSense = cue?.examples?.length ? cue : card.senses.find((sense) => sense.examples?.length)
+  const examples = exampleSense?.examples ?? []
+  const [exampleTurn, setExampleTurn] = useState(0)
   const kind = describeKind(card.type, card.senses.length > 1 ? null : card.partOfSpeech)
 
   // Only on mount: a card kept after a failed save must leave focus on the button pressed.
@@ -107,6 +112,12 @@ export function StudyCardView({
     // Only on mount: a card kept after a failed save must not be read again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function hearExample() {
+    if (examples.length === 0) return
+    speakText(examples[exampleTurn % examples.length], { onStart: () => {}, onEnd: () => {} })
+    setExampleTurn((turn) => turn + 1)
+  }
 
   // Showing the answer is a press, which is where speech is always allowed to start.
   function showAnswer() {
@@ -208,6 +219,17 @@ export function StudyCardView({
           <span className="sr-only">Pronunciation: </span>
           {phonetics}
         </p>
+      ) : null}
+
+      {!revealed && examples.length > 0 && isSpeechSupported() ? (
+        <button className={`mt-4 ${tintedAction}`} onClick={hearExample} type="button">
+          <svg aria-hidden="true" fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18">
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+          </svg>
+          {exampleTurn === 0 ? 'Hear an example' : examples.length > 1 ? 'Hear another example' : 'Hear the example again'}
+        </button>
       ) : null}
 
       {revealed ? (
