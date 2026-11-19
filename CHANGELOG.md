@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.24.1] - 2026-11-19
+
+### Fixed
+
+- **Words added from outside the app now show up in Your vocabulary.** The list reads the server again every time it is opened and whenever the app comes back into view, and has a **Refresh** button beside the entry count.
+
 ## [1.24.0] - 2026-11-19
 
 ### Added

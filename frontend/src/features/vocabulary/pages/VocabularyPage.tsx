@@ -109,10 +109,20 @@ export function VocabularyPage() {
           </p>
         ) : (
           <>
-            <p className="mb-3 text-sm text-slate-600">
-              {list.data.totalElements} {list.data.totalElements === 1 ? 'entry' : 'entries'}
-              {search ? ' found' : ''}
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-3 text-sm text-slate-600">
+              <p>
+                {list.data.totalElements} {list.data.totalElements === 1 ? 'entry' : 'entries'}
+                {search ? ' found' : ''}
+              </p>
+              <button
+                className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline underline-offset-4 disabled:opacity-60"
+                disabled={list.isFetching}
+                onClick={() => void list.refetch()}
+                type="button"
+              >
+                {list.isFetching ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </div>
             <ul className={`space-y-3 ${list.isPlaceholderData ? 'opacity-60' : ''}`}>
               {list.data.content.map((entry) => (
                 <VocabularyListItem entry={entry} key={entry.id} />

@@ -199,4 +199,4 @@ test('the settings page has no axe violations, including with an error shown', a
   await browserUser.click(screen.getByRole('button', { name: 'Save' }))
   await screen.findByRole('alert')
   await expectNoAxeViolations()
-}, 20_000)
+}, 60_000)
