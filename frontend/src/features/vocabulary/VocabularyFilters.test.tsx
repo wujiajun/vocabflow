@@ -109,6 +109,19 @@ test('adding a word while filtered returns to All, where the new word shows', as
   await waitFor(() => expect(urls(fetchMock).at(-1)).toBe('/api/v1/vocabulary?page=0&size=20'))
 })
 
+test('the Refresh button reads the list again, so a word added from outside appears', async () => {
+  let words = [entry(1, 'one')]
+  api(() => page(words))
+  const browserUser = userEvent.setup()
+
+  renderApp('/app/vocabulary')
+  await screen.findByText('one')
+  words = [entry(2, 'from a shortcut'), entry(1, 'one')]
+  await browserUser.click(screen.getByRole('button', { name: 'Refresh' }))
+
+  expect(await screen.findByText('from a shortcut')).toBeInTheDocument()
+})
+
 test('an entry opened from a filtered list comes back to that list', async () => {
   stubApi({
     'GET /api/v1/auth/me': () => jsonResponse(user),

@@ -24,6 +24,10 @@ export function useVocabularyList(page: number, filter = '') {
     queryFn: () => listVocabulary(page, vocabularyPageSize, filter),
     placeholderData: keepPreviousData,
     refetchInterval,
+    // A word can be added from outside the app (a shortcut), so the list reads again whenever it
+    // is opened or the app comes back into view.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
 }
 
