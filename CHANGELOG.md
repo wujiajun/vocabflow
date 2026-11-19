@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.23.0] - 2026-11-19
+
+### Added
+
+- **Add a word from a link.** An address such as `/app/vocabulary?add=resilient` opens the add-word panel with that word filled in (spaces and line breaks tidied, a phrase kept whole), on any page of the app, and then takes the parameter out of the address so a reload does not open it again. It lets a macOS Shortcut (a Quick Action on the selected text, in the Services menu) hand a word to VocabFlow from any other app. Signed out, the link goes to the login page and the word is not kept.
+
 ## [1.22.0] - 2026-11-14
 
 ### Added

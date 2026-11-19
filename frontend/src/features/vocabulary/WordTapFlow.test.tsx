@@ -380,3 +380,31 @@ test('touching the panel while the notice shows keeps it open, and an error neve
   await new Promise((resolve) => setTimeout(resolve, 400))
   expect(screen.getByRole('dialog')).toBeInTheDocument()
 })
+
+test('a link with ?add= opens the add-word panel with that word, on any page of the app', async () => {
+  stubApi(routes())
+  renderApp('/app/vocabulary/7?add=%20resilient%0A')
+
+  const panel = await screen.findByRole('dialog', { name: 'Add a word' })
+  expect(within(panel).getByLabelText('Add a word or phrase')).toHaveValue('resilient')
+  expect(await screen.findByRole('heading', { name: 'lease' })).toBeInTheDocument()
+})
+
+test('a phrase with spaces is kept as one phrase', async () => {
+  stubApi(routes())
+  renderApp('/app/vocabulary/7?add=take%20for%20granted')
+
+  const panel = await screen.findByRole('dialog', { name: 'Add a word' })
+  expect(within(panel).getByLabelText('Add a word or phrase')).toHaveValue('take for granted')
+})
+
+test('an empty ?add= opens nothing, and closing the panel does not bring it back', async () => {
+  stubApi(routes())
+  const browserUser = userEvent.setup()
+  renderApp('/app/vocabulary/7?add=')
+  await screen.findByRole('heading', { name: 'lease' })
+  expect(screen.queryByRole('dialog', { name: 'Add a word' })).not.toBeInTheDocument()
+
+  await browserUser.click(screen.getByRole('button', { name: /Add a word|\+ Add/ }))
+  expect(await screen.findByRole('dialog', { name: 'Add a word' })).toBeInTheDocument()
+})

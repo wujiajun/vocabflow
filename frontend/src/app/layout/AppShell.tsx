@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useAuth, useLogoutMutation } from '../../features/auth/hooks/useAuth'
+import { AddFromLink } from '../../features/vocabulary/components/AddFromLink'
 import { AddWordButton } from '../../features/vocabulary/components/AddWordButton'
 import { WordSheetProvider } from '../../features/vocabulary/components/WordSheetProvider'
 import { useTabNavigation } from './useTabNavigation'
@@ -29,6 +30,7 @@ export function AppShell() {
 
   return (
     <WordSheetProvider>
+      <AddFromLink />
       <div className="min-h-screen bg-slate-50 text-slate-950">
         <a
           className="sr-only rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow focus:not-sr-only focus:m-3 focus:block focus:w-fit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700"
