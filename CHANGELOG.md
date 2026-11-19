@@ -5,6 +5,12 @@ versions follow [Semantic Versioning](https://semver.org/): a fix raises the las
 in how the app is used raises the middle one, and a change that breaks what was stored or how it is run raises the
 first. Each release is a `vX.Y.Z` tag; the number is shown at the bottom of Settings.
 
+## [1.24.0] - 2026-11-19
+
+### Added
+
+- **Add words silently from other apps.** Settings has a new section, **Add words from other apps**, where you make a key (shown once, with a Copy button), see when it was made and last used, make a new one (the old one stops at once) or revoke it. A shortcut on your computer that sends the selected word with this key to `POST /api/v1/quick-add` (header `X-Quick-Add-Key`, body `{"term": "…"}`) adds it to your list without opening VocabFlow, and the reply says what happened ("Added …" or "… is already in your list") for a notification. The key can only add words: on every other address it is ignored, so it can neither read your list nor sign in nor make or revoke keys. Only its hash is stored. Migration V23 (`quick_add_keys`).
+
 ## [1.23.0] - 2026-11-19
 
 ### Added

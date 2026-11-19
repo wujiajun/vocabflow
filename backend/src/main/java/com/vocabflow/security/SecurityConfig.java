@@ -1,6 +1,7 @@
 package com.vocabflow.security;
 
 import com.vocabflow.identity.application.UserRepository;
+import com.vocabflow.quickadd.application.QuickAddKeyService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -31,6 +32,7 @@ public class SecurityConfig {
       HttpSecurity h,
       TokenService t,
       UserRepository users,
+      QuickAddKeyService quickAddKeys,
       JsonAuthenticationEntryPoint authenticationEntryPoint,
       JsonAccessDeniedHandler accessDeniedHandler)
       throws Exception {
@@ -47,7 +49,42 @@ public class SecurityConfig {
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(new JwtFilter(t, users), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(
+            new QuickAddKeyFilter(quickAddKeys), UsernamePasswordAuthenticationFilter.class)
         .build();
+  }
+
+  /**
+   * The quick-add key opens one door only: adding a word (POST /api/v1/quick-add). On every other
+   * path the header is ignored, so the key can neither read data nor make or revoke keys.
+   */
+  static class QuickAddKeyFilter extends OncePerRequestFilter {
+    static final String HEADER = "X-Quick-Add-Key";
+    final QuickAddKeyService keys;
+
+    QuickAddKeyFilter(QuickAddKeyService keys) {
+      this.keys = keys;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest r) {
+      return !("POST".equals(r.getMethod()) && "/api/v1/quick-add".equals(r.getRequestURI()));
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest r, HttpServletResponse s, FilterChain c)
+        throws ServletException, IOException {
+      if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        keys.authenticate(r.getHeader(HEADER))
+            .ifPresent(
+                id ->
+                    SecurityContextHolder.getContext()
+                        .setAuthentication(
+                            new UsernamePasswordAuthenticationToken(
+                                id, null, List.of(new SimpleGrantedAuthority("ROLE_USER")))));
+      }
+      c.doFilter(r, s);
+    }
   }
 
   static class JwtFilter extends OncePerRequestFilter {
