@@ -62,7 +62,12 @@ export const emptyTaskDay = {
 
 export function stubApi(given: Record<string, RouteHandler>) {
   // Most tests are not about the daily tasks: unless one says otherwise, the day has none.
-  const routes: Record<string, RouteHandler> = { 'GET /api/v1/tasks/today': () => jsonResponse(emptyTaskDay), ...given }
+  const routes: Record<string, RouteHandler> = {
+    'GET /api/v1/tasks/today': () => jsonResponse(emptyTaskDay),
+    // The Settings page asks whether there is a quick-add key; most tests are not about it.
+    'GET /api/v1/quick-add/key': () => jsonResponse({ exists: false, createdAt: null, lastUsedAt: null }),
+    ...given,
+  }
   unexpectedRequests = []
   const fetchMock = vi.fn(async (input: string, init: RequestInit = {}) => {
     const url = new URL(input, 'http://localhost')
